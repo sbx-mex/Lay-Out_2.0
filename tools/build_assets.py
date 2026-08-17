@@ -1,10 +1,22 @@
 from pathlib import Path
+import argparse
 import os
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 import json, math, re
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path(os.environ.get('LAYOUT_SOURCE', ROOT / 'source' / 'Lay Out_2.0'))
+
+parser = argparse.ArgumentParser(description='Reconstruye las imágenes optimizadas de Lay Out 2.0 desde las láminas fuente.')
+parser.add_argument('--source', type=Path, default=None, help='Carpeta que contiene archivos Lay Out_2.0_<n>.jpg. También puede definirse LAYOUT_SOURCE.')
+args = parser.parse_args()
+SOURCE = args.source or Path(os.environ.get('LAYOUT_SOURCE', ROOT / 'source' / 'Lay Out_2.0'))
+if not SOURCE.is_dir():
+    raise SystemExit(
+        f'No se encontró la fuente: {SOURCE}\n'
+        'Usa: python tools/build_assets.py --source /ruta/a/Lay Out_2.0\n'
+        'Los assets publicados ya incluidos en el repositorio no requieren reconstrucción para ejecutar la app.'
+    )
+
 OUT = ROOT / 'assets' / 'stations'
 TECH = ROOT / 'assets' / 'technical'
 OUT.mkdir(parents=True, exist_ok=True)

@@ -3,15 +3,15 @@
   "project": "Lay Out 2.0",
   "language": "es-MX",
   "updated": "2026-08-17",
-  "sourceNote": "Remaster visual a partir de la guía Station Layout Guide proporcionada. Los códigos originales se conservan sin traducir.",
+  "sourceNote": "Versión remasterizada a partir de la guía Station Layout Guide. Los códigos originales se conservan; el contexto operativo se presenta en español.",
   "stations": [
     {
       "id": "mop",
       "label": "Pedidos móviles",
-      "short": "MOP",
+      "short": "Pedidos móviles",
       "icon": "▣",
       "description": "Selecciona la configuración que más se parezca al módulo de Mobile Order & Pay de tu tienda.",
-      "translation": "Mobile Order & Pay → Pedidos móviles y entrega.",
+      "translation": "MOP significa Pedidos móviles. Elige el código cuya forma y número de módulos se parezcan más a tu tienda.",
       "tips": [
         "Compara ancho, número de módulos y superficies de apoyo.",
         "Valida la ubicación de contenedores y zonas de entrega.",
@@ -82,15 +82,18 @@
           "image": "assets/technical/mop-componentes.webp",
           "sourcePage": 10
         }
-      ]
+      ],
+      "subgroupLabels": {
+        "MOP": "Pedidos móviles"
+      }
     },
     {
       "id": "brewing",
-      "label": "Brewing",
+      "label": "Preparación de café",
       "short": "Café filtrado",
       "icon": "◉",
-      "description": "Compara la estación de preparación de café y elige el acomodo que corresponda a tu configuración física.",
-      "translation": "Brewing Station → Estación de preparación de café.",
+      "description": "Compara la estación de preparación de café y elige el acomodo que corresponda a la configuración física de tu tienda.",
+      "translation": "Las referencias BRW, BUN, SRV y WST pertenecen a la zona de preparación de café. Conserva el código original al validar.",
       "tips": [
         "Prioriza la secuencia de trabajo de izquierda a derecha.",
         "Valida equipos principales, tarjas y superficies de apoyo.",
@@ -177,15 +180,18 @@
           "image": "assets/technical/brewing-componentes.webp",
           "sourcePage": 22
         }
-      ]
+      ],
+      "subgroupLabels": {
+        "Brewing": "Preparación de café"
+      }
     },
     {
       "id": "coldbar",
       "label": "Barra fría",
-      "short": "Cold Bar",
+      "short": "Barra fría",
       "icon": "◇",
-      "description": "La barra fría se concentra en una sola estación y separa las familias CBE/Blend/Tea y CBS para comparar más rápido.",
-      "translation": "Cold Bar → Barra fría. Equipment & Smallwares → Equipo y utensilios.",
+      "description": "La barra fría se concentra en una sola estación y separa las familias CBE/Mezclado/Té y CBS para comparar más rápido.",
+      "translation": "Identifica primero si tu barra corresponde a CBE/Mezclado/Té o CBS; después compara la forma y los módulos.",
       "tips": [
         "Primero identifica la familia de tu barra: CBE/Blend/Tea o CBS.",
         "Compara geometría: lineal, esquina o módulos laterales.",
@@ -338,15 +344,19 @@
           "image": "assets/technical/coldbar-cbs-ingredientes.webp",
           "sourcePage": 44
         }
-      ]
+      ],
+      "subgroupLabels": {
+        "CBE / Blend / Tea": "CBE / Mezclado / Té",
+        "CBS": "CBS"
+      }
     },
     {
       "id": "condiments",
-      "label": "Condimentos",
-      "short": "Condiment Cart",
+      "label": "Carro de condimentos",
+      "short": "Condimentos",
       "icon": "▤",
       "description": "Agrupa las configuraciones del carro de condimentos sin mezclar la lista técnica con la selección visual.",
-      "translation": "Condiment Cart → Carro de condimentos. Single → configuración sencilla.",
+      "translation": "Los nombres técnicos del código se conservan; en pantalla se muestran como opciones del carro de condimentos.",
       "tips": [
         "Identifica primero el número de módulos o depósitos.",
         "Compara la posición de contenedores y dispensadores.",
@@ -393,15 +403,18 @@
           "image": "assets/technical/condimentos-componentes.webp",
           "sourcePage": 51
         }
-      ]
+      ],
+      "subgroupLabels": {
+        "Condimentos": "Condimentos"
+      }
     },
     {
       "id": "espresso",
       "label": "Espresso",
-      "short": "Barra Espresso",
+      "short": "Barra de espresso",
       "icon": "◌",
       "description": "Las opciones de Espresso se separaron de las láminas maestras para que cada código pueda revisarse de forma individual.",
-      "translation": "Espresso Stations → Estaciones de espresso.",
+      "translation": "Cada código ESP representa una configuración de la barra de espresso. Compara máquinas, tarjas y módulos laterales.",
       "tips": [
         "Compara número de máquinas, módulos laterales y posición de tarjas.",
         "Revisa el código antes de imprimir: varias variantes son visualmente cercanas.",
@@ -550,7 +563,10 @@
           "image": "assets/technical/espresso-ingredientes.webp",
           "sourcePage": 54
         }
-      ]
+      ],
+      "subgroupLabels": {
+        "ESP": "Espresso"
+      }
     }
   ]
 }

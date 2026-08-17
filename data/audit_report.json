@@ -5,6 +5,18 @@
   "fullImages": 51,
   "thumbImages": 51,
   "technicalViews": 9,
+  "print": {
+    "format": "A4",
+    "orientation": "portrait",
+    "marginMm": 12,
+    "maxPages": 1
+  },
+  "checks": {
+    "globalSearch": true,
+    "cameraAndGallery": true,
+    "adaptivePdf": true,
+    "offlineCatalog": true
+  },
   "errors": [],
   "warnings": []
 }

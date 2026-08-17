@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-MX">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#006241">
-  <meta name="description" content="Lay Out 2.0: catálogo visual por estación para comparar configuraciones operativas Starbucks.">
+  <meta name="description" content="Lay Out 2.0: guía visual en español para identificar, comparar y validar estaciones operativas.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lay Out 2.0">
@@ -37,20 +37,20 @@
   <main class="app" id="inicio">
     <section class="hero">
       <div class="hero__copy">
-        <span class="eyebrow">Remaster operativo · una sola vista</span>
+        <span class="eyebrow">Guía operativa · una sola vista</span>
         <h1>Encuentra tu estación, compara el acomodo y valida lo esencial.</h1>
-        <p>Las referencias se reorganizaron por estación, con códigos originales, imágenes enfocadas y contexto en español. Sin láminas repetitivas ni información de relleno.</p>
+        <p>Selecciona una referencia por código, revisa solo la información útil y compárala contra el acomodo real de tu tienda.</p>
         <div class="hero__meta">
           <span id="catalogSummary" class="metric">Cargando catálogo…</span>
-          <span class="metric">Impresión A4 con margen seguro de 12 mm</span>
+          <span class="metric">PDF A4 vertical · margen seguro de 12 mm</span>
         </div>
       </div>
       <div class="hero__card" aria-label="Flujo recomendado">
-        <span class="eyebrow">Flujo 2.0</span>
-        <strong>1. Elige estación</strong>
-        <strong>2. Compara código</strong>
-        <strong>3. Carga evidencia</strong>
-        <strong>4. Exporta en una hoja</strong>
+        <span class="eyebrow">Ruta rápida</span>
+        <strong>1. Busca o elige estación</strong>
+        <strong>2. Selecciona el código</strong>
+        <strong>3. Compara con tu foto</strong>
+        <strong>4. Exporta en una página</strong>
       </div>
     </section>
 
@@ -58,13 +58,17 @@
       <div class="section-heading">
         <div>
           <span class="eyebrow">Contexto de revisión</span>
-          <h2 id="contextTitle">Identifica tu tienda</h2>
+          <h2 id="contextTitle">Identifica tu tienda y tu referencia</h2>
         </div>
         <button id="resetButton" class="button button--text" type="button">Reiniciar</button>
       </div>
       <div class="context__grid">
         <label class="field"><span>Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
-        <label class="field"><span>Buscar código</span><input id="searchInput" autocomplete="off" placeholder="Ej. CBS 15-01"></label>
+        <div class="field search-field">
+          <label for="searchInput"><span>Buscar código en todas las estaciones</span></label>
+          <input id="searchInput" autocomplete="off" placeholder="Ej. ESP 03-02" aria-controls="searchResults" aria-expanded="false">
+          <div id="searchResults" class="search-results hidden" role="listbox" aria-label="Resultados de búsqueda"></div>
+        </div>
       </div>
     </section>
 
@@ -82,7 +86,7 @@
           <h2 id="stationLabel">Estación</h2>
           <p id="stationDescription"></p>
         </div>
-        <div class="workspace__translation"><strong>En español</strong><span id="stationTranslation"></span></div>
+        <div class="workspace__translation"><strong>En palabras simples</strong><span id="stationTranslation"></span></div>
       </div>
 
       <div id="subgroupBar" class="subgroup-bar hidden" aria-label="Familias de la estación"></div>
@@ -95,10 +99,13 @@
             <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
           </div>
           <figure class="reference-stage">
-            <img id="referenceImage" alt="Referencia de estación" decoding="async">
+            <button id="zoomReference" class="reference-stage__button" type="button" aria-label="Ampliar referencia seleccionada">
+              <img id="referenceImage" alt="Referencia de estación" decoding="async">
+              <span class="zoom-hint" aria-hidden="true">Ampliar</span>
+            </button>
             <figcaption id="sourceCaption">Selecciona una referencia.</figcaption>
           </figure>
-          <div id="variantRail" class="variant-rail" role="listbox" aria-label="Opciones de layout"></div>
+          <div id="variantRail" class="variant-rail" role="listbox" aria-label="Opciones de Lay Out"></div>
         </div>
 
         <aside class="validation-card">
@@ -106,7 +113,7 @@
           <ul id="stationTips"></ul>
           <div class="technical-block">
             <strong>Vistas técnicas</strong>
-            <p>Solo aparecen cuando ayudan a confirmar piezas, ingredientes o pequeños utensilios.</p>
+            <p>Ábrelas solo si necesitas confirmar equipo, utensilios o ingredientes.</p>
             <div id="technicalButtons" class="technical-buttons"></div>
           </div>
         </aside>
@@ -114,13 +121,16 @@
     </section>
 
     <section class="compare panel" aria-labelledby="compareTitle">
-      <div class="section-heading">
+      <div class="section-heading compare-heading">
         <div>
           <span class="eyebrow">Evidencia de tienda</span>
           <h2 id="compareTitle">Compara referencia vs. acomodo real</h2>
-          <p>La fotografía se procesa localmente en tu dispositivo y no se envía a ningún servidor.</p>
+          <p>La fotografía se procesa localmente en tu dispositivo; no se envía a ningún servidor.</p>
         </div>
-        <button id="exportButton" class="button" type="button">Exportar PDF</button>
+        <div class="export-box">
+          <span id="exportStatus" class="export-status" role="status">Agrega evidencia para completar la revisión.</span>
+          <button id="exportButton" class="button" type="button">Exportar Lay Out</button>
+        </div>
       </div>
 
       <div class="compare-grid">
@@ -130,24 +140,36 @@
         </article>
         <article class="compare-card compare-card--evidence">
           <div class="compare-card__head"><strong>Acomodo real</strong><button id="removeEvidence" class="button button--text hidden" type="button">Quitar</button></div>
-          <label id="dropZone" class="drop-zone" for="evidenceInput">
-            <input id="evidenceInput" type="file" accept="image/*" capture="environment">
+          <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Agregar fotografía del acomodo real">
             <span aria-hidden="true">＋</span>
-            <strong>Cargar foto de la estación</strong>
-            <small>Toca aquí o arrastra una imagen</small>
-          </label>
+            <strong>Agrega una foto de la estación</strong>
+            <small>Arrastra una imagen o usa una de las opciones inferiores</small>
+          </div>
           <img id="evidenceImage" class="hidden" alt="Fotografía del acomodo real">
+          <div class="photo-actions no-print">
+            <button id="cameraButton" class="button button--photo" type="button">Tomar foto</button>
+            <button id="attachButton" class="button button--ghost-dark" type="button">Adjuntar</button>
+          </div>
+          <input id="cameraInput" class="file-input" type="file" accept="image/*" capture="environment">
+          <input id="evidenceInput" class="file-input" type="file" accept="image/*">
         </article>
       </div>
+      <p class="photo-tip no-print">Recomendación: fotografía la estación completa. El PDF ajusta automáticamente imágenes horizontales y verticales sin deformarlas.</p>
 
-      <label class="field field--notes"><span>Notas breves</span><textarea id="notes" maxlength="420" rows="3" placeholder="Ej. Falta reubicar jarabes y liberar superficie de trabajo."></textarea></label>
+      <label class="field field--notes"><span>Notas breves</span><textarea id="notes" maxlength="360" rows="3" placeholder="Ej. Falta reubicar jarabes y liberar superficie de trabajo."></textarea></label>
     </section>
 
     <footer class="footer">
       <strong>Lay Out 2.0</strong>
-      <span>Referencia visual para comparación operativa. Conserva el código original de cada configuración.</span>
+      <span>Referencia visual para comparación operativa. Los códigos originales se conservan sin traducir.</span>
     </footer>
   </main>
+
+  <div class="mobile-actions no-print" aria-label="Acciones rápidas">
+    <button id="mobilePrevious" type="button">← Anterior</button>
+    <button id="mobilePhoto" type="button">Foto</button>
+    <button id="mobileExport" type="button">Exportar</button>
+  </div>
 
   <dialog id="technicalDialog" class="technical-dialog">
     <div class="technical-dialog__head">
@@ -155,7 +177,18 @@
       <button id="closeTechnical" class="icon-button" type="button" aria-label="Cerrar">×</button>
     </div>
     <img id="technicalImage" alt="Vista técnica de la estación">
-    <p>La nomenclatura técnica de la lámina se conserva para evitar ambigüedad con equipo y componentes.</p>
+    <p>La nomenclatura técnica se conserva para evitar ambigüedad con equipo y componentes.</p>
   </dialog>
+
+  <dialog id="referenceDialog" class="technical-dialog reference-dialog">
+    <div class="technical-dialog__head">
+      <div><span class="eyebrow">Referencia ampliada</span><strong id="referenceDialogTitle">Código</strong></div>
+      <button id="closeReference" class="icon-button" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <img id="referenceDialogImage" alt="Referencia ampliada de la estación">
+    <p>Usa esta vista para confirmar detalles antes de comparar con el acomodo real.</p>
+  </dialog>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 </body>
 </html>
