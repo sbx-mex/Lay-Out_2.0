@@ -15,7 +15,10 @@
     "globalSearch": true,
     "cameraAndGallery": true,
     "adaptivePdf": true,
-    "offlineCatalog": true
+    "offlineCatalog": true,
+    "zoomDialog": true,
+    "intuitiveEvidence": true,
+    "districtGoClean": true
   },
   "errors": [],
   "warnings": []

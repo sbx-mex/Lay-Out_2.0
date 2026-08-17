@@ -3,7 +3,7 @@
 const DATA_URL = "data/layouts.json";
 const MEMORY_KEY = "layout20-state-v2";
 const PDF_MARGIN = 12;
-const MAX_EVIDENCE_PX = 2000;
+const MAX_EVIDENCE_PX = 2200;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
 const $ = id => document.getElementById(id);
 
@@ -13,10 +13,12 @@ let activeCode = null;
 let activeSubgroup = "all";
 let deferredInstall = null;
 let evidenceDataUrl = null;
+let evidenceMeta = null;
 let toastTimer = null;
+let mediaZoom = 1;
 
 function station() {
-  return catalog?.stations.find(item => item.id === activeStationId) || catalog?.stations[0];
+  return catalog?.stations.find(item => item.id === activeStationId) || catalog?.stations?.[0] || null;
 }
 
 function stationVariants() {
@@ -29,7 +31,7 @@ function stationVariants() {
 
 function activeVariant() {
   const current = station();
-  return current?.variants.find(item => item.code === activeCode) || stationVariants()[0] || current?.variants[0];
+  return current?.variants.find(item => item.code === activeCode) || stationVariants()[0] || current?.variants?.[0] || null;
 }
 
 function allVariants() {
@@ -58,7 +60,9 @@ function saveState() {
     station: activeStationId,
     code: activeCode,
     store: $("storeName").value.trim(),
-    notes: $("notes").value
+    notes: $("notes").value,
+    evidenceDataUrl,
+    evidenceMeta
   };
   localStorage.setItem(MEMORY_KEY, JSON.stringify(state));
 }
@@ -81,6 +85,8 @@ async function loadCatalog() {
   activeStationId = catalog.stations.some(item => item.id === saved.station) ? saved.station : catalog.stations[0].id;
   $("storeName").value = saved.store || "";
   $("notes").value = saved.notes || "";
+  evidenceDataUrl = saved.evidenceDataUrl || null;
+  evidenceMeta = saved.evidenceMeta || null;
 
   const current = station();
   activeCode = current.variants.some(item => item.code === saved.code) ? saved.code : current.variants[0].code;
@@ -92,6 +98,7 @@ function renderAll() {
   renderStationNav();
   renderStation();
   renderComparison();
+  renderEvidenceState();
   updateCompletion();
   saveState();
 }
@@ -116,14 +123,14 @@ function renderStationNav() {
 }
 
 function navigateStationTabs(event, index) {
-  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
   event.preventDefault();
   const total = catalog.stations.length;
   let target = index;
-  if (event.key === 'ArrowLeft') target = (index - 1 + total) % total;
-  if (event.key === 'ArrowRight') target = (index + 1) % total;
-  if (event.key === 'Home') target = 0;
-  if (event.key === 'End') target = total - 1;
+  if (event.key === "ArrowLeft") target = (index - 1 + total) % total;
+  if (event.key === "ArrowRight") target = (index + 1) % total;
+  if (event.key === "Home") target = 0;
+  if (event.key === "End") target = total - 1;
   selectStation(catalog.stations[target].id, false);
   requestAnimationFrame(() => $("stationNav").querySelector(`[data-station-id="${catalog.stations[target].id}"]`)?.focus());
 }
@@ -136,16 +143,17 @@ function selectStation(id, scroll = true) {
   $("searchInput").value = "";
   closeSearchResults();
   renderAll();
-  if (scroll) document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (scroll) document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function subgroupLabel(group) {
   const current = station();
-  return current.subgroupLabels?.[group] || group;
+  return current?.subgroupLabels?.[group] || group;
 }
 
 function renderStation() {
   const current = station();
+  if (!current) return;
   $("stationShort").textContent = current.short;
   $("stationLabel").textContent = current.label;
   $("stationDescription").textContent = current.description;
@@ -214,14 +222,13 @@ function renderVariants() {
 
 function renderActive() {
   const item = activeVariant();
-  if (!item) return;
+  const current = station();
+  if (!item || !current) return;
   activeCode = item.code;
   $("activeCode").textContent = item.code;
   $("referenceImage").src = item.image;
-  $("referenceImage").alt = `Referencia ${item.code} de ${station().label}`;
-  $("sourceCaption").textContent = `Código original ${item.code} · Referencia optimizada para comparación`;
-  $("referenceDialogTitle").textContent = `${station().label} · ${item.code}`;
-  $("referenceDialogImage").src = item.image;
+  $("referenceImage").alt = `Referencia ${item.code} de ${current.label}`;
+  $("sourceCaption").textContent = `Código original ${item.code} · Referencia optimizada para comparación · Toca la imagen para ampliar.`;
 }
 
 function shiftVariant(delta) {
@@ -266,26 +273,36 @@ function openTechnical(item) {
   $("technicalDialog").showModal();
 }
 
-function openReference() {
-  const item = activeVariant();
-  if (!item) return;
-  $("referenceDialogTitle").textContent = `${station().label} · ${item.code}`;
-  $("referenceDialogImage").src = item.image;
-  $("referenceDialog").showModal();
-}
-
 function renderComparison() {
   const item = activeVariant();
-  if (!item) return;
+  const current = station();
+  if (!item || !current) return;
   $("compareCode").textContent = item.code;
   $("compareReference").src = item.image;
-  $("compareReference").alt = `Referencia ${item.code}`;
+  $("compareReference").alt = `Referencia ${item.code} de ${current.label}`;
+}
+
+function renderEvidenceState() {
+  const hasEvidence = Boolean(evidenceDataUrl);
+  $("dropZone").classList.toggle("hidden", hasEvidence);
+  $("evidenceFrame").classList.toggle("hidden", !hasEvidence);
+  $("removeEvidence").classList.toggle("hidden", !hasEvidence);
+  $("evidencePreviewButton").classList.toggle("hidden", !hasEvidence);
+  if (hasEvidence) {
+    $("evidenceImage").src = evidenceDataUrl;
+    $("evidenceImage").alt = `Fotografía del acomodo real${evidenceMeta?.name ? ` · ${evidenceMeta.name}` : ""}`;
+  } else {
+    $("evidenceImage").removeAttribute("src");
+    $("evidenceImage").alt = "Fotografía del acomodo real";
+  }
 }
 
 function updateCompletion() {
   const ready = Boolean(evidenceDataUrl);
   const status = $("exportStatus");
-  status.textContent = ready ? "Evidencia lista · PDF preparado para una página." : "Agrega evidencia para completar la revisión.";
+  status.textContent = ready
+    ? "Evidencia lista · PDF preparado para una página."
+    : "Agrega evidencia para completar la revisión.";
   status.classList.toggle("ready", ready);
 }
 
@@ -302,6 +319,13 @@ function validateEvidenceFile(file) {
   return true;
 }
 
+function prepareCanvas(width, height) {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, width);
+  canvas.height = Math.max(1, height);
+  return canvas;
+}
+
 async function processEvidence(file) {
   if (!validateEvidenceFile(file)) return;
   const objectUrl = URL.createObjectURL(file);
@@ -312,22 +336,33 @@ async function processEvidence(file) {
       image.onerror = () => reject(new Error("No fue posible leer la imagen seleccionada."));
       image.src = objectUrl;
     });
+
     const scale = Math.min(1, MAX_EVIDENCE_PX / Math.max(image.naturalWidth, image.naturalHeight));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = prepareCanvas(width, height);
     const ctx = canvas.getContext("2d", { alpha: false });
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, width, height);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    evidenceDataUrl = canvas.toDataURL("image/jpeg", 0.9);
-    $("evidenceImage").src = evidenceDataUrl;
-    $("evidenceImage").classList.remove("hidden");
-    $("dropZone").classList.add("hidden");
-    $("removeEvidence").classList.remove("hidden");
+
+    if ("filter" in ctx) {
+      ctx.filter = "contrast(1.05) saturate(1.03)";
+    }
+    ctx.drawImage(image, 0, 0, width, height);
+    ctx.filter = "none";
+
+    evidenceDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    evidenceMeta = {
+      name: file.name || "evidencia.jpg",
+      width,
+      height,
+      updatedAt: Date.now()
+    };
+    renderEvidenceState();
     updateCompletion();
+    saveState();
     announce("Evidencia lista para comparar y exportar.");
   } catch (error) {
     announce(error.message);
@@ -338,48 +373,44 @@ async function processEvidence(file) {
 
 function clearEvidence() {
   evidenceDataUrl = null;
-  $("evidenceImage").src = "";
-  $("evidenceImage").classList.add("hidden");
-  $("dropZone").classList.remove("hidden");
-  $("removeEvidence").classList.add("hidden");
-  $("evidenceInput").value = "";
-  $("cameraInput").value = "";
+  evidenceMeta = null;
+  renderEvidenceState();
   updateCompletion();
+  saveState();
 }
 
 function showSearchResults() {
   const query = $("searchInput").value.trim().toLowerCase();
-  const results = $("searchResults");
-  results.innerHTML = "";
+  const container = $("searchResults");
+  container.innerHTML = "";
   if (!query) {
-    closeSearchResults();
+    container.classList.add("hidden");
+    $("searchInput").setAttribute("aria-expanded", "false");
     return;
   }
 
-  const matches = allVariants().filter(({ station: itemStation, variant }) => {
-    const haystack = `${variant.code} ${variant.subgroup} ${itemStation.label} ${itemStation.short}`.toLowerCase();
-    return haystack.includes(query);
-  }).slice(0, 10);
+  const matches = allVariants()
+    .filter(({ station, variant }) => {
+      const text = [variant.code, station.label, station.short, subgroupLabel(variant.subgroup)].join(" ").toLowerCase();
+      return text.includes(query);
+    })
+    .slice(0, 12);
 
   if (!matches.length) {
-    const empty = document.createElement("div");
-    empty.className = "search-empty";
-    empty.textContent = "Sin coincidencias. Verifica el código o prueba con otra estación.";
-    results.appendChild(empty);
+    container.innerHTML = '<div class="search-empty">No encontramos coincidencias. Intenta con otro código o estación.</div>';
   } else {
-    matches.forEach(({ station: itemStation, variant }) => {
+    matches.forEach(item => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "search-result";
       button.setAttribute("role", "option");
-      button.innerHTML = "<strong></strong><span></span>";
-      button.querySelector("strong").textContent = variant.code;
-      button.querySelector("span").textContent = `${itemStation.label} · ${itemStation.subgroupLabels?.[variant.subgroup] || variant.subgroup}`;
-      button.addEventListener("click", () => selectSearchResult(itemStation, variant));
-      results.appendChild(button);
+      button.innerHTML = `<strong>${item.variant.code}</strong><span>${item.station.label} · ${subgroupLabel(item.variant.subgroup)}</span>`;
+      button.addEventListener("click", () => selectSearchResult(item));
+      container.appendChild(button);
     });
   }
-  results.classList.remove("hidden");
+
+  container.classList.remove("hidden");
   $("searchInput").setAttribute("aria-expanded", "true");
 }
 
@@ -388,64 +419,122 @@ function closeSearchResults() {
   $("searchInput").setAttribute("aria-expanded", "false");
 }
 
-function selectSearchResult(itemStation, variant) {
-  activeStationId = itemStation.id;
-  activeSubgroup = itemStation.variants.some(item => item.subgroup === variant.subgroup) ? variant.subgroup : "all";
-  activeCode = variant.code;
-  $("searchInput").value = variant.code;
+function selectSearchResult(item) {
+  activeStationId = item.station.id;
+  activeSubgroup = item.variant.subgroup;
+  activeCode = item.variant.code;
+  $("searchInput").value = item.variant.code;
   closeSearchResults();
   renderAll();
-  document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
-  announce(`${variant.code} seleccionado en ${itemStation.label}.`);
+  document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function dataUrlFromBlob(blob) {
-  return new Promise((resolve, reject) => {
+function openMediaDialog({ src, title, caption }) {
+  if (!src) return;
+  mediaZoom = 1;
+  $("mediaDialogTitle").textContent = title;
+  $("mediaDialogImage").src = src;
+  $("mediaDialogCaption").textContent = caption;
+  applyMediaZoom();
+  $("mediaDialog").showModal();
+}
+
+function applyMediaZoom() {
+  $("mediaDialogImage").style.transform = `scale(${mediaZoom})`;
+  $("zoomResetMedia").textContent = `${Math.round(mediaZoom * 100)}%`;
+}
+
+function zoomMedia(delta) {
+  mediaZoom = Math.min(4, Math.max(0.5, Math.round((mediaZoom + delta) * 100) / 100));
+  applyMediaZoom();
+}
+
+function resetMediaZoom() {
+  mediaZoom = 1;
+  applyMediaZoom();
+}
+
+function openReference() {
+  const item = activeVariant();
+  const current = station();
+  if (!item || !current) return;
+  openMediaDialog({
+    src: item.image,
+    title: `${current.label} · ${item.code}`,
+    caption: "Referencia optimizada para comparación. Usa esta vista para revisar mejor la imagen antes de validar el acomodo real."
+  });
+}
+
+function openComparisonReference() {
+  const item = activeVariant();
+  const current = station();
+  if (!item || !current) return;
+  openMediaDialog({
+    src: item.image,
+    title: `Referencia comparativa · ${item.code}`,
+    caption: `Estación ${current.label}. Puedes usar esta vista para revisar más detalles del layout de referencia.`
+  });
+}
+
+function openEvidencePreview() {
+  if (!evidenceDataUrl) return;
+  openMediaDialog({
+    src: evidenceDataUrl,
+    title: evidenceMeta?.name ? `Evidencia real · ${evidenceMeta.name}` : "Evidencia real",
+    caption: "Fotografía del acomodo real capturada o adjuntada desde tu dispositivo."
+  });
+}
+
+async function pdfImageSource(src) {
+  if (!src) return null;
+  if (src.startsWith("data:")) return src;
+  const response = await fetch(src, { cache: "force-cache" });
+  if (!response.ok) throw new Error("No se pudo preparar una imagen para el PDF.");
+  const blob = await response.blob();
+  return await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("No fue posible preparar la imagen para el PDF."));
+    reader.onerror = () => reject(new Error("No se pudo leer una imagen del catálogo."));
     reader.readAsDataURL(blob);
   });
 }
 
-async function pdfImageSource(source) {
-  if (!source) return null;
-  if (source.startsWith("data:image/")) return source;
-  const response = await fetch(source, { cache: "force-cache" });
-  if (!response.ok) throw new Error(`No fue posible cargar la referencia ${activeCode}.`);
-  return dataUrlFromBlob(await response.blob());
-}
-
 function pdfImageFormat(source) {
-  if (/^data:image\/png/i.test(source)) return "PNG";
-  if (/^data:image\/webp/i.test(source)) return "WEBP";
+  if (!source) return "JPEG";
+  const start = String(source).slice(0, 40).toLowerCase();
+  if (start.includes("image/png")) return "PNG";
+  if (start.includes("image/webp")) return "WEBP";
   return "JPEG";
 }
 
-function fitPdfText(pdf, value, maxWidth) {
-  const original = String(value || "");
-  if (pdf.getTextWidth(original) <= maxWidth) return original;
-  let fitted = original;
-  while (fitted.length > 1 && pdf.getTextWidth(`${fitted}…`) > maxWidth) fitted = fitted.slice(0, -1);
-  return `${fitted.trimEnd()}…`;
+function fitPdfText(pdf, text, width) {
+  return pdf.splitTextToSize(text, width).slice(0, 2);
+}
+
+function drawPdfPlaceholder(pdf, message, x, y, width, height) {
+  pdf.setFillColor(248, 250, 249);
+  pdf.roundedRect(x, y, width, height, 2.5, 2.5, "F");
+  pdf.setDrawColor(205, 217, 212);
+  pdf.roundedRect(x, y, width, height, 2.5, 2.5, "S");
+  pdf.setTextColor(120, 132, 126);
+  pdf.setFont("helvetica", "italic");
+  pdf.setFontSize(10);
+  pdf.text(message, x + width / 2, y + height / 2, { align: "center", baseline: "middle" });
 }
 
 function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(x, y, width, height, "F");
   if (!source) {
-    pdf.setFillColor(245, 248, 246);
-    pdf.roundedRect(x, y, width, height, 2.5, 2.5, "F");
-    pdf.setTextColor(95, 112, 105);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.text("Sin evidencia fotográfica", x + width / 2, y + height / 2, { align: "center" });
+    drawPdfPlaceholder(pdf, "Sin evidencia real", x, y, width, height);
     return;
   }
   const properties = pdf.getImageProperties(source);
-  const scale = Math.min(width / properties.width, height / properties.height);
-  const imageWidth = properties.width * scale;
-  const imageHeight = properties.height * scale;
+  const ratio = properties.width / properties.height;
+  let imageWidth = width;
+  let imageHeight = imageWidth / ratio;
+  if (imageHeight > height) {
+    imageHeight = height;
+    imageWidth = imageHeight * ratio;
+  }
   const imageX = x + (width - imageWidth) / 2;
   const imageY = y + (height - imageHeight) / 2;
   pdf.addImage(source, pdfImageFormat(source), imageX, imageY, imageWidth, imageHeight, alias, "FAST");
@@ -495,6 +584,8 @@ async function buildLayoutExportDocument() {
   if (!window.jspdf?.jsPDF) throw new Error("El generador PDF local no está disponible. Actualiza la aplicación e intenta nuevamente.");
   const current = station();
   const variant = activeVariant();
+  if (!current || !variant) throw new Error("No hay una referencia activa para exportar.");
+
   const store = $("storeName").value.trim() || "Tienda sin definir";
   const notes = $("notes").value.trim();
   const referenceSource = await pdfImageSource(variant.image);
@@ -607,10 +698,19 @@ function bindSwipe() {
   }, { passive: true });
 }
 
+function updateNetwork() {
+  $("networkStatus").textContent = navigator.onLine ? "En línea" : "Sin conexión";
+  $("networkStatus").classList.toggle("offline", !navigator.onLine);
+}
+
 function bind() {
   $("prevButton").addEventListener("click", () => shiftVariant(-1));
   $("nextButton").addEventListener("click", () => shiftVariant(1));
   $("zoomReference").addEventListener("click", openReference);
+  $("compareReferenceButton").addEventListener("click", openComparisonReference);
+  $("compareReferenceFrame").addEventListener("click", openComparisonReference);
+  $("evidencePreviewButton").addEventListener("click", openEvidencePreview);
+  $("evidenceFrame").addEventListener("click", openEvidencePreview);
   bindSwipe();
 
   $("searchInput").addEventListener("input", showSearchResults);
@@ -674,7 +774,14 @@ function bind() {
   });
 
   bindDialogClose("technicalDialog", "closeTechnical");
-  bindDialogClose("referenceDialog", "closeReference");
+  bindDialogClose("mediaDialog", "closeMedia");
+  $("zoomInMedia").addEventListener("click", () => zoomMedia(0.2));
+  $("zoomOutMedia").addEventListener("click", () => zoomMedia(-0.2));
+  $("zoomResetMedia").addEventListener("click", resetMediaZoom);
+  $("mediaDialog").addEventListener("wheel", event => {
+    event.preventDefault();
+    zoomMedia(event.deltaY < 0 ? 0.15 : -0.15);
+  }, { passive: false });
 
   $("mobilePrevious").addEventListener("click", () => shiftVariant(-1));
   $("mobilePhoto").addEventListener("click", () => $("cameraInput").click());
@@ -694,11 +801,6 @@ function bind() {
     deferredInstall = null;
     $("installButton").classList.add("hidden");
   });
-}
-
-function updateNetwork() {
-  $("networkStatus").textContent = navigator.onLine ? "En línea" : "Sin conexión";
-  $("networkStatus").classList.toggle("offline", !navigator.onLine);
 }
 
 async function start() {

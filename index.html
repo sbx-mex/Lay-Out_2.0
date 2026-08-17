@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#006241">
-  <meta name="description" content="Lay Out 2.0: guía visual en español para identificar, comparar y validar estaciones operativas.">
+  <meta name="description" content="Lay Out 2.0 Premium: guía visual en español para identificar, comparar y validar estaciones operativas Starbucks con una experiencia más intuitiva.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lay Out 2.0">
@@ -25,7 +25,10 @@
     <div class="topbar__inner">
       <a class="brand" href="#inicio" aria-label="Ir al inicio">
         <span class="brand__mark" aria-hidden="true">✦</span>
-        <span><strong>Lay Out 2.0</strong><small>Guía visual por estación</small></span>
+        <span>
+          <strong>Lay Out 2.0</strong>
+          <small>Guía visual por estación</small>
+        </span>
       </a>
       <div class="topbar__actions">
         <span id="networkStatus" class="status" role="status" aria-live="polite">En línea</span>
@@ -37,20 +40,21 @@
   <main class="app" id="inicio">
     <section class="hero">
       <div class="hero__copy">
-        <span class="eyebrow">Guía operativa · una sola vista</span>
-        <h1>Encuentra tu estación, compara el acomodo y valida lo esencial.</h1>
-        <p>Selecciona una referencia por código, revisa solo la información útil y compárala contra el acomodo real de tu tienda.</p>
+        <span class="eyebrow">Starbucks Layouts · Herramienta operativa · Uso interno</span>
+        <h1>Encuentra tu estación, revisa la referencia y compara el acomodo real con una vista mucho más clara.</h1>
+        <p>Esta versión prioriza lo importante: referencias más grandes, evidencia real integrada, navegación más intuitiva y exportación A4 validada en una sola página.</p>
         <div class="hero__meta">
           <span id="catalogSummary" class="metric">Cargando catálogo…</span>
           <span class="metric">PDF A4 vertical · margen seguro de 12 mm</span>
+          <span class="metric">Vista ampliable · comparación visual</span>
         </div>
       </div>
       <div class="hero__card" aria-label="Flujo recomendado">
         <span class="eyebrow">Ruta rápida</span>
-        <strong>1. Busca o elige estación</strong>
+        <strong>1. Busca la estación</strong>
         <strong>2. Selecciona el código</strong>
-        <strong>3. Compara con tu foto</strong>
-        <strong>4. Exporta en una página</strong>
+        <strong>3. Agrega la evidencia real</strong>
+        <strong>4. Amplía, valida y exporta</strong>
       </div>
     </section>
 
@@ -59,6 +63,7 @@
         <div>
           <span class="eyebrow">Contexto de revisión</span>
           <h2 id="contextTitle">Identifica tu tienda y tu referencia</h2>
+          <p>Todo está enfocado a una sola pestaña y a un recorrido operativo simple.</p>
         </div>
         <button id="resetButton" class="button button--text" type="button">Reiniciar</button>
       </div>
@@ -74,7 +79,10 @@
 
     <section class="station-strip" id="catalogo" aria-labelledby="stationTitle">
       <div class="section-heading section-heading--compact">
-        <div><span class="eyebrow">Estaciones</span><h2 id="stationTitle">Selecciona dónde vas a trabajar</h2></div>
+        <div>
+          <span class="eyebrow">Estaciones</span>
+          <h2 id="stationTitle">Selecciona dónde vas a trabajar</h2>
+        </div>
       </div>
       <div id="stationNav" class="station-nav" role="tablist" aria-label="Estaciones disponibles"></div>
     </section>
@@ -86,7 +94,10 @@
           <h2 id="stationLabel">Estación</h2>
           <p id="stationDescription"></p>
         </div>
-        <div class="workspace__translation"><strong>En palabras simples</strong><span id="stationTranslation"></span></div>
+        <div class="workspace__translation">
+          <strong>En palabras simples</strong>
+          <span id="stationTranslation"></span>
+        </div>
       </div>
 
       <div id="subgroupBar" class="subgroup-bar hidden" aria-label="Familias de la estación"></div>
@@ -98,13 +109,21 @@
             <div class="viewer-title"><small>Referencia seleccionada</small><strong id="activeCode">—</strong></div>
             <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
           </div>
+
           <figure class="reference-stage">
             <button id="zoomReference" class="reference-stage__button" type="button" aria-label="Ampliar referencia seleccionada">
               <img id="referenceImage" alt="Referencia de estación" decoding="async">
-              <span class="zoom-hint" aria-hidden="true">Ampliar</span>
+              <span class="zoom-hint" aria-hidden="true">Tocar para ampliar</span>
             </button>
             <figcaption id="sourceCaption">Selecciona una referencia.</figcaption>
           </figure>
+
+          <div class="image-helpbar">
+            <span class="metric metric--soft">Vista amplia y adaptativa</span>
+            <span class="metric metric--soft">Zoom disponible</span>
+            <span class="metric metric--soft">Desliza para cambiar</span>
+          </div>
+
           <div id="variantRail" class="variant-rail" role="listbox" aria-label="Opciones de Lay Out"></div>
         </div>
 
@@ -113,7 +132,7 @@
           <ul id="stationTips"></ul>
           <div class="technical-block">
             <strong>Vistas técnicas</strong>
-            <p>Ábrelas solo si necesitas confirmar equipo, utensilios o ingredientes.</p>
+            <p>Ábrelas solo cuando ayuden a confirmar piezas, ingredientes, equipo o pequeños utensilios.</p>
             <div id="technicalButtons" class="technical-buttons"></div>
           </div>
         </aside>
@@ -135,17 +154,34 @@
 
       <div class="compare-grid">
         <article class="compare-card">
-          <div class="compare-card__head"><strong>Referencia</strong><span id="compareCode">—</span></div>
-          <img id="compareReference" alt="Referencia seleccionada">
-        </article>
-        <article class="compare-card compare-card--evidence">
-          <div class="compare-card__head"><strong>Acomodo real</strong><button id="removeEvidence" class="button button--text hidden" type="button">Quitar</button></div>
-          <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Agregar fotografía del acomodo real">
-            <span aria-hidden="true">＋</span>
-            <strong>Agrega una foto de la estación</strong>
-            <small>Arrastra una imagen o usa una de las opciones inferiores</small>
+          <div class="compare-card__head">
+            <div><strong>Referencia</strong><span id="compareCode">—</span></div>
+            <button id="compareReferenceButton" class="button button--text" type="button">Ampliar</button>
           </div>
-          <img id="evidenceImage" class="hidden" alt="Fotografía del acomodo real">
+          <button id="compareReferenceFrame" class="compare-media" type="button" aria-label="Ampliar referencia comparativa">
+            <img id="compareReference" alt="Referencia seleccionada">
+            <span class="zoom-hint zoom-hint--static" aria-hidden="true">Zoom</span>
+          </button>
+        </article>
+
+        <article class="compare-card compare-card--evidence">
+          <div class="compare-card__head">
+            <div><strong>Acomodo real</strong><span class="compare-subtitle">Evidencia real</span></div>
+            <div class="compare-card__actions">
+              <button id="evidencePreviewButton" class="button button--text hidden" type="button">Ampliar</button>
+              <button id="removeEvidence" class="button button--text hidden" type="button">Quitar</button>
+            </div>
+          </div>
+          <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Agregar fotografía del acomodo real">
+            <span class="drop-zone__icon" aria-hidden="true">○</span>
+            <strong>Agrega la evidencia real</strong>
+            <small>Puedes tocar el área de evidencia para seleccionar una imagen.</small>
+            <span class="drop-zone__hint">También puedes arrastrar una imagen, tomar una foto o adjuntarla desde tu dispositivo.</span>
+          </div>
+          <button id="evidenceFrame" class="compare-media hidden" type="button" aria-label="Ampliar evidencia real">
+            <img id="evidenceImage" alt="Fotografía del acomodo real">
+            <span class="zoom-hint zoom-hint--static" aria-hidden="true">Zoom</span>
+          </button>
           <div class="photo-actions no-print">
             <button id="cameraButton" class="button button--photo" type="button">Tomar foto</button>
             <button id="attachButton" class="button button--ghost-dark" type="button">Adjuntar</button>
@@ -160,8 +196,17 @@
     </section>
 
     <footer class="footer">
-      <strong>Lay Out 2.0</strong>
-      <span>Referencia visual para comparación operativa. Los códigos originales se conservan sin traducir.</span>
+      <div class="footer__group">
+        <strong>Starbucks Layouts</strong>
+        <span>Herramienta operativa · Uso interno</span>
+      </div>
+      <div class="footer__group">
+        <strong>Estamos mejorando para ti</strong>
+        <span>Diseño: Jorge Alcantar Aguiar &amp; Enrique César Flores</span>
+      </div>
+      <div class="footer__group footer__group--link">
+        <a class="footer__link" href="https://wa.me/message/ENKDSAHYHIGAN1" target="_blank" rel="noopener noreferrer">Comentarios y/o Sugerencias ↗</a>
+      </div>
     </footer>
   </main>
 
@@ -180,13 +225,23 @@
     <p>La nomenclatura técnica se conserva para evitar ambigüedad con equipo y componentes.</p>
   </dialog>
 
-  <dialog id="referenceDialog" class="technical-dialog reference-dialog">
+  <dialog id="mediaDialog" class="technical-dialog reference-dialog">
     <div class="technical-dialog__head">
-      <div><span class="eyebrow">Referencia ampliada</span><strong id="referenceDialogTitle">Código</strong></div>
-      <button id="closeReference" class="icon-button" type="button" aria-label="Cerrar">×</button>
+      <div>
+        <span class="eyebrow">Vista ampliada</span>
+        <strong id="mediaDialogTitle">Imagen</strong>
+      </div>
+      <div class="dialog-tools">
+        <button id="zoomOutMedia" class="icon-button" type="button" aria-label="Alejar imagen">−</button>
+        <button id="zoomResetMedia" class="icon-button icon-button--wide" type="button">100%</button>
+        <button id="zoomInMedia" class="icon-button" type="button" aria-label="Acercar imagen">＋</button>
+        <button id="closeMedia" class="icon-button" type="button" aria-label="Cerrar">×</button>
+      </div>
     </div>
-    <img id="referenceDialogImage" alt="Referencia ampliada de la estación">
-    <p>Usa esta vista para confirmar detalles antes de comparar con el acomodo real.</p>
+    <div class="media-dialog__stage">
+      <img id="mediaDialogImage" alt="Imagen ampliada para revisión">
+    </div>
+    <p id="mediaDialogCaption">Usa esta vista para revisar mejor la referencia o la evidencia real.</p>
   </dialog>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>

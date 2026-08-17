@@ -14,6 +14,10 @@ REQUIRED = [
     'data/layouts.json', 'vendor/jspdf.umd.min.js'
 ]
 
+FORBIDDEN_MARKERS = [
+    'Distrito GO', 'Distrito Go', 'Distrito Goo', 'distrito goo', 'Distrito GOO'
+]
+
 
 def require(path: str) -> Path:
     target = ROOT / path
@@ -55,7 +59,6 @@ if any(not code for code in codes):
 if len(codes) != len(set(codes)):
     ERRORS.append('Hay códigos de configuración duplicados')
 
-# El código técnico se conserva; el contexto visible debe ser digerible en español.
 for station in stations:
     for field in ('label', 'short', 'description', 'translation'):
         if not str(station.get(field, '')).strip():
@@ -64,7 +67,6 @@ for station in stations:
     if not 2 <= len(tips) <= 4:
         WARNINGS.append(f'{station.get("id")}: conviene mantener entre 2 y 4 puntos de validación')
 
-# Assets: resolución, consistencia de fondo y relación entre imagen completa/miniatura.
 full_files = []
 thumb_files = []
 for station, variant in variants:
@@ -110,7 +112,6 @@ for station in stations:
         except Exception as exc:
             ERRORS.append(f'No se puede leer vista técnica {rel}: {exc}')
 
-# Detecta duplicados accidentales entre imágenes principales.
 hashes = {}
 for target in full_files:
     digest = hashlib.sha256(target.read_bytes()).hexdigest()
@@ -126,23 +127,30 @@ sw = read_text('sw.js')
 workflow = (ROOT / '.github/workflows/validate.yml').read_text(encoding='utf-8') if (ROOT / '.github/workflows/validate.yml').is_file() else ''
 builder = (ROOT / 'tools/build_assets.py').read_text(encoding='utf-8') if (ROOT / 'tools/build_assets.py').is_file() else ''
 
-# UX / accesibilidad / una sola pestaña.
+for marker in FORBIDDEN_MARKERS:
+    for rel in ('index.html', 'styles.css', 'app.js', 'manifest.json', 'README.md'):
+        target = ROOT / rel
+        if target.is_file() and marker.lower() in target.read_text(encoding='utf-8', errors='ignore').lower():
+            ERRORS.append(f'Se detectó un texto ajeno al proyecto ({marker}) en {rel}')
+
 if '<html lang="es-MX">' not in html:
     ERRORS.append('El documento debe declarar lang="es-MX"')
 if html.count('<main') != 1:
     ERRORS.append('La experiencia debe conservar un solo <main>')
-for required_id in ('stationNav', 'searchInput', 'searchResults', 'variantRail', 'referenceImage', 'cameraInput', 'evidenceInput', 'exportButton', 'exportStatus'):
+for required_id in (
+    'stationNav', 'searchInput', 'searchResults', 'variantRail', 'referenceImage',
+    'cameraInput', 'evidenceInput', 'exportButton', 'exportStatus', 'mediaDialog',
+    'mediaDialogImage', 'dropZone', 'compareReferenceButton', 'evidencePreviewButton'
+):
     if f'id="{required_id}"' not in html:
         ERRORS.append(f'Falta control de interfaz: #{required_id}')
 
-# Verifica que los IDs estáticos usados con $("id") existan en HTML.
 referenced_ids = set(re.findall(r'\$\(["\']([^"\']+)["\']\)', js))
 html_ids = set(re.findall(r'id=["\']([^"\']+)["\']', html))
 missing_ids = sorted(referenced_ids - html_ids)
 if missing_ids:
     ERRORS.append(f'app.js referencia IDs inexistentes: {", ".join(missing_ids)}')
 
-# Exportación alineada a V1: A4 vertical, una página, imágenes sin deformar y margen seguro.
 css_flat = re.sub(r'\s+', '', css)
 if '@page{size:A4portrait;margin:12mm}' not in css_flat:
     ERRORS.append('La impresión debe usar A4 vertical con margen de 12 mm')
@@ -157,7 +165,6 @@ for marker, message in [
     if marker not in js:
         ERRORS.append(message)
 
-# Navegación intuitiva y captura de evidencia.
 for marker, message in [
     ('function showSearchResults(', 'Falta buscador global por código'),
     ('function selectSearchResult(', 'Falta navegación directa desde búsqueda'),
@@ -165,11 +172,30 @@ for marker, message in [
     ('evidenceInput', 'Falta opción de adjuntar desde galería/archivo'),
     ('function bindSwipe(', 'Falta navegación táctil entre referencias'),
     ('notes: $("notes").value', 'Las notas no se conservan en el estado local'),
+    ('function openMediaDialog(', 'Falta vista ampliada para imágenes'),
+    ('Agrega la evidencia real', 'Falta área de evidencia real más intuitiva'),
+    ('Puedes tocar el área de evidencia para seleccionar una imagen.', 'Falta instrucción clara para seleccionar evidencia'),
 ]:
-    if marker not in js:
+    if marker not in js and marker not in html:
         ERRORS.append(message)
 
-# PWA/offline: el catálogo completo debe poder quedar disponible después de instalar/cargar.
+for marker, message in [
+    ('Starbucks Layouts', 'Falta branding operativo visible'),
+    ('Herramienta operativa · Uso interno', 'Falta aclaración de uso interno'),
+    ('Estamos mejorando para ti', 'Falta mensaje de mejora continua'),
+    ('Diseño: Jorge Alcantar Aguiar &amp; Enrique César Flores', 'Falta crédito de diseño'),
+    ('https://wa.me/message/ENKDSAHYHIGAN1', 'Falta liga de comentarios y sugerencias'),
+]:
+    if marker not in html:
+        ERRORS.append(message)
+
+for marker, message in [
+    ('clamp(420px,60vh,780px)', 'La referencia principal aún no usa una vista amplia y dinámica'),
+    ('clamp(360px,54vh,700px)', 'La comparación visual aún no usa paneles amplios y dinámicos'),
+]:
+    if marker not in css_flat:
+        WARNINGS.append(message)
+
 if 'layout-2-remaster-v2' not in sw:
     ERRORS.append('Versión de caché PWA desactualizada')
 if 'async function catalogAssets()' not in sw:
@@ -178,12 +204,10 @@ for shell in ('index.html', 'styles.css', 'app.js', 'manifest.json', 'data/layou
     if shell not in sw:
         ERRORS.append(f'PWA no incluye {shell}')
 
-# CI: evita que una corrección llegue al repositorio con JS o auditoría rotos.
 for marker in ('node --check app.js', 'node --check sw.js', 'python tools/audit_project.py'):
     if marker not in workflow:
         ERRORS.append(f'Workflow incompleto: falta {marker}')
 
-# Herramienta de reconstrucción: debe explicar cómo aportar la fuente en un repo limpio.
 if builder and ('argparse' not in builder or '--source' not in builder):
     WARNINGS.append('build_assets.py todavía depende de una ruta implícita; conviene aceptar --source')
 
@@ -200,6 +224,9 @@ report = {
         'cameraAndGallery': 'cameraInput' in js and 'evidenceInput' in js,
         'adaptivePdf': 'function pdfGeometry(' in js,
         'offlineCatalog': 'async function catalogAssets()' in sw,
+        'zoomDialog': 'function openMediaDialog(' in js,
+        'intuitiveEvidence': 'Agrega la evidencia real' in html,
+        'districtGoClean': not any(marker.lower() in (html + css + js).lower() for marker in FORBIDDEN_MARKERS),
     },
     'errors': ERRORS,
     'warnings': WARNINGS,
