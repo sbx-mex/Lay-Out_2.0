@@ -1,25 +1,22 @@
 {
-  "status": "passed",
-  "stations": 5,
-  "variants": 51,
-  "fullImages": 51,
-  "thumbImages": 51,
-  "technicalViews": 9,
-  "print": {
-    "format": "A4",
-    "orientation": "portrait",
-    "marginMm": 12,
-    "maxPages": 1
+  "status": "reviewed",
+  "focus": [
+    "Vista principal más amplia",
+    "Zoom interactivo para referencias y evidencia",
+    "Recorte inteligente para ganar visibilidad",
+    "Interfaz más intuitiva en español",
+    "Compatibilidad con exportación A4 vertical V1"
+  ],
+  "patchFiles": [
+    "index.html",
+    "styles.css",
+    "app.js",
+    "data/audit_report.json",
+    "tools/audit_project.py"
+  ],
+  "validatedWithPython": {
+    "matrenaZipDetected": true,
+    "matrenaSource": "Matrena 1 y 2.zip"
   },
-  "checks": {
-    "globalSearch": true,
-    "cameraAndGallery": true,
-    "adaptivePdf": true,
-    "offlineCatalog": true,
-    "zoomDialog": true,
-    "intuitiveEvidence": true,
-    "districtGoClean": true
-  },
-  "errors": [],
   "warnings": []
 }

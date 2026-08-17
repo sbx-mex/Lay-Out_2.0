@@ -5,6 +5,7 @@ const MEMORY_KEY = "layout20-state-v2";
 const PDF_MARGIN = 12;
 const MAX_EVIDENCE_PX = 2200;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
+const IMAGE_BG_THRESHOLD = 242;
 const $ = id => document.getElementById(id);
 
 let catalog = null;
@@ -13,12 +14,23 @@ let activeCode = null;
 let activeSubgroup = "all";
 let deferredInstall = null;
 let evidenceDataUrl = null;
-let evidenceMeta = null;
+let activeReferenceDisplayUrl = null;
 let toastTimer = null;
-let mediaZoom = 1;
+let renderTicket = 0;
+const displayCache = new Map();
+const technicalCache = new Map();
+
+const mediaDialogState = {
+  scale: 1,
+  x: 0,
+  y: 0,
+  pointer: null,
+  source: null,
+  title: ""
+};
 
 function station() {
-  return catalog?.stations.find(item => item.id === activeStationId) || catalog?.stations?.[0] || null;
+  return catalog?.stations.find(item => item.id === activeStationId) || catalog?.stations[0];
 }
 
 function stationVariants() {
@@ -31,12 +43,16 @@ function stationVariants() {
 
 function activeVariant() {
   const current = station();
-  return current?.variants.find(item => item.code === activeCode) || stationVariants()[0] || current?.variants?.[0] || null;
+  return current?.variants.find(item => item.code === activeCode) || stationVariants()[0] || current?.variants[0];
 }
 
 function allVariants() {
   if (!catalog) return [];
   return catalog.stations.flatMap(current => current.variants.map(variant => ({ station: current, variant })));
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function cleanFilename(value) {
@@ -60,9 +76,7 @@ function saveState() {
     station: activeStationId,
     code: activeCode,
     store: $("storeName").value.trim(),
-    notes: $("notes").value,
-    evidenceDataUrl,
-    evidenceMeta
+    notes: $("notes").value
   };
   localStorage.setItem(MEMORY_KEY, JSON.stringify(state));
 }
@@ -72,6 +86,136 @@ function loadState() {
     return JSON.parse(localStorage.getItem(MEMORY_KEY) || "{}");
   } catch {
     return {};
+  }
+}
+
+function setStageProcessing(state) {
+  $("referenceStage").classList.toggle("is-processing", state);
+}
+
+function imageCacheKey(source, targetWidth, padding) {
+  return `${source}|${targetWidth}|${padding}`;
+}
+
+function loadImageElement(source) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("No fue posible preparar la imagen."));
+    image.src = source;
+  });
+}
+
+function detectContentBox(image) {
+  const probe = document.createElement("canvas");
+  const ratio = Math.min(1, 850 / Math.max(image.naturalWidth, image.naturalHeight));
+  probe.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+  probe.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+  const ctx = probe.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(image, 0, 0, probe.width, probe.height);
+  const { data, width, height } = ctx.getImageData(0, 0, probe.width, probe.height);
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4;
+      const alpha = data[index + 3];
+      const r = data[index];
+      const g = data[index + 1];
+      const b = data[index + 2];
+      const isVisible = alpha > 18;
+      const isNearWhite = r > IMAGE_BG_THRESHOLD && g > IMAGE_BG_THRESHOLD && b > IMAGE_BG_THRESHOLD;
+      if (isVisible && !isNearWhite) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (maxX < 0 || maxY < 0) {
+    return { x: 0, y: 0, width: image.naturalWidth, height: image.naturalHeight };
+  }
+
+  const scaleBack = 1 / ratio;
+  return {
+    x: Math.floor(minX * scaleBack),
+    y: Math.floor(minY * scaleBack),
+    width: Math.max(1, Math.ceil((maxX - minX + 1) * scaleBack)),
+    height: Math.max(1, Math.ceil((maxY - minY + 1) * scaleBack))
+  };
+}
+
+async function optimizeImageForDisplay(source, options = {}) {
+  const targetWidth = options.targetWidth || 1900;
+  const padding = options.padding ?? 0.08;
+  const cacheKey = imageCacheKey(source, targetWidth, padding);
+  if (displayCache.has(cacheKey)) return displayCache.get(cacheKey);
+
+  const image = await loadImageElement(source);
+  const bounds = detectContentBox(image);
+  const padX = Math.round(bounds.width * padding);
+  const padY = Math.round(bounds.height * padding);
+  const cropX = clamp(bounds.x - padX, 0, image.naturalWidth - 1);
+  const cropY = clamp(bounds.y - padY, 0, image.naturalHeight - 1);
+  const cropW = clamp(bounds.width + padX * 2, 1, image.naturalWidth - cropX);
+  const cropH = clamp(bounds.height + padY * 2, 1, image.naturalHeight - cropY);
+  const scale = targetWidth / cropW;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(cropW * scale));
+  canvas.height = Math.max(1, Math.round(cropH * scale));
+  const ctx = canvas.getContext("2d", { alpha: false });
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.filter = "contrast(1.04) saturate(1.02)";
+  ctx.drawImage(image, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+  ctx.filter = "none";
+
+  const result = {
+    url: canvas.toDataURL("image/webp", 0.96),
+    width: canvas.width,
+    height: canvas.height,
+    crop: { x: cropX, y: cropY, width: cropW, height: cropH }
+  };
+  displayCache.set(cacheKey, result);
+  return result;
+}
+
+async function hydrateThumb(imageNode, source) {
+  try {
+    const optimized = await optimizeImageForDisplay(source, { targetWidth: 520, padding: 0.07 });
+    imageNode.src = optimized.url;
+  } catch {
+    imageNode.src = source;
+  }
+}
+
+async function applyActiveVisual(item, ticket) {
+  try {
+    setStageProcessing(true);
+    const optimized = await optimizeImageForDisplay(item.image, { targetWidth: 2100, padding: 0.075 });
+    if (ticket !== renderTicket) return;
+    activeReferenceDisplayUrl = optimized.url;
+    $("referenceImage").src = optimized.url;
+    $("compareReference").src = optimized.url;
+    $("referenceDialogImage").src = optimized.url;
+    $("sourceCaption").textContent = `Código original ${item.code} · Vista optimizada con recorte inteligente · Toca la imagen para ampliar.`;
+  } catch {
+    if (ticket !== renderTicket) return;
+    activeReferenceDisplayUrl = item.image;
+    $("referenceImage").src = item.image;
+    $("compareReference").src = item.image;
+    $("referenceDialogImage").src = item.image;
+    $("sourceCaption").textContent = `Código original ${item.code} · Referencia lista para comparación.`;
+  } finally {
+    if (ticket === renderTicket) setStageProcessing(false);
   }
 }
 
@@ -85,8 +229,6 @@ async function loadCatalog() {
   activeStationId = catalog.stations.some(item => item.id === saved.station) ? saved.station : catalog.stations[0].id;
   $("storeName").value = saved.store || "";
   $("notes").value = saved.notes || "";
-  evidenceDataUrl = saved.evidenceDataUrl || null;
-  evidenceMeta = saved.evidenceMeta || null;
 
   const current = station();
   activeCode = current.variants.some(item => item.code === saved.code) ? saved.code : current.variants[0].code;
@@ -98,7 +240,6 @@ function renderAll() {
   renderStationNav();
   renderStation();
   renderComparison();
-  renderEvidenceState();
   updateCompletion();
   saveState();
 }
@@ -143,17 +284,16 @@ function selectStation(id, scroll = true) {
   $("searchInput").value = "";
   closeSearchResults();
   renderAll();
-  if (scroll) document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (scroll) document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function subgroupLabel(group) {
   const current = station();
-  return current?.subgroupLabels?.[group] || group;
+  return current.subgroupLabels?.[group] || group;
 }
 
 function renderStation() {
   const current = station();
-  if (!current) return;
   $("stationShort").textContent = current.short;
   $("stationLabel").textContent = current.label;
   $("stationDescription").textContent = current.description;
@@ -205,8 +345,11 @@ function renderVariants() {
     button.className = "variant-card";
     button.setAttribute("role", "option");
     button.setAttribute("aria-selected", String(item.code === activeCode));
-    button.innerHTML = '<img alt="" loading="lazy"><strong></strong><small></small>';
-    button.querySelector("img").src = item.thumb;
+    button.innerHTML = '<img alt=""><strong></strong><small></small>';
+    const imageNode = button.querySelector("img");
+    imageNode.src = item.thumb;
+    imageNode.alt = `Miniatura de ${item.code}`;
+    hydrateThumb(imageNode, item.thumb || item.image);
     button.querySelector("strong").textContent = item.code;
     button.querySelector("small").textContent = subgroupLabel(item.subgroup);
     button.addEventListener("click", () => {
@@ -222,13 +365,18 @@ function renderVariants() {
 
 function renderActive() {
   const item = activeVariant();
-  const current = station();
-  if (!item || !current) return;
+  if (!item) return;
   activeCode = item.code;
   $("activeCode").textContent = item.code;
   $("referenceImage").src = item.image;
-  $("referenceImage").alt = `Referencia ${item.code} de ${current.label}`;
-  $("sourceCaption").textContent = `Código original ${item.code} · Referencia optimizada para comparación · Toca la imagen para ampliar.`;
+  $("referenceImage").alt = `Referencia ${item.code} de ${station().label}`;
+  $("sourceCaption").textContent = `Código original ${item.code} · Preparando vista optimizada…`;
+  $("referenceDialogTitle").textContent = `${station().label} · ${item.code}`;
+  $("referenceDialogImage").src = item.image;
+  renderTicket += 1;
+  const ticket = renderTicket;
+  activeReferenceDisplayUrl = item.image;
+  applyActiveVisual(item, ticket);
 }
 
 function shiftVariant(delta) {
@@ -267,42 +415,76 @@ function renderTechnical(current) {
   });
 }
 
-function openTechnical(item) {
+async function openTechnical(item) {
   $("technicalTitle").textContent = item.label;
+  if (technicalCache.has(item.image)) {
+    $("technicalImage").src = technicalCache.get(item.image);
+    $("technicalDialog").showModal();
+    return;
+  }
   $("technicalImage").src = item.image;
   $("technicalDialog").showModal();
+  try {
+    const optimized = await optimizeImageForDisplay(item.image, { targetWidth: 1800, padding: 0.04 });
+    technicalCache.set(item.image, optimized.url);
+    $("technicalImage").src = optimized.url;
+  } catch {
+    $("technicalImage").src = item.image;
+  }
+}
+
+function resetMediaDialogTransform() {
+  mediaDialogState.scale = 1;
+  mediaDialogState.x = 0;
+  mediaDialogState.y = 0;
+  applyMediaDialogTransform();
+}
+
+function applyMediaDialogTransform() {
+  const image = $("referenceDialogImage");
+  image.style.transform = `translate(${mediaDialogState.x}px, ${mediaDialogState.y}px) scale(${mediaDialogState.scale})`;
+  image.classList.toggle("zoomed", mediaDialogState.pointer !== null);
+  $("referenceZoomReset").textContent = `${Math.round(mediaDialogState.scale * 100)}%`;
+}
+
+function updateMediaZoom(delta) {
+  mediaDialogState.scale = clamp(Math.round((mediaDialogState.scale + delta) * 100) / 100, 1, 4);
+  if (mediaDialogState.scale === 1) {
+    mediaDialogState.x = 0;
+    mediaDialogState.y = 0;
+  }
+  applyMediaDialogTransform();
+}
+
+function openMediaDialog(source, title, caption) {
+  if (!source) return;
+  mediaDialogState.source = source;
+  mediaDialogState.title = title;
+  $("referenceDialogTitle").textContent = title;
+  $("referenceDialogCaption").textContent = caption || "Usa esta vista para confirmar detalles antes de comparar con el acomodo real.";
+  $("referenceDialogImage").src = source;
+  resetMediaDialogTransform();
+  $("referenceDialog").showModal();
+}
+
+function openReference() {
+  const item = activeVariant();
+  if (!item) return;
+  openMediaDialog(activeReferenceDisplayUrl || item.image, `${station().label} · ${item.code}`, "Usa la rueda del mouse o los botones para hacer zoom. Arrastra la imagen si necesitas revisar detalles.");
 }
 
 function renderComparison() {
   const item = activeVariant();
-  const current = station();
-  if (!item || !current) return;
+  if (!item) return;
   $("compareCode").textContent = item.code;
-  $("compareReference").src = item.image;
-  $("compareReference").alt = `Referencia ${item.code} de ${current.label}`;
-}
-
-function renderEvidenceState() {
-  const hasEvidence = Boolean(evidenceDataUrl);
-  $("dropZone").classList.toggle("hidden", hasEvidence);
-  $("evidenceFrame").classList.toggle("hidden", !hasEvidence);
-  $("removeEvidence").classList.toggle("hidden", !hasEvidence);
-  $("evidencePreviewButton").classList.toggle("hidden", !hasEvidence);
-  if (hasEvidence) {
-    $("evidenceImage").src = evidenceDataUrl;
-    $("evidenceImage").alt = `Fotografía del acomodo real${evidenceMeta?.name ? ` · ${evidenceMeta.name}` : ""}`;
-  } else {
-    $("evidenceImage").removeAttribute("src");
-    $("evidenceImage").alt = "Fotografía del acomodo real";
-  }
+  $("compareReference").src = activeReferenceDisplayUrl || item.image;
+  $("compareReference").alt = `Referencia ${item.code}`;
 }
 
 function updateCompletion() {
   const ready = Boolean(evidenceDataUrl);
   const status = $("exportStatus");
-  status.textContent = ready
-    ? "Evidencia lista · PDF preparado para una página."
-    : "Agrega evidencia para completar la revisión.";
+  status.textContent = ready ? "Evidencia lista · PDF preparado para una página." : "Agrega evidencia para completar la revisión.";
   status.classList.toggle("ready", ready);
 }
 
@@ -319,13 +501,6 @@ function validateEvidenceFile(file) {
   return true;
 }
 
-function prepareCanvas(width, height) {
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, width);
-  canvas.height = Math.max(1, height);
-  return canvas;
-}
-
 async function processEvidence(file) {
   if (!validateEvidenceFile(file)) return;
   const objectUrl = URL.createObjectURL(file);
@@ -336,33 +511,24 @@ async function processEvidence(file) {
       image.onerror = () => reject(new Error("No fue posible leer la imagen seleccionada."));
       image.src = objectUrl;
     });
-
     const scale = Math.min(1, MAX_EVIDENCE_PX / Math.max(image.naturalWidth, image.naturalHeight));
-    const width = Math.max(1, Math.round(image.naturalWidth * scale));
-    const height = Math.max(1, Math.round(image.naturalHeight * scale));
-    const canvas = prepareCanvas(width, height);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
     const ctx = canvas.getContext("2d", { alpha: false });
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-
-    if ("filter" in ctx) {
-      ctx.filter = "contrast(1.05) saturate(1.03)";
-    }
-    ctx.drawImage(image, 0, 0, width, height);
-    ctx.filter = "none";
-
-    evidenceDataUrl = canvas.toDataURL("image/jpeg", 0.92);
-    evidenceMeta = {
-      name: file.name || "evidencia.jpg",
-      width,
-      height,
-      updatedAt: Date.now()
-    };
-    renderEvidenceState();
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const resized = canvas.toDataURL("image/jpeg", 0.9);
+    const optimized = await optimizeImageForDisplay(resized, { targetWidth: 1900, padding: 0.03 });
+    evidenceDataUrl = optimized.url;
+    $("evidenceImage").src = evidenceDataUrl;
+    $("evidenceImage").classList.remove("hidden");
+    $("dropZone").classList.add("hidden");
+    $("removeEvidence").classList.remove("hidden");
     updateCompletion();
-    saveState();
     announce("Evidencia lista para comparar y exportar.");
   } catch (error) {
     announce(error.message);
@@ -373,44 +539,48 @@ async function processEvidence(file) {
 
 function clearEvidence() {
   evidenceDataUrl = null;
-  evidenceMeta = null;
-  renderEvidenceState();
+  $("evidenceImage").src = "";
+  $("evidenceImage").classList.add("hidden");
+  $("dropZone").classList.remove("hidden");
+  $("removeEvidence").classList.add("hidden");
+  $("evidenceInput").value = "";
+  $("cameraInput").value = "";
   updateCompletion();
-  saveState();
 }
 
 function showSearchResults() {
   const query = $("searchInput").value.trim().toLowerCase();
-  const container = $("searchResults");
-  container.innerHTML = "";
+  const results = $("searchResults");
+  results.innerHTML = "";
   if (!query) {
-    container.classList.add("hidden");
-    $("searchInput").setAttribute("aria-expanded", "false");
+    closeSearchResults();
     return;
   }
 
-  const matches = allVariants()
-    .filter(({ station, variant }) => {
-      const text = [variant.code, station.label, station.short, subgroupLabel(variant.subgroup)].join(" ").toLowerCase();
-      return text.includes(query);
-    })
-    .slice(0, 12);
+  const matches = allVariants().filter(({ station: itemStation, variant }) => {
+    const haystack = `${variant.code} ${variant.subgroup} ${itemStation.label} ${itemStation.short}`.toLowerCase();
+    return haystack.includes(query);
+  }).slice(0, 10);
 
   if (!matches.length) {
-    container.innerHTML = '<div class="search-empty">No encontramos coincidencias. Intenta con otro código o estación.</div>';
+    const empty = document.createElement("div");
+    empty.className = "search-empty";
+    empty.textContent = "Sin coincidencias. Verifica el código o prueba con otra estación.";
+    results.appendChild(empty);
   } else {
-    matches.forEach(item => {
+    matches.forEach(({ station: itemStation, variant }) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "search-result";
       button.setAttribute("role", "option");
-      button.innerHTML = `<strong>${item.variant.code}</strong><span>${item.station.label} · ${subgroupLabel(item.variant.subgroup)}</span>`;
-      button.addEventListener("click", () => selectSearchResult(item));
-      container.appendChild(button);
+      button.innerHTML = "<strong></strong><span></span>";
+      button.querySelector("strong").textContent = variant.code;
+      button.querySelector("span").textContent = `${itemStation.label} · ${itemStation.subgroupLabels?.[variant.subgroup] || variant.subgroup}`;
+      button.addEventListener("click", () => selectSearchResult(itemStation, variant));
+      results.appendChild(button);
     });
   }
-
-  container.classList.remove("hidden");
+  results.classList.remove("hidden");
   $("searchInput").setAttribute("aria-expanded", "true");
 }
 
@@ -419,122 +589,64 @@ function closeSearchResults() {
   $("searchInput").setAttribute("aria-expanded", "false");
 }
 
-function selectSearchResult(item) {
-  activeStationId = item.station.id;
-  activeSubgroup = item.variant.subgroup;
-  activeCode = item.variant.code;
-  $("searchInput").value = item.variant.code;
+function selectSearchResult(itemStation, variant) {
+  activeStationId = itemStation.id;
+  activeSubgroup = itemStation.variants.some(item => item.subgroup === variant.subgroup) ? variant.subgroup : "all";
+  activeCode = variant.code;
+  $("searchInput").value = variant.code;
   closeSearchResults();
   renderAll();
-  document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+  announce(`${variant.code} seleccionado en ${itemStation.label}.`);
 }
 
-function openMediaDialog({ src, title, caption }) {
-  if (!src) return;
-  mediaZoom = 1;
-  $("mediaDialogTitle").textContent = title;
-  $("mediaDialogImage").src = src;
-  $("mediaDialogCaption").textContent = caption;
-  applyMediaZoom();
-  $("mediaDialog").showModal();
-}
-
-function applyMediaZoom() {
-  $("mediaDialogImage").style.transform = `scale(${mediaZoom})`;
-  $("zoomResetMedia").textContent = `${Math.round(mediaZoom * 100)}%`;
-}
-
-function zoomMedia(delta) {
-  mediaZoom = Math.min(4, Math.max(0.5, Math.round((mediaZoom + delta) * 100) / 100));
-  applyMediaZoom();
-}
-
-function resetMediaZoom() {
-  mediaZoom = 1;
-  applyMediaZoom();
-}
-
-function openReference() {
-  const item = activeVariant();
-  const current = station();
-  if (!item || !current) return;
-  openMediaDialog({
-    src: item.image,
-    title: `${current.label} · ${item.code}`,
-    caption: "Referencia optimizada para comparación. Usa esta vista para revisar mejor la imagen antes de validar el acomodo real."
-  });
-}
-
-function openComparisonReference() {
-  const item = activeVariant();
-  const current = station();
-  if (!item || !current) return;
-  openMediaDialog({
-    src: item.image,
-    title: `Referencia comparativa · ${item.code}`,
-    caption: `Estación ${current.label}. Puedes usar esta vista para revisar más detalles del layout de referencia.`
-  });
-}
-
-function openEvidencePreview() {
-  if (!evidenceDataUrl) return;
-  openMediaDialog({
-    src: evidenceDataUrl,
-    title: evidenceMeta?.name ? `Evidencia real · ${evidenceMeta.name}` : "Evidencia real",
-    caption: "Fotografía del acomodo real capturada o adjuntada desde tu dispositivo."
-  });
-}
-
-async function pdfImageSource(src) {
-  if (!src) return null;
-  if (src.startsWith("data:")) return src;
-  const response = await fetch(src, { cache: "force-cache" });
-  if (!response.ok) throw new Error("No se pudo preparar una imagen para el PDF.");
-  const blob = await response.blob();
-  return await new Promise((resolve, reject) => {
+function dataUrlFromBlob(blob) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("No se pudo leer una imagen del catálogo."));
+    reader.onerror = () => reject(new Error("No fue posible preparar la imagen para el PDF."));
     reader.readAsDataURL(blob);
   });
 }
 
+async function pdfImageSource(source) {
+  if (!source) return null;
+  if (source.startsWith("data:image/")) return source;
+  const response = await fetch(source, { cache: "force-cache" });
+  if (!response.ok) throw new Error(`No fue posible cargar la referencia ${activeCode}.`);
+  return dataUrlFromBlob(await response.blob());
+}
+
 function pdfImageFormat(source) {
-  if (!source) return "JPEG";
-  const start = String(source).slice(0, 40).toLowerCase();
-  if (start.includes("image/png")) return "PNG";
-  if (start.includes("image/webp")) return "WEBP";
+  if (/^data:image\/png/i.test(source)) return "PNG";
+  if (/^data:image\/webp/i.test(source)) return "WEBP";
   return "JPEG";
 }
 
-function fitPdfText(pdf, text, width) {
-  return pdf.splitTextToSize(text, width).slice(0, 2);
-}
-
-function drawPdfPlaceholder(pdf, message, x, y, width, height) {
-  pdf.setFillColor(248, 250, 249);
-  pdf.roundedRect(x, y, width, height, 2.5, 2.5, "F");
-  pdf.setDrawColor(205, 217, 212);
-  pdf.roundedRect(x, y, width, height, 2.5, 2.5, "S");
-  pdf.setTextColor(120, 132, 126);
-  pdf.setFont("helvetica", "italic");
-  pdf.setFontSize(10);
-  pdf.text(message, x + width / 2, y + height / 2, { align: "center", baseline: "middle" });
+function fitPdfText(pdf, value, maxWidth) {
+  const original = String(value || "");
+  if (pdf.getTextWidth(original) <= maxWidth) return original;
+  let fitted = original;
+  while (fitted.length > 1 && pdf.getTextWidth(`${fitted}…`) > maxWidth) fitted = fitted.slice(0, -1);
+  return `${fitted.trimEnd()}…`;
 }
 
 function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(x, y, width, height, "F");
   if (!source) {
-    drawPdfPlaceholder(pdf, "Sin evidencia real", x, y, width, height);
+    pdf.setFillColor(245, 248, 246);
+    pdf.roundedRect(x, y, width, height, 2.5, 2.5, "F");
+    pdf.setTextColor(95, 112, 105);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.text("Sin evidencia fotográfica", x + width / 2, y + height / 2, { align: "center" });
     return;
   }
   const properties = pdf.getImageProperties(source);
-  const ratio = properties.width / properties.height;
-  let imageWidth = width;
-  let imageHeight = imageWidth / ratio;
-  if (imageHeight > height) {
-    imageHeight = height;
-    imageWidth = imageHeight * ratio;
-  }
+  const scale = Math.min(width / properties.width, height / properties.height);
+  const imageWidth = properties.width * scale;
+  const imageHeight = properties.height * scale;
   const imageX = x + (width - imageWidth) / 2;
   const imageY = y + (height - imageHeight) / 2;
   pdf.addImage(source, pdfImageFormat(source), imageX, imageY, imageWidth, imageHeight, alias, "FAST");
@@ -584,11 +696,9 @@ async function buildLayoutExportDocument() {
   if (!window.jspdf?.jsPDF) throw new Error("El generador PDF local no está disponible. Actualiza la aplicación e intenta nuevamente.");
   const current = station();
   const variant = activeVariant();
-  if (!current || !variant) throw new Error("No hay una referencia activa para exportar.");
-
   const store = $("storeName").value.trim() || "Tienda sin definir";
   const notes = $("notes").value.trim();
-  const referenceSource = await pdfImageSource(variant.image);
+  const referenceSource = activeReferenceDisplayUrl || await pdfImageSource(variant.image);
   const evidenceSource = evidenceDataUrl;
   const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true, putOnlyUsedFonts: true });
   const W = 210;
@@ -698,20 +808,60 @@ function bindSwipe() {
   }, { passive: true });
 }
 
-function updateNetwork() {
-  $("networkStatus").textContent = navigator.onLine ? "En línea" : "Sin conexión";
-  $("networkStatus").classList.toggle("offline", !navigator.onLine);
+function bindMediaDialog() {
+  const viewport = $("referenceDialogViewport");
+  const image = $("referenceDialogImage");
+  $("referenceZoomIn").addEventListener("click", () => updateMediaZoom(0.2));
+  $("referenceZoomOut").addEventListener("click", () => updateMediaZoom(-0.2));
+  $("referenceZoomReset").addEventListener("click", resetMediaDialogTransform);
+
+  viewport.addEventListener("wheel", event => {
+    event.preventDefault();
+    updateMediaZoom(event.deltaY < 0 ? 0.15 : -0.15);
+  }, { passive: false });
+
+  image.addEventListener("pointerdown", event => {
+    if (mediaDialogState.scale <= 1) return;
+    mediaDialogState.pointer = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      startX: mediaDialogState.x,
+      startY: mediaDialogState.y
+    };
+    image.setPointerCapture(event.pointerId);
+    applyMediaDialogTransform();
+  });
+
+  image.addEventListener("pointermove", event => {
+    if (!mediaDialogState.pointer || mediaDialogState.pointer.id !== event.pointerId) return;
+    const deltaX = event.clientX - mediaDialogState.pointer.x;
+    const deltaY = event.clientY - mediaDialogState.pointer.y;
+    mediaDialogState.x = mediaDialogState.pointer.startX + deltaX;
+    mediaDialogState.y = mediaDialogState.pointer.startY + deltaY;
+    applyMediaDialogTransform();
+  });
+
+  const releasePointer = event => {
+    if (!mediaDialogState.pointer || mediaDialogState.pointer.id !== event.pointerId) return;
+    image.releasePointerCapture(event.pointerId);
+    mediaDialogState.pointer = null;
+    applyMediaDialogTransform();
+  };
+  image.addEventListener("pointerup", releasePointer);
+  image.addEventListener("pointercancel", releasePointer);
+  $("referenceDialog").addEventListener("close", () => {
+    mediaDialogState.pointer = null;
+    resetMediaDialogTransform();
+  });
 }
 
 function bind() {
   $("prevButton").addEventListener("click", () => shiftVariant(-1));
   $("nextButton").addEventListener("click", () => shiftVariant(1));
   $("zoomReference").addEventListener("click", openReference);
-  $("compareReferenceButton").addEventListener("click", openComparisonReference);
-  $("compareReferenceFrame").addEventListener("click", openComparisonReference);
-  $("evidencePreviewButton").addEventListener("click", openEvidencePreview);
-  $("evidenceFrame").addEventListener("click", openEvidencePreview);
   bindSwipe();
+  bindMediaDialog();
 
   $("searchInput").addEventListener("input", showSearchResults);
   $("searchInput").addEventListener("focus", showSearchResults);
@@ -747,6 +897,27 @@ function bind() {
     }
   });
 
+  $("compareReference").addEventListener("click", () => {
+    const item = activeVariant();
+    openMediaDialog(activeReferenceDisplayUrl || item?.image, `Referencia comparativa · ${item?.code || "—"}`, "Vista ampliada de la referencia optimizada.");
+  });
+  $("compareReference").addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      $("compareReference").click();
+    }
+  });
+  $("evidenceImage").addEventListener("click", () => {
+    if (!evidenceDataUrl) return;
+    openMediaDialog(evidenceDataUrl, "Evidencia real", "Vista ampliada de la evidencia procesada localmente.");
+  });
+  $("evidenceImage").addEventListener("keydown", event => {
+    if ((event.key === "Enter" || event.key === " ") && evidenceDataUrl) {
+      event.preventDefault();
+      $("evidenceImage").click();
+    }
+  });
+
   const dropZone = $("dropZone");
   ["dragenter", "dragover"].forEach(name => dropZone.addEventListener(name, event => {
     event.preventDefault();
@@ -774,14 +945,7 @@ function bind() {
   });
 
   bindDialogClose("technicalDialog", "closeTechnical");
-  bindDialogClose("mediaDialog", "closeMedia");
-  $("zoomInMedia").addEventListener("click", () => zoomMedia(0.2));
-  $("zoomOutMedia").addEventListener("click", () => zoomMedia(-0.2));
-  $("zoomResetMedia").addEventListener("click", resetMediaZoom);
-  $("mediaDialog").addEventListener("wheel", event => {
-    event.preventDefault();
-    zoomMedia(event.deltaY < 0 ? 0.15 : -0.15);
-  }, { passive: false });
+  bindDialogClose("referenceDialog", "closeReference");
 
   $("mobilePrevious").addEventListener("click", () => shiftVariant(-1));
   $("mobilePhoto").addEventListener("click", () => $("cameraInput").click());
@@ -801,6 +965,11 @@ function bind() {
     deferredInstall = null;
     $("installButton").classList.add("hidden");
   });
+}
+
+function updateNetwork() {
+  $("networkStatus").textContent = navigator.onLine ? "En línea" : "Sin conexión";
+  $("networkStatus").classList.toggle("offline", !navigator.onLine);
 }
 
 async function start() {
