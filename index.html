@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#006241">
+  <meta name="description" content="Lay Out 2.0: catálogo visual por estación para comparar configuraciones operativas Starbucks.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Lay Out 2.0">
+  <title>Lay Out 2.0</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preload" href="data/layouts.json" as="fetch" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/jspdf.umd.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#catalogo">Ir al catálogo</a>
+  <noscript><p class="noscript">Activa JavaScript para utilizar Lay Out 2.0.</p></noscript>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="#inicio" aria-label="Ir al inicio">
+        <span class="brand__mark" aria-hidden="true">✦</span>
+        <span><strong>Lay Out 2.0</strong><small>Guía visual por estación</small></span>
+      </a>
+      <div class="topbar__actions">
+        <span id="networkStatus" class="status" role="status" aria-live="polite">En línea</span>
+        <button id="installButton" class="button button--ghost button--compact hidden" type="button">Instalar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app" id="inicio">
+    <section class="hero">
+      <div class="hero__copy">
+        <span class="eyebrow">Remaster operativo · una sola vista</span>
+        <h1>Encuentra tu estación, compara el acomodo y valida lo esencial.</h1>
+        <p>Las referencias se reorganizaron por estación, con códigos originales, imágenes enfocadas y contexto en español. Sin láminas repetitivas ni información de relleno.</p>
+        <div class="hero__meta">
+          <span id="catalogSummary" class="metric">Cargando catálogo…</span>
+          <span class="metric">Impresión A4 con margen seguro de 12 mm</span>
+        </div>
+      </div>
+      <div class="hero__card" aria-label="Flujo recomendado">
+        <span class="eyebrow">Flujo 2.0</span>
+        <strong>1. Elige estación</strong>
+        <strong>2. Compara código</strong>
+        <strong>3. Carga evidencia</strong>
+        <strong>4. Exporta en una hoja</strong>
+      </div>
+    </section>
+
+    <section class="context panel" aria-labelledby="contextTitle">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Contexto de revisión</span>
+          <h2 id="contextTitle">Identifica tu tienda</h2>
+        </div>
+        <button id="resetButton" class="button button--text" type="button">Reiniciar</button>
+      </div>
+      <div class="context__grid">
+        <label class="field"><span>Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
+        <label class="field"><span>Buscar código</span><input id="searchInput" autocomplete="off" placeholder="Ej. CBS 15-01"></label>
+      </div>
+    </section>
+
+    <section class="station-strip" id="catalogo" aria-labelledby="stationTitle">
+      <div class="section-heading section-heading--compact">
+        <div><span class="eyebrow">Estaciones</span><h2 id="stationTitle">Selecciona dónde vas a trabajar</h2></div>
+      </div>
+      <div id="stationNav" class="station-nav" role="tablist" aria-label="Estaciones disponibles"></div>
+    </section>
+
+    <section class="workspace panel" aria-live="polite">
+      <div class="workspace__head">
+        <div>
+          <span id="stationShort" class="eyebrow"></span>
+          <h2 id="stationLabel">Estación</h2>
+          <p id="stationDescription"></p>
+        </div>
+        <div class="workspace__translation"><strong>En español</strong><span id="stationTranslation"></span></div>
+      </div>
+
+      <div id="subgroupBar" class="subgroup-bar hidden" aria-label="Familias de la estación"></div>
+
+      <div class="viewer-grid">
+        <div class="reference-column">
+          <div class="viewer-toolbar">
+            <button id="prevButton" class="icon-button" type="button" aria-label="Referencia anterior">←</button>
+            <div class="viewer-title"><small>Referencia seleccionada</small><strong id="activeCode">—</strong></div>
+            <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
+          </div>
+          <figure class="reference-stage">
+            <img id="referenceImage" alt="Referencia de estación" decoding="async">
+            <figcaption id="sourceCaption">Selecciona una referencia.</figcaption>
+          </figure>
+          <div id="variantRail" class="variant-rail" role="listbox" aria-label="Opciones de layout"></div>
+        </div>
+
+        <aside class="validation-card">
+          <span class="eyebrow">Qué validar</span>
+          <ul id="stationTips"></ul>
+          <div class="technical-block">
+            <strong>Vistas técnicas</strong>
+            <p>Solo aparecen cuando ayudan a confirmar piezas, ingredientes o pequeños utensilios.</p>
+            <div id="technicalButtons" class="technical-buttons"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="compare panel" aria-labelledby="compareTitle">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Evidencia de tienda</span>
+          <h2 id="compareTitle">Compara referencia vs. acomodo real</h2>
+          <p>La fotografía se procesa localmente en tu dispositivo y no se envía a ningún servidor.</p>
+        </div>
+        <button id="exportButton" class="button" type="button">Exportar PDF</button>
+      </div>
+
+      <div class="compare-grid">
+        <article class="compare-card">
+          <div class="compare-card__head"><strong>Referencia</strong><span id="compareCode">—</span></div>
+          <img id="compareReference" alt="Referencia seleccionada">
+        </article>
+        <article class="compare-card compare-card--evidence">
+          <div class="compare-card__head"><strong>Acomodo real</strong><button id="removeEvidence" class="button button--text hidden" type="button">Quitar</button></div>
+          <label id="dropZone" class="drop-zone" for="evidenceInput">
+            <input id="evidenceInput" type="file" accept="image/*" capture="environment">
+            <span aria-hidden="true">＋</span>
+            <strong>Cargar foto de la estación</strong>
+            <small>Toca aquí o arrastra una imagen</small>
+          </label>
+          <img id="evidenceImage" class="hidden" alt="Fotografía del acomodo real">
+        </article>
+      </div>
+
+      <label class="field field--notes"><span>Notas breves</span><textarea id="notes" maxlength="420" rows="3" placeholder="Ej. Falta reubicar jarabes y liberar superficie de trabajo."></textarea></label>
+    </section>
+
+    <footer class="footer">
+      <strong>Lay Out 2.0</strong>
+      <span>Referencia visual para comparación operativa. Conserva el código original de cada configuración.</span>
+    </footer>
+  </main>
+
+  <dialog id="technicalDialog" class="technical-dialog">
+    <div class="technical-dialog__head">
+      <div><span class="eyebrow">Vista técnica</span><strong id="technicalTitle">Detalle</strong></div>
+      <button id="closeTechnical" class="icon-button" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <img id="technicalImage" alt="Vista técnica de la estación">
+    <p>La nomenclatura técnica de la lámina se conserva para evitar ambigüedad con equipo y componentes.</p>
+  </dialog>
+</body>
+</html>
