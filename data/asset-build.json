@@ -1,0 +1,427 @@
+{
+  "variants": {
+    "mop": [
+      {
+        "code": "MOP 01-01",
+        "image": "assets/stations/mop/mop-01-01.webp",
+        "thumb": "assets/stations/mop/mop-01-01.thumb.webp",
+        "source": "Lay Out_2.0_3.jpg",
+        "sourcePage": 3
+      },
+      {
+        "code": "MOP 03-02",
+        "image": "assets/stations/mop/mop-03-02.webp",
+        "thumb": "assets/stations/mop/mop-03-02.thumb.webp",
+        "source": "Lay Out_2.0_4.jpg",
+        "sourcePage": 4
+      },
+      {
+        "code": "MOP 04-02",
+        "image": "assets/stations/mop/mop-04-02.webp",
+        "thumb": "assets/stations/mop/mop-04-02.thumb.webp",
+        "source": "Lay Out_2.0_5.jpg",
+        "sourcePage": 5
+      },
+      {
+        "code": "MOP 06-02",
+        "image": "assets/stations/mop/mop-06-02.webp",
+        "thumb": "assets/stations/mop/mop-06-02.thumb.webp",
+        "source": "Lay Out_2.0_6.jpg",
+        "sourcePage": 6
+      },
+      {
+        "code": "MOP 03-01",
+        "image": "assets/stations/mop/mop-03-01.webp",
+        "thumb": "assets/stations/mop/mop-03-01.thumb.webp",
+        "source": "Lay Out_2.0_7.jpg",
+        "sourcePage": 7
+      },
+      {
+        "code": "MOP 04-01",
+        "image": "assets/stations/mop/mop-04-01.webp",
+        "thumb": "assets/stations/mop/mop-04-01.thumb.webp",
+        "source": "Lay Out_2.0_8.jpg",
+        "sourcePage": 8
+      },
+      {
+        "code": "MOP 06-01",
+        "image": "assets/stations/mop/mop-06-01.webp",
+        "thumb": "assets/stations/mop/mop-06-01.thumb.webp",
+        "source": "Lay Out_2.0_9.jpg",
+        "sourcePage": 9
+      }
+    ],
+    "brewing": [
+      {
+        "code": "BRW 03-02",
+        "image": "assets/stations/brewing/brw-03-02.webp",
+        "thumb": "assets/stations/brewing/brw-03-02.thumb.webp",
+        "source": "Lay Out_2.0_13.jpg",
+        "sourcePage": 13
+      },
+      {
+        "code": "BRW 01-02",
+        "image": "assets/stations/brewing/brw-01-02.webp",
+        "thumb": "assets/stations/brewing/brw-01-02.thumb.webp",
+        "source": "Lay Out_2.0_14.jpg",
+        "sourcePage": 14
+      },
+      {
+        "code": "BUN 02-02",
+        "image": "assets/stations/brewing/bun-02-02.webp",
+        "thumb": "assets/stations/brewing/bun-02-02.thumb.webp",
+        "source": "Lay Out_2.0_15.jpg",
+        "sourcePage": 15
+      },
+      {
+        "code": "SRV 01-01",
+        "image": "assets/stations/brewing/srv-01-01.webp",
+        "thumb": "assets/stations/brewing/srv-01-01.thumb.webp",
+        "source": "Lay Out_2.0_16.jpg",
+        "sourcePage": 16
+      },
+      {
+        "code": "BRW 11-01",
+        "image": "assets/stations/brewing/brw-11-01.webp",
+        "thumb": "assets/stations/brewing/brw-11-01.thumb.webp",
+        "source": "Lay Out_2.0_17.jpg",
+        "sourcePage": 17
+      },
+      {
+        "code": "BRW 09-05",
+        "image": "assets/stations/brewing/brw-09-05.webp",
+        "thumb": "assets/stations/brewing/brw-09-05.thumb.webp",
+        "source": "Lay Out_2.0_18.jpg",
+        "sourcePage": 18
+      },
+      {
+        "code": "BRW 05-06",
+        "image": "assets/stations/brewing/brw-05-06.webp",
+        "thumb": "assets/stations/brewing/brw-05-06.thumb.webp",
+        "source": "Lay Out_2.0_19.jpg",
+        "sourcePage": 19
+      },
+      {
+        "code": "BRW 03-06",
+        "image": "assets/stations/brewing/brw-03-06.webp",
+        "thumb": "assets/stations/brewing/brw-03-06.thumb.webp",
+        "source": "Lay Out_2.0_20.jpg",
+        "sourcePage": 20
+      },
+      {
+        "code": "WST 09",
+        "image": "assets/stations/brewing/wst-09.webp",
+        "thumb": "assets/stations/brewing/wst-09.thumb.webp",
+        "source": "Lay Out_2.0_21.jpg",
+        "sourcePage": 21
+      }
+    ],
+    "coldbar": [
+      {
+        "code": "CBE 01-05",
+        "image": "assets/stations/coldbar/cbe-01-05.webp",
+        "thumb": "assets/stations/coldbar/cbe-01-05.thumb.webp",
+        "source": "Lay Out_2.0_26.jpg",
+        "sourcePage": 26
+      },
+      {
+        "code": "CBE 03-01",
+        "image": "assets/stations/coldbar/cbe-03-01.webp",
+        "thumb": "assets/stations/coldbar/cbe-03-01.thumb.webp",
+        "source": "Lay Out_2.0_27.jpg",
+        "sourcePage": 27
+      },
+      {
+        "code": "BLEND 01-03",
+        "image": "assets/stations/coldbar/blend-01-03.webp",
+        "thumb": "assets/stations/coldbar/blend-01-03.thumb.webp",
+        "source": "Lay Out_2.0_28.jpg",
+        "sourcePage": 28
+      },
+      {
+        "code": "TEA 01-04",
+        "image": "assets/stations/coldbar/tea-01-04.webp",
+        "thumb": "assets/stations/coldbar/tea-01-04.thumb.webp",
+        "source": "Lay Out_2.0_29.jpg",
+        "sourcePage": 29
+      },
+      {
+        "code": "CBE 05-03",
+        "image": "assets/stations/coldbar/cbe-05-03.webp",
+        "thumb": "assets/stations/coldbar/cbe-05-03.thumb.webp",
+        "source": "Lay Out_2.0_30.jpg",
+        "sourcePage": 30
+      },
+      {
+        "code": "CBE 07-03",
+        "image": "assets/stations/coldbar/cbe-07-03.webp",
+        "thumb": "assets/stations/coldbar/cbe-07-03.thumb.webp",
+        "source": "Lay Out_2.0_31.jpg",
+        "sourcePage": 31
+      },
+      {
+        "code": "CBE 09-01",
+        "image": "assets/stations/coldbar/cbe-09-01.webp",
+        "thumb": "assets/stations/coldbar/cbe-09-01.thumb.webp",
+        "source": "Lay Out_2.0_32.jpg",
+        "sourcePage": 32
+      },
+      {
+        "code": "CBE 11-01",
+        "image": "assets/stations/coldbar/cbe-11-01.webp",
+        "thumb": "assets/stations/coldbar/cbe-11-01.thumb.webp",
+        "source": "Lay Out_2.0_33.jpg",
+        "sourcePage": 33
+      },
+      {
+        "code": "CBS 01-02",
+        "image": "assets/stations/coldbar/cbs-01-02.webp",
+        "thumb": "assets/stations/coldbar/cbs-01-02.thumb.webp",
+        "source": "Lay Out_2.0_36.jpg",
+        "sourcePage": 36
+      },
+      {
+        "code": "CBS 03-01",
+        "image": "assets/stations/coldbar/cbs-03-01.webp",
+        "thumb": "assets/stations/coldbar/cbs-03-01.thumb.webp",
+        "source": "Lay Out_2.0_37.jpg",
+        "sourcePage": 37
+      },
+      {
+        "code": "CBS 05-01",
+        "image": "assets/stations/coldbar/cbs-05-01.webp",
+        "thumb": "assets/stations/coldbar/cbs-05-01.thumb.webp",
+        "source": "Lay Out_2.0_38.jpg",
+        "sourcePage": 38
+      },
+      {
+        "code": "CBS 09-01",
+        "image": "assets/stations/coldbar/cbs-09-01.webp",
+        "thumb": "assets/stations/coldbar/cbs-09-01.thumb.webp",
+        "source": "Lay Out_2.0_39.jpg",
+        "sourcePage": 39
+      },
+      {
+        "code": "CBS 11-02",
+        "image": "assets/stations/coldbar/cbs-11-02.webp",
+        "thumb": "assets/stations/coldbar/cbs-11-02.thumb.webp",
+        "source": "Lay Out_2.0_40.jpg",
+        "sourcePage": 40
+      },
+      {
+        "code": "CBS 13-02",
+        "image": "assets/stations/coldbar/cbs-13-02.webp",
+        "thumb": "assets/stations/coldbar/cbs-13-02.thumb.webp",
+        "source": "Lay Out_2.0_41.jpg",
+        "sourcePage": 41
+      },
+      {
+        "code": "CBS 15-01",
+        "image": "assets/stations/coldbar/cbs-15-01.webp",
+        "thumb": "assets/stations/coldbar/cbs-15-01.thumb.webp",
+        "source": "Lay Out_2.0_42.jpg",
+        "sourcePage": 42
+      }
+    ],
+    "condiments": [
+      {
+        "code": "Condiment Cart - 3 Drop",
+        "image": "assets/stations/condiments/condiment-cart-3-drop.webp",
+        "thumb": "assets/stations/condiments/condiment-cart-3-drop.thumb.webp",
+        "source": "Lay Out_2.0_47.jpg",
+        "sourcePage": 47
+      },
+      {
+        "code": "Condiment Cart 01-02",
+        "image": "assets/stations/condiments/condiment-cart-01-02.webp",
+        "thumb": "assets/stations/condiments/condiment-cart-01-02.thumb.webp",
+        "source": "Lay Out_2.0_48.jpg",
+        "sourcePage": 48
+      },
+      {
+        "code": "Condiment Cart Single",
+        "image": "assets/stations/condiments/condiment-cart-single.webp",
+        "thumb": "assets/stations/condiments/condiment-cart-single.thumb.webp",
+        "source": "Lay Out_2.0_49.jpg",
+        "sourcePage": 49
+      },
+      {
+        "code": "Condiment Cart 03-02",
+        "image": "assets/stations/condiments/condiment-cart-03-02.webp",
+        "thumb": "assets/stations/condiments/condiment-cart-03-02.thumb.webp",
+        "source": "Lay Out_2.0_50.jpg",
+        "sourcePage": 50
+      }
+    ],
+    "espresso": [
+      {
+        "code": "ESP 01-02",
+        "image": "assets/stations/espresso/esp-01-02.webp",
+        "thumb": "assets/stations/espresso/esp-01-02.thumb.webp",
+        "source": "Lay Out_2.0_55.jpg",
+        "sourcePage": 55
+      },
+      {
+        "code": "ESP 03-02",
+        "image": "assets/stations/espresso/esp-03-02.webp",
+        "thumb": "assets/stations/espresso/esp-03-02.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 05-02",
+        "image": "assets/stations/espresso/esp-05-02.webp",
+        "thumb": "assets/stations/espresso/esp-05-02.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 06-01",
+        "image": "assets/stations/espresso/esp-06-01.webp",
+        "thumb": "assets/stations/espresso/esp-06-01.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 07-03",
+        "image": "assets/stations/espresso/esp-07-03.webp",
+        "thumb": "assets/stations/espresso/esp-07-03.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 10-01",
+        "image": "assets/stations/espresso/esp-10-01.webp",
+        "thumb": "assets/stations/espresso/esp-10-01.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 11-01",
+        "image": "assets/stations/espresso/esp-11-01.webp",
+        "thumb": "assets/stations/espresso/esp-11-01.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 03-04",
+        "image": "assets/stations/espresso/esp-03-04.webp",
+        "thumb": "assets/stations/espresso/esp-03-04.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 05-04",
+        "image": "assets/stations/espresso/esp-05-04.webp",
+        "thumb": "assets/stations/espresso/esp-05-04.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 09-04",
+        "image": "assets/stations/espresso/esp-09-04.webp",
+        "thumb": "assets/stations/espresso/esp-09-04.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 21-04",
+        "image": "assets/stations/espresso/esp-21-04.webp",
+        "thumb": "assets/stations/espresso/esp-21-04.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 25-03",
+        "image": "assets/stations/espresso/esp-25-03.webp",
+        "thumb": "assets/stations/espresso/esp-25-03.thumb.webp",
+        "source": "Lay Out_2.0_53.jpg (recorte de opciones)",
+        "sourcePage": 53
+      },
+      {
+        "code": "ESP 43-02",
+        "image": "assets/stations/espresso/esp-43-02.webp",
+        "thumb": "assets/stations/espresso/esp-43-02.thumb.webp",
+        "source": "Lay Out_2.0_54.jpg (recorte de opciones)",
+        "sourcePage": 54
+      },
+      {
+        "code": "ESP 08-02",
+        "image": "assets/stations/espresso/esp-08-02.webp",
+        "thumb": "assets/stations/espresso/esp-08-02.thumb.webp",
+        "source": "Lay Out_2.0_54.jpg (recorte de opciones)",
+        "sourcePage": 54
+      },
+      {
+        "code": "ESP 09-03",
+        "image": "assets/stations/espresso/esp-09-03.webp",
+        "thumb": "assets/stations/espresso/esp-09-03.thumb.webp",
+        "source": "Lay Out_2.0_54.jpg (recorte de opciones)",
+        "sourcePage": 54
+      },
+      {
+        "code": "ESP 31-04",
+        "image": "assets/stations/espresso/esp-31-04.webp",
+        "thumb": "assets/stations/espresso/esp-31-04.thumb.webp",
+        "source": "Lay Out_2.0_54.jpg (recorte de opciones)",
+        "sourcePage": 54
+      }
+    ]
+  },
+  "technical": [
+    {
+      "key": "mop-componentes",
+      "label": "Lista de equipo y utensilios · Pedidos móviles",
+      "image": "assets/technical/mop-componentes.webp",
+      "sourcePage": 10
+    },
+    {
+      "key": "brewing-componentes",
+      "label": "Lista de equipo y utensilios · Brewing",
+      "image": "assets/technical/brewing-componentes.webp",
+      "sourcePage": 22
+    },
+    {
+      "key": "coldbar-cbe-equipo",
+      "label": "Equipo y utensilios · Barra fría CBE",
+      "image": "assets/technical/coldbar-cbe-equipo.webp",
+      "sourcePage": 34
+    },
+    {
+      "key": "coldbar-cbe-ingredientes",
+      "label": "Ingredientes · Barra fría CBE",
+      "image": "assets/technical/coldbar-cbe-ingredientes.webp",
+      "sourcePage": 35
+    },
+    {
+      "key": "coldbar-cbs-equipo",
+      "label": "Equipo y utensilios · Barra fría CBS",
+      "image": "assets/technical/coldbar-cbs-equipo.webp",
+      "sourcePage": 43
+    },
+    {
+      "key": "coldbar-cbs-ingredientes",
+      "label": "Ingredientes · Barra fría CBS",
+      "image": "assets/technical/coldbar-cbs-ingredientes.webp",
+      "sourcePage": 44
+    },
+    {
+      "key": "condimentos-componentes",
+      "label": "Lista de componentes · Condimentos",
+      "image": "assets/technical/condimentos-componentes.webp",
+      "sourcePage": 51
+    },
+    {
+      "key": "espresso-equipo",
+      "label": "Equipo y utensilios · Espresso",
+      "image": "assets/technical/espresso-equipo.webp",
+      "sourcePage": 54
+    },
+    {
+      "key": "espresso-ingredientes",
+      "label": "Ingredientes · Espresso",
+      "image": "assets/technical/espresso-ingredientes.webp",
+      "sourcePage": 54
+    }
+  ]
+}

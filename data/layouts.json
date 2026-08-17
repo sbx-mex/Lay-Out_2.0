@@ -1,0 +1,556 @@
+{
+  "schemaVersion": "2.0.0",
+  "project": "Lay Out 2.0",
+  "language": "es-MX",
+  "updated": "2026-08-17",
+  "sourceNote": "Remaster visual a partir de la guía Station Layout Guide proporcionada. Los códigos originales se conservan sin traducir.",
+  "stations": [
+    {
+      "id": "mop",
+      "label": "Pedidos móviles",
+      "short": "MOP",
+      "icon": "▣",
+      "description": "Selecciona la configuración que más se parezca al módulo de Mobile Order & Pay de tu tienda.",
+      "translation": "Mobile Order & Pay → Pedidos móviles y entrega.",
+      "tips": [
+        "Compara ancho, número de módulos y superficies de apoyo.",
+        "Valida la ubicación de contenedores y zonas de entrega.",
+        "Usa la vista técnica solo para confirmar equipo y utensilios."
+      ],
+      "variants": [
+        {
+          "code": "MOP 01-01",
+          "label": "MOP 01-01",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-01-01.webp",
+          "thumb": "assets/stations/mop/mop-01-01.thumb.webp",
+          "source": "Lay Out_2.0_3.jpg"
+        },
+        {
+          "code": "MOP 03-02",
+          "label": "MOP 03-02",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-03-02.webp",
+          "thumb": "assets/stations/mop/mop-03-02.thumb.webp",
+          "source": "Lay Out_2.0_4.jpg"
+        },
+        {
+          "code": "MOP 04-02",
+          "label": "MOP 04-02",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-04-02.webp",
+          "thumb": "assets/stations/mop/mop-04-02.thumb.webp",
+          "source": "Lay Out_2.0_5.jpg"
+        },
+        {
+          "code": "MOP 06-02",
+          "label": "MOP 06-02",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-06-02.webp",
+          "thumb": "assets/stations/mop/mop-06-02.thumb.webp",
+          "source": "Lay Out_2.0_6.jpg"
+        },
+        {
+          "code": "MOP 03-01",
+          "label": "MOP 03-01",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-03-01.webp",
+          "thumb": "assets/stations/mop/mop-03-01.thumb.webp",
+          "source": "Lay Out_2.0_7.jpg"
+        },
+        {
+          "code": "MOP 04-01",
+          "label": "MOP 04-01",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-04-01.webp",
+          "thumb": "assets/stations/mop/mop-04-01.thumb.webp",
+          "source": "Lay Out_2.0_8.jpg"
+        },
+        {
+          "code": "MOP 06-01",
+          "label": "MOP 06-01",
+          "subgroup": "MOP",
+          "image": "assets/stations/mop/mop-06-01.webp",
+          "thumb": "assets/stations/mop/mop-06-01.thumb.webp",
+          "source": "Lay Out_2.0_9.jpg"
+        }
+      ],
+      "technical": [
+        {
+          "key": "mop-componentes",
+          "label": "Lista de equipo y utensilios · Pedidos móviles",
+          "image": "assets/technical/mop-componentes.webp",
+          "sourcePage": 10
+        }
+      ]
+    },
+    {
+      "id": "brewing",
+      "label": "Brewing",
+      "short": "Café filtrado",
+      "icon": "◉",
+      "description": "Compara la estación de preparación de café y elige el acomodo que corresponda a tu configuración física.",
+      "translation": "Brewing Station → Estación de preparación de café.",
+      "tips": [
+        "Prioriza la secuencia de trabajo de izquierda a derecha.",
+        "Valida equipos principales, tarjas y superficies de apoyo.",
+        "No fuerces un modelo: elige el código que más se aproxima a tu barra."
+      ],
+      "variants": [
+        {
+          "code": "BRW 03-02",
+          "label": "BRW 03-02",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/brw-03-02.webp",
+          "thumb": "assets/stations/brewing/brw-03-02.thumb.webp",
+          "source": "Lay Out_2.0_13.jpg"
+        },
+        {
+          "code": "BRW 01-02",
+          "label": "BRW 01-02",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/brw-01-02.webp",
+          "thumb": "assets/stations/brewing/brw-01-02.thumb.webp",
+          "source": "Lay Out_2.0_14.jpg"
+        },
+        {
+          "code": "BUN 02-02",
+          "label": "BUN 02-02",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/bun-02-02.webp",
+          "thumb": "assets/stations/brewing/bun-02-02.thumb.webp",
+          "source": "Lay Out_2.0_15.jpg"
+        },
+        {
+          "code": "SRV 01-01",
+          "label": "SRV 01-01",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/srv-01-01.webp",
+          "thumb": "assets/stations/brewing/srv-01-01.thumb.webp",
+          "source": "Lay Out_2.0_16.jpg"
+        },
+        {
+          "code": "BRW 11-01",
+          "label": "BRW 11-01",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/brw-11-01.webp",
+          "thumb": "assets/stations/brewing/brw-11-01.thumb.webp",
+          "source": "Lay Out_2.0_17.jpg"
+        },
+        {
+          "code": "BRW 09-05",
+          "label": "BRW 09-05",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/brw-09-05.webp",
+          "thumb": "assets/stations/brewing/brw-09-05.thumb.webp",
+          "source": "Lay Out_2.0_18.jpg"
+        },
+        {
+          "code": "BRW 05-06",
+          "label": "BRW 05-06",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/brw-05-06.webp",
+          "thumb": "assets/stations/brewing/brw-05-06.thumb.webp",
+          "source": "Lay Out_2.0_19.jpg"
+        },
+        {
+          "code": "BRW 03-06",
+          "label": "BRW 03-06",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/brw-03-06.webp",
+          "thumb": "assets/stations/brewing/brw-03-06.thumb.webp",
+          "source": "Lay Out_2.0_20.jpg"
+        },
+        {
+          "code": "WST 09",
+          "label": "WST 09",
+          "subgroup": "Brewing",
+          "image": "assets/stations/brewing/wst-09.webp",
+          "thumb": "assets/stations/brewing/wst-09.thumb.webp",
+          "source": "Lay Out_2.0_21.jpg"
+        }
+      ],
+      "technical": [
+        {
+          "key": "brewing-componentes",
+          "label": "Lista de equipo y utensilios · Brewing",
+          "image": "assets/technical/brewing-componentes.webp",
+          "sourcePage": 22
+        }
+      ]
+    },
+    {
+      "id": "coldbar",
+      "label": "Barra fría",
+      "short": "Cold Bar",
+      "icon": "◇",
+      "description": "La barra fría se concentra en una sola estación y separa las familias CBE/Blend/Tea y CBS para comparar más rápido.",
+      "translation": "Cold Bar → Barra fría. Equipment & Smallwares → Equipo y utensilios.",
+      "tips": [
+        "Primero identifica la familia de tu barra: CBE/Blend/Tea o CBS.",
+        "Compara geometría: lineal, esquina o módulos laterales.",
+        "Después confirma ingredientes, pitchers, bombas y almacenamiento inferior."
+      ],
+      "variants": [
+        {
+          "code": "CBE 01-05",
+          "label": "CBE 01-05",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/cbe-01-05.webp",
+          "thumb": "assets/stations/coldbar/cbe-01-05.thumb.webp",
+          "source": "Lay Out_2.0_26.jpg"
+        },
+        {
+          "code": "CBE 03-01",
+          "label": "CBE 03-01",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/cbe-03-01.webp",
+          "thumb": "assets/stations/coldbar/cbe-03-01.thumb.webp",
+          "source": "Lay Out_2.0_27.jpg"
+        },
+        {
+          "code": "BLEND 01-03",
+          "label": "BLEND 01-03",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/blend-01-03.webp",
+          "thumb": "assets/stations/coldbar/blend-01-03.thumb.webp",
+          "source": "Lay Out_2.0_28.jpg"
+        },
+        {
+          "code": "TEA 01-04",
+          "label": "TEA 01-04",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/tea-01-04.webp",
+          "thumb": "assets/stations/coldbar/tea-01-04.thumb.webp",
+          "source": "Lay Out_2.0_29.jpg"
+        },
+        {
+          "code": "CBE 05-03",
+          "label": "CBE 05-03",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/cbe-05-03.webp",
+          "thumb": "assets/stations/coldbar/cbe-05-03.thumb.webp",
+          "source": "Lay Out_2.0_30.jpg"
+        },
+        {
+          "code": "CBE 07-03",
+          "label": "CBE 07-03",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/cbe-07-03.webp",
+          "thumb": "assets/stations/coldbar/cbe-07-03.thumb.webp",
+          "source": "Lay Out_2.0_31.jpg"
+        },
+        {
+          "code": "CBE 09-01",
+          "label": "CBE 09-01",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/cbe-09-01.webp",
+          "thumb": "assets/stations/coldbar/cbe-09-01.thumb.webp",
+          "source": "Lay Out_2.0_32.jpg"
+        },
+        {
+          "code": "CBE 11-01",
+          "label": "CBE 11-01",
+          "subgroup": "CBE / Blend / Tea",
+          "image": "assets/stations/coldbar/cbe-11-01.webp",
+          "thumb": "assets/stations/coldbar/cbe-11-01.thumb.webp",
+          "source": "Lay Out_2.0_33.jpg"
+        },
+        {
+          "code": "CBS 01-02",
+          "label": "CBS 01-02",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-01-02.webp",
+          "thumb": "assets/stations/coldbar/cbs-01-02.thumb.webp",
+          "source": "Lay Out_2.0_36.jpg"
+        },
+        {
+          "code": "CBS 03-01",
+          "label": "CBS 03-01",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-03-01.webp",
+          "thumb": "assets/stations/coldbar/cbs-03-01.thumb.webp",
+          "source": "Lay Out_2.0_37.jpg"
+        },
+        {
+          "code": "CBS 05-01",
+          "label": "CBS 05-01",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-05-01.webp",
+          "thumb": "assets/stations/coldbar/cbs-05-01.thumb.webp",
+          "source": "Lay Out_2.0_38.jpg"
+        },
+        {
+          "code": "CBS 09-01",
+          "label": "CBS 09-01",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-09-01.webp",
+          "thumb": "assets/stations/coldbar/cbs-09-01.thumb.webp",
+          "source": "Lay Out_2.0_39.jpg"
+        },
+        {
+          "code": "CBS 11-02",
+          "label": "CBS 11-02",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-11-02.webp",
+          "thumb": "assets/stations/coldbar/cbs-11-02.thumb.webp",
+          "source": "Lay Out_2.0_40.jpg"
+        },
+        {
+          "code": "CBS 13-02",
+          "label": "CBS 13-02",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-13-02.webp",
+          "thumb": "assets/stations/coldbar/cbs-13-02.thumb.webp",
+          "source": "Lay Out_2.0_41.jpg"
+        },
+        {
+          "code": "CBS 15-01",
+          "label": "CBS 15-01",
+          "subgroup": "CBS",
+          "image": "assets/stations/coldbar/cbs-15-01.webp",
+          "thumb": "assets/stations/coldbar/cbs-15-01.thumb.webp",
+          "source": "Lay Out_2.0_42.jpg"
+        }
+      ],
+      "technical": [
+        {
+          "key": "coldbar-cbe-equipo",
+          "label": "Equipo y utensilios · Barra fría CBE",
+          "image": "assets/technical/coldbar-cbe-equipo.webp",
+          "sourcePage": 34
+        },
+        {
+          "key": "coldbar-cbe-ingredientes",
+          "label": "Ingredientes · Barra fría CBE",
+          "image": "assets/technical/coldbar-cbe-ingredientes.webp",
+          "sourcePage": 35
+        },
+        {
+          "key": "coldbar-cbs-equipo",
+          "label": "Equipo y utensilios · Barra fría CBS",
+          "image": "assets/technical/coldbar-cbs-equipo.webp",
+          "sourcePage": 43
+        },
+        {
+          "key": "coldbar-cbs-ingredientes",
+          "label": "Ingredientes · Barra fría CBS",
+          "image": "assets/technical/coldbar-cbs-ingredientes.webp",
+          "sourcePage": 44
+        }
+      ]
+    },
+    {
+      "id": "condiments",
+      "label": "Condimentos",
+      "short": "Condiment Cart",
+      "icon": "▤",
+      "description": "Agrupa las configuraciones del carro de condimentos sin mezclar la lista técnica con la selección visual.",
+      "translation": "Condiment Cart → Carro de condimentos. Single → configuración sencilla.",
+      "tips": [
+        "Identifica primero el número de módulos o depósitos.",
+        "Compara la posición de contenedores y dispensadores.",
+        "Consulta la lista de componentes solo cuando necesites validar piezas."
+      ],
+      "variants": [
+        {
+          "code": "Condiment Cart - 3 Drop",
+          "label": "Condiment Cart - 3 Drop",
+          "subgroup": "Condimentos",
+          "image": "assets/stations/condiments/condiment-cart-3-drop.webp",
+          "thumb": "assets/stations/condiments/condiment-cart-3-drop.thumb.webp",
+          "source": "Lay Out_2.0_47.jpg"
+        },
+        {
+          "code": "Condiment Cart 01-02",
+          "label": "Condiment Cart 01-02",
+          "subgroup": "Condimentos",
+          "image": "assets/stations/condiments/condiment-cart-01-02.webp",
+          "thumb": "assets/stations/condiments/condiment-cart-01-02.thumb.webp",
+          "source": "Lay Out_2.0_48.jpg"
+        },
+        {
+          "code": "Condiment Cart Single",
+          "label": "Condiment Cart Single",
+          "subgroup": "Condimentos",
+          "image": "assets/stations/condiments/condiment-cart-single.webp",
+          "thumb": "assets/stations/condiments/condiment-cart-single.thumb.webp",
+          "source": "Lay Out_2.0_49.jpg"
+        },
+        {
+          "code": "Condiment Cart 03-02",
+          "label": "Condiment Cart 03-02",
+          "subgroup": "Condimentos",
+          "image": "assets/stations/condiments/condiment-cart-03-02.webp",
+          "thumb": "assets/stations/condiments/condiment-cart-03-02.thumb.webp",
+          "source": "Lay Out_2.0_50.jpg"
+        }
+      ],
+      "technical": [
+        {
+          "key": "condimentos-componentes",
+          "label": "Lista de componentes · Condimentos",
+          "image": "assets/technical/condimentos-componentes.webp",
+          "sourcePage": 51
+        }
+      ]
+    },
+    {
+      "id": "espresso",
+      "label": "Espresso",
+      "short": "Barra Espresso",
+      "icon": "◌",
+      "description": "Las opciones de Espresso se separaron de las láminas maestras para que cada código pueda revisarse de forma individual.",
+      "translation": "Espresso Stations → Estaciones de espresso.",
+      "tips": [
+        "Compara número de máquinas, módulos laterales y posición de tarjas.",
+        "Revisa el código antes de imprimir: varias variantes son visualmente cercanas.",
+        "La opción ESP 01-02 conserva una lámina individual de mayor detalle; el resto proviene de la matriz maestra."
+      ],
+      "variants": [
+        {
+          "code": "ESP 01-02",
+          "label": "ESP 01-02",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-01-02.webp",
+          "thumb": "assets/stations/espresso/esp-01-02.thumb.webp",
+          "source": "Lay Out_2.0_55.jpg"
+        },
+        {
+          "code": "ESP 03-02",
+          "label": "ESP 03-02",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-03-02.webp",
+          "thumb": "assets/stations/espresso/esp-03-02.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 05-02",
+          "label": "ESP 05-02",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-05-02.webp",
+          "thumb": "assets/stations/espresso/esp-05-02.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 06-01",
+          "label": "ESP 06-01",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-06-01.webp",
+          "thumb": "assets/stations/espresso/esp-06-01.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 07-03",
+          "label": "ESP 07-03",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-07-03.webp",
+          "thumb": "assets/stations/espresso/esp-07-03.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 10-01",
+          "label": "ESP 10-01",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-10-01.webp",
+          "thumb": "assets/stations/espresso/esp-10-01.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 11-01",
+          "label": "ESP 11-01",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-11-01.webp",
+          "thumb": "assets/stations/espresso/esp-11-01.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 03-04",
+          "label": "ESP 03-04",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-03-04.webp",
+          "thumb": "assets/stations/espresso/esp-03-04.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 05-04",
+          "label": "ESP 05-04",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-05-04.webp",
+          "thumb": "assets/stations/espresso/esp-05-04.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 09-04",
+          "label": "ESP 09-04",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-09-04.webp",
+          "thumb": "assets/stations/espresso/esp-09-04.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 21-04",
+          "label": "ESP 21-04",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-21-04.webp",
+          "thumb": "assets/stations/espresso/esp-21-04.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 25-03",
+          "label": "ESP 25-03",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-25-03.webp",
+          "thumb": "assets/stations/espresso/esp-25-03.thumb.webp",
+          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 43-02",
+          "label": "ESP 43-02",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-43-02.webp",
+          "thumb": "assets/stations/espresso/esp-43-02.thumb.webp",
+          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 08-02",
+          "label": "ESP 08-02",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-08-02.webp",
+          "thumb": "assets/stations/espresso/esp-08-02.thumb.webp",
+          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 09-03",
+          "label": "ESP 09-03",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-09-03.webp",
+          "thumb": "assets/stations/espresso/esp-09-03.thumb.webp",
+          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+        },
+        {
+          "code": "ESP 31-04",
+          "label": "ESP 31-04",
+          "subgroup": "ESP",
+          "image": "assets/stations/espresso/esp-31-04.webp",
+          "thumb": "assets/stations/espresso/esp-31-04.thumb.webp",
+          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+        }
+      ],
+      "technical": [
+        {
+          "key": "espresso-equipo",
+          "label": "Equipo y utensilios · Espresso",
+          "image": "assets/technical/espresso-equipo.webp",
+          "sourcePage": 54
+        },
+        {
+          "key": "espresso-ingredientes",
+          "label": "Ingredientes · Espresso",
+          "image": "assets/technical/espresso-ingredientes.webp",
+          "sourcePage": 54
+        }
+      ]
+    }
+  ]
+}
