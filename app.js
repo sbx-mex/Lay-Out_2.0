@@ -7,6 +7,16 @@ const PDF_CUT_GAP = 2;
 const MAX_EVIDENCE_PX = 2200;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
 const IMAGE_BG_THRESHOLD = 242;
+const MIN_EXPORT_FEEDBACK_MS = 900;
+const PDF_COLORS = {
+  page: [247, 243, 234],
+  panel: [255, 253, 249],
+  green: [0, 98, 65],
+  greenDark: [0, 59, 42],
+  line: [184, 207, 197],
+  gold: [198, 156, 84],
+  muted: [70, 83, 77]
+};
 const $ = id => document.getElementById(id);
 
 let catalog = null;
@@ -20,6 +30,7 @@ let activeReferenceDisplayUrl = null;
 let toastTimer = null;
 let renderTicket = 0;
 let exportInProgress = false;
+let pendingPhotoInputId = null;
 const displayCache = new Map();
 const technicalCache = new Map();
 
@@ -670,7 +681,7 @@ function fitPdfText(pdf, value, maxWidth) {
 }
 
 function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
-  pdf.setFillColor(255, 255, 255);
+  pdf.setFillColor(...PDF_COLORS.panel);
   pdf.rect(x, y, width, height, "F");
   if (!source) {
     pdf.setFillColor(245, 248, 246);
@@ -692,23 +703,26 @@ function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
 
 function drawPdfHalf(pdf, section, stationLabel, code, store, date, source, x, y, width, height, alias) {
   const padding = 2;
-  const headerHeight = 10;
+  const headerHeight = 11;
   const leftLabel = `${stationLabel} - ${code} / ${section}`;
   const rightLabel = `Tienda: ${store}  |  Fecha: ${date}`;
   const rightWidth = Math.min(84, Math.max(58, width * 0.42));
 
-  pdf.setDrawColor(190, 216, 204);
+  pdf.setFillColor(...PDF_COLORS.panel);
+  pdf.setDrawColor(...PDF_COLORS.line);
   pdf.setLineWidth(0.3);
-  pdf.rect(x, y, width, height, "S");
+  pdf.roundedRect(x, y, width, height, 1.6, 1.6, "FD");
+  pdf.setFillColor(...PDF_COLORS.green);
+  pdf.rect(x, y, width, 1.2, "F");
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8.2);
-  pdf.setTextColor(0, 98, 65);
-  pdf.text(fitPdfText(pdf, leftLabel, width - rightWidth - padding * 3), x + padding, y + 6.4);
+  pdf.setTextColor(...PDF_COLORS.greenDark);
+  pdf.text(fitPdfText(pdf, leftLabel, width - rightWidth - padding * 3), x + padding, y + 7.2);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7.2);
-  pdf.setTextColor(54, 76, 68);
-  pdf.text(fitPdfText(pdf, rightLabel, rightWidth), x + width - padding, y + 6.4, { align: "right" });
-  pdf.setDrawColor(0, 98, 65);
+  pdf.setTextColor(...PDF_COLORS.muted);
+  pdf.text(fitPdfText(pdf, rightLabel, rightWidth), x + width - padding, y + 7.2, { align: "right" });
+  pdf.setDrawColor(...PDF_COLORS.green);
   pdf.setLineWidth(0.35);
   pdf.line(x + padding, y + headerHeight, x + width - padding, y + headerHeight);
   drawPdfImageContain(pdf, source, x + 1, y + headerHeight + 1, width - 2, height - headerHeight - 2, alias);
@@ -734,6 +748,8 @@ async function buildLayoutExportDocument() {
     author: "Guía de acomodo operativo",
     creator: "Guía de acomodo operativo"
   });
+  pdf.setFillColor(...PDF_COLORS.page);
+  pdf.rect(0, 0, W, H, "F");
   const date = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date());
   let cutLine;
   if (useLandscapePage) {
@@ -753,7 +769,7 @@ async function buildLayoutExportDocument() {
     drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, m, secondY, sectionWidth, halfHeight, "layout-evidence");
     cutLine = [m, H / 2, W - m, H / 2];
   }
-  pdf.setDrawColor(130, 145, 139);
+  pdf.setDrawColor(...PDF_COLORS.gold);
   pdf.setLineDashPattern([2, 1.5], 0);
   pdf.setLineWidth(0.25);
   pdf.line(...cutLine);
@@ -784,12 +800,17 @@ async function exportPdf() {
   if (!evidenceDataUrl && !window.confirm("Aún no agregas evidencia real. ¿Deseas exportar solo la referencia?")) return;
   const button = $("exportButton");
   const originalText = button.textContent;
+  const feedbackStarted = performance.now();
+  let completed = false;
   setExportBusy(true);
   button.textContent = "Generando…";
   try {
     await waitForInterfacePaint();
     const { pdf, filename, pageOrientation } = await buildLayoutExportDocument();
+    const remainingFeedback = MIN_EXPORT_FEEDBACK_MS - (performance.now() - feedbackStarted);
+    if (remainingFeedback > 0) await new Promise(resolve => window.setTimeout(resolve, remainingFeedback));
     pdf.save(filename);
+    completed = true;
     announce(`Lay Out exportado en A4 ${pageOrientation === "landscape" ? "horizontal" : "vertical"}.`);
   } catch (error) {
     announce(`${error.message} No se generó un PDF incompleto.`);
@@ -797,11 +818,20 @@ async function exportPdf() {
     setExportBusy(false);
     button.textContent = originalText;
   }
+  if (completed) $("exportCompleteDialog").showModal();
 }
 
 function openPhotoPicker(inputId) {
-  announce("Consejo: gira el celular y toma la estación completa en horizontal.");
-  $(inputId).click();
+  pendingPhotoInputId = inputId;
+  $("photoGuidanceAction").textContent = inputId === "cameraInput" ? "Abrir cámara" : "Elegir imagen";
+  $("photoOrientationDialog").showModal();
+}
+
+function continuePhotoPicker() {
+  const inputId = pendingPhotoInputId;
+  pendingPhotoInputId = null;
+  $("photoOrientationDialog").close();
+  if (inputId) $(inputId).click();
 }
 
 function bindDialogClose(dialogId, buttonId) {
@@ -948,6 +978,16 @@ function bind() {
     dropZone.classList.remove("dragging");
   }));
   dropZone.addEventListener("drop", event => processEvidence(event.dataTransfer.files[0]));
+
+  $("photoGuidanceAction").addEventListener("click", continuePhotoPicker);
+  $("photoGuidanceCancel").addEventListener("click", () => {
+    pendingPhotoInputId = null;
+    $("photoOrientationDialog").close();
+  });
+  $("photoOrientationDialog").addEventListener("cancel", () => {
+    pendingPhotoInputId = null;
+  });
+  $("closeExportComplete").addEventListener("click", () => $("exportCompleteDialog").close());
 
   $("exportButton").addEventListener("click", exportPdf);
   $("resetButton").addEventListener("click", () => {

@@ -8,6 +8,10 @@
     "adaptiveOrientation": true,
     "horizontalCaptureGuidance": true,
     "exportProgress": true,
+    "orientationFirstDialog": true,
+    "completionDialog": true,
+    "warmStarbucksPalette": true,
+    "optimizedUiAssets": 2,
     "fastCacheRefresh": true
   },
   "lots": {

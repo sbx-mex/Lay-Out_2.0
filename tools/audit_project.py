@@ -10,6 +10,8 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "data" / "layouts.json"
 ASSET_ROOT = ROOT / "assets" / "layouts"
+UI_ASSET_ROOT = ROOT / "assets" / "ui"
+UI_ASSETS = ("Damos_Seguimiento.webp", "Un_placer_haber_Ayudado.webp")
 MAX_FILES = 99
 MAX_BYTES = 25 * 1024 * 1024
 
@@ -24,18 +26,18 @@ app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-premium-v5";' not in service_worker_source:
+if 'const CACHE = "layout-2-premium-v6";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
         fail(f"falta estrategia de actualización rápida: {marker}")
-for marker in ("evidenceMeta", "useLandscapePage", "setExportBusy", "waitForInterfacePaint"):
+for marker in ("evidenceMeta", "useLandscapePage", "setExportBusy", "waitForInterfacePaint", "PDF_COLORS", "pendingPhotoInputId"):
     if marker not in app_source:
         fail(f"falta función premium de exportación: {marker}")
-for marker in ("captureGuidance", "exportProgress"):
+for marker in ("captureGuidance", "photoOrientationDialog", "exportProgress", "exportCompleteDialog"):
     if marker not in html_source:
         fail(f"falta interfaz ejecutiva: {marker}")
-for marker in (".capture-guidance", ".export-progress"):
+for marker in (".capture-guidance", ".orientation-dialog", ".export-progress", ".completion-dialog"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
 
@@ -92,6 +94,17 @@ unreferenced = sorted(all_catalog_images - set(paths))
 if unreferenced:
     fail(f"imágenes obsoletas sin referencia: {unreferenced[:8]}")
 
+for name in UI_ASSETS:
+    path = UI_ASSET_ROOT / name
+    if not path.is_file():
+        fail(f"falta imagen de experiencia: {name}")
+    with Image.open(path) as image:
+        if image.format != "WEBP" or image.size != (768, 512):
+            fail(f"imagen de experiencia inválida: {name} {image.format} {image.size}")
+        image.verify()
+    if path.stat().st_size > 250 * 1024:
+        fail(f"imagen de experiencia demasiado pesada: {name}")
+
 report = {
     "status": "ok",
     "stations": len(stations),
@@ -102,6 +115,10 @@ report = {
         "adaptiveOrientation": True,
         "horizontalCaptureGuidance": True,
         "exportProgress": True,
+        "orientationFirstDialog": True,
+        "completionDialog": True,
+        "warmStarbucksPalette": True,
+        "optimizedUiAssets": len(UI_ASSETS),
         "fastCacheRefresh": True,
     },
     "lots": {

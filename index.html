@@ -13,6 +13,8 @@
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preload" href="data/layouts.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="assets/ui/Damos_Seguimiento.webp" as="image" type="image/webp">
+  <link rel="preload" href="assets/ui/Un_placer_haber_Ayudado.webp" as="image" type="image/webp">
   <link rel="stylesheet" href="styles.css">
   <script defer src="vendor/jspdf.umd.min.js"></script>
   <script defer src="app.js"></script>
@@ -181,14 +183,46 @@
     </footer>
   </main>
 
+  <dialog id="photoOrientationDialog" class="flow-dialog orientation-dialog" aria-labelledby="photoGuidanceTitle" aria-describedby="photoGuidanceDescription">
+    <div class="flow-dialog__body">
+      <span class="flow-badge">Antes de continuar</span>
+      <h2 id="photoGuidanceTitle">Recomendación: captura la foto de manera horizontal</h2>
+      <p id="photoGuidanceDescription">Encuadra la estación completa para aprovechar mejor el espacio del PDF.</p>
+      <div class="orientation-options" aria-label="Orientación de fotografía y resultado del PDF">
+        <div class="orientation-option orientation-option--recommended">
+          <span class="orientation-icon orientation-icon--horizontal" aria-hidden="true"></span>
+          <span><strong>Foto horizontal</strong><small>Exportación vertical</small></span>
+          <em>Recomendada</em>
+        </div>
+        <div class="orientation-option">
+          <span class="orientation-icon orientation-icon--vertical" aria-hidden="true"></span>
+          <span><strong>Foto vertical</strong><small>Exportación horizontal</small></span>
+        </div>
+      </div>
+      <div class="flow-dialog__actions">
+        <button id="photoGuidanceCancel" class="button button--ghost-dark" type="button">Cancelar</button>
+        <button id="photoGuidanceAction" class="button" type="button">Continuar</button>
+      </div>
+    </div>
+  </dialog>
+
   <div id="exportProgress" class="export-progress hidden" role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="exportProgressTitle" aria-describedby="exportProgressText">
     <div class="export-progress__card">
-      <span class="export-spinner" aria-hidden="true"></span>
-      <strong id="exportProgressTitle">Estamos preparando tu Lay Out</strong>
-      <p id="exportProgressText">No muevas nada. Enseguida aparecerá la descarga.</p>
-      <small>Optimizando imágenes y formato A4…</small>
+      <img src="assets/ui/Damos_Seguimiento.webp" alt="Le damos seguimiento, estamos trabajando para ti">
+      <strong id="exportProgressTitle">Preparando tu PDF</strong>
+      <p id="exportProgressText">Estamos trabajando. Tu descarga aparecerá enseguida.</p>
+      <span class="export-progress__bar" aria-hidden="true"><i></i></span>
     </div>
   </div>
+
+  <dialog id="exportCompleteDialog" class="flow-dialog completion-dialog" aria-labelledby="exportCompleteTitle" aria-describedby="exportCompleteText">
+    <div class="flow-dialog__body">
+      <img src="assets/ui/Un_placer_haber_Ayudado.webp" alt="Un placer haber ayudado">
+      <h2 id="exportCompleteTitle">PDF listo</h2>
+      <p id="exportCompleteText">Tu descarga está lista. Gracias por validar tu estación.</p>
+      <button id="closeExportComplete" class="button" type="button">Continuar</button>
+    </div>
+  </dialog>
 
   <div class="mobile-actions no-print" aria-label="Acciones rápidas">
     <button id="mobilePrevious" type="button">← Anterior</button>

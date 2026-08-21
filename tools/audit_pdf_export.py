@@ -20,6 +20,10 @@ from pypdf import PdfReader
 ROOT = Path(__file__).resolve().parents[1]
 A4_PORTRAIT = (1240, 1754)
 A4_LANDSCAPE = (1754, 1240)
+WARM_PAGE = "#F7F3EA"
+WARM_PANEL = "#FFFDF9"
+STARBUCKS_GREEN = "#006241"
+WARM_GOLD = "#C69C54"
 FORBIDDEN_VISIBLE_COPY = ("LAY OUT 2.0", "STARBUCKS", "Una página A4", 'pdf.text("NOTAS"')
 REQUIRED_SOURCE_MARKERS = (
     'evidenceMeta?.orientation === "portrait"',
@@ -29,6 +33,10 @@ REQUIRED_SOURCE_MARKERS = (
     'drawPdfHalf(pdf, "Referencia"',
     'drawPdfHalf(pdf, "Acomodo real"',
     "pdf.line(...cutLine)",
+    "PDF_COLORS.page",
+    "PDF_COLORS.panel",
+    "PDF_COLORS.gold",
+    "pdf.roundedRect",
 )
 
 
@@ -63,11 +71,12 @@ def draw_panel(
 ) -> Placement:
     draw = ImageDraw.Draw(canvas)
     left, top, right, bottom = box
-    green, line = "#006241", "#BED8CC"
-    draw.rectangle(box, outline=line, width=2)
-    draw.text((left + 12, top + 11), label, fill=green, font=ImageFont.load_default())
-    draw.line((left + 10, top + 48, right - 10, top + 48), fill=green, width=2)
-    return contain(canvas, image, (left + 5, top + 54, right - 5, bottom - 5))
+    line = "#B8CFC5"
+    draw.rectangle(box, fill=WARM_PANEL, outline=line, width=2)
+    draw.rectangle((left, top, right, top + 7), fill=STARBUCKS_GREEN)
+    draw.text((left + 12, top + 17), label, fill="#003B2A", font=ImageFont.load_default())
+    draw.line((left + 10, top + 53, right - 10, top + 53), fill=STARBUCKS_GREEN, width=2)
+    return contain(canvas, image, (left + 5, top + 59, right - 5, bottom - 5))
 
 
 def cut_line(draw: ImageDraw.ImageDraw, start: tuple[int, int], end: tuple[int, int]) -> None:
@@ -75,14 +84,14 @@ def cut_line(draw: ImageDraw.ImageDraw, start: tuple[int, int], end: tuple[int, 
     x2, y2 = end
     if y1 == y2:
         for x in range(x1, x2, 18):
-            draw.line((x, y1, min(x + 9, x2), y2), fill="#82918B", width=1)
+            draw.line((x, y1, min(x + 9, x2), y2), fill=WARM_GOLD, width=2)
     else:
         for y in range(y1, y2, 18):
-            draw.line((x1, y, x2, min(y + 9, y2)), fill="#82918B", width=1)
+            draw.line((x1, y, x2, min(y + 9, y2)), fill=WARM_GOLD, width=2)
 
 
 def build_portrait_test(reference: Image.Image, evidence: Image.Image) -> tuple[Image.Image, Placement]:
-    canvas = Image.new("RGB", A4_PORTRAIT, "white")
+    canvas = Image.new("RGB", A4_PORTRAIT, WARM_PAGE)
     margin, gap = 35, 12
     mid = A4_PORTRAIT[1] // 2
     draw_panel(canvas, (margin, margin, A4_PORTRAIT[0] - margin, mid - gap // 2),
@@ -94,7 +103,7 @@ def build_portrait_test(reference: Image.Image, evidence: Image.Image) -> tuple[
 
 
 def build_landscape_test(reference: Image.Image, evidence: Image.Image) -> tuple[Image.Image, Placement]:
-    canvas = Image.new("RGB", A4_LANDSCAPE, "white")
+    canvas = Image.new("RGB", A4_LANDSCAPE, WARM_PAGE)
     margin, gap = 35, 12
     mid = A4_LANDSCAPE[0] // 2
     draw_panel(canvas, (margin, margin, mid - gap // 2, A4_LANDSCAPE[1] - margin),
@@ -141,7 +150,7 @@ def main() -> int:
         if text in build:
             fail(f"texto global prohibido en PDF: {text}")
     for marker in REQUIRED_SOURCE_MARKERS:
-        if marker not in build:
+        if marker not in source:
             fail(f"falta la regla adaptativa: {marker}")
 
     catalog = json.loads((ROOT / "data" / "layouts.json").read_text(encoding="utf-8"))
@@ -184,6 +193,7 @@ def main() -> int:
         "horizontal_photo_page": "portrait",
         "vertical_photo_page": "landscape",
         "vertical_photo_width_gain": round(width_gain, 2),
+        "warm_starbucks_palette": True,
         "horizontal_photo_placement_px": [horizontal_placement.width, horizontal_placement.height],
         "vertical_photo_placement_px": [vertical_placement.width, vertical_placement.height],
         "outputs": {key: str(value) for key, value in outputs.items()},

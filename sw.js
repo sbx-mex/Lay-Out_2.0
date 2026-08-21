@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE = "layout-2-premium-v5";
+const CACHE = "layout-2-premium-v6";
 const SHELL = [
   "./",
   "index.html",
@@ -10,6 +10,8 @@ const SHELL = [
   "data/layouts.json",
   "icons/icon-192.png",
   "icons/icon-512.png",
+  "assets/ui/Damos_Seguimiento.webp",
+  "assets/ui/Un_placer_haber_Ayudado.webp",
   "vendor/jspdf.umd.min.js"
 ];
 
