@@ -21,6 +21,7 @@ jobs:
       - run: pip install Pillow pypdf
       - run: node --check app.js
       - run: node --check sw.js
+      - run: python tools/optimize_ui_assets.py --check
       - run: python tools/cleanup_assets.py
       - run: python tools/audit_project.py
       - run: python tools/audit_pdf_export.py --output-dir /tmp/layout-pdf-audit
