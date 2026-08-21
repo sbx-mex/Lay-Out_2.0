@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE = "layout-2-remaster-v4";
+const CACHE = "layout-2-premium-v5";
 const SHELL = [
   "./",
   "index.html",
@@ -52,20 +52,37 @@ self.addEventListener("activate", event => {
   })());
 });
 
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE);
+  try {
+    const response = await fetch(request);
+    if (response.ok) await cache.put(request, response.clone());
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    if (request.mode === "navigate") return (await cache.match("index.html")) || Response.error();
+    return Response.error();
+  }
+}
+
+async function staleWhileRevalidate(request, event) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+  const refresh = fetch(request, { cache: "no-cache" }).then(async response => {
+    if (response.ok) await cache.put(request, response.clone());
+    return response;
+  }).catch(() => null);
+  event.waitUntil(refresh);
+  return cached || (await refresh) || Response.error();
+}
+
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-  event.respondWith((async () => {
-    const cached = await caches.match(event.request);
-    if (cached) return cached;
-    try {
-      const response = await fetch(event.request);
-      if (response.ok && new URL(event.request.url).origin === self.location.origin) {
-        const cache = await caches.open(CACHE);
-        cache.put(event.request, response.clone());
-      }
-      return response;
-    } catch {
-      return cached || Response.error();
-    }
-  })());
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  const isLargeVisual = event.request.destination === "image" || url.pathname.includes("/assets/layouts/");
+  event.respondWith(isLargeVisual
+    ? staleWhileRevalidate(event.request, event)
+    : networkFirst(event.request));
 });

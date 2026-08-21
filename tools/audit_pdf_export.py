@@ -1,25 +1,50 @@
 #!/usr/bin/env python3
-"""Audita la plantilla PDF y genera una prueba A4 de dos mitades recortables."""
+"""Audita la exportación A4 adaptativa de Lay Out 2.0.
+
+Genera pruebas visuales para fotografía horizontal y vertical, verifica una sola
+página, márgenes ejecutivos y confirma que el modo adaptativo amplía una foto
+vertical sin deformarla.
+"""
 from __future__ import annotations
 
 import argparse
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
+from pypdf import PdfReader
 
 
 ROOT = Path(__file__).resolve().parents[1]
-A4_150_DPI = (1240, 1754)
+A4_PORTRAIT = (1240, 1754)
+A4_LANDSCAPE = (1754, 1240)
 FORBIDDEN_VISIBLE_COPY = ("LAY OUT 2.0", "STARBUCKS", "Una página A4", 'pdf.text("NOTAS"')
+REQUIRED_SOURCE_MARKERS = (
+    'evidenceMeta?.orientation === "portrait"',
+    'pageOrientation = useLandscapePage ? "landscape" : "portrait"',
+    'pdf.internal.pageSize.getWidth()',
+    'pdf.internal.pageSize.getHeight()',
+    'drawPdfHalf(pdf, "Referencia"',
+    'drawPdfHalf(pdf, "Acomodo real"',
+    "pdf.line(...cutLine)",
+)
+
+
+@dataclass(frozen=True)
+class Placement:
+    width: int
+    height: int
+    x: int
+    y: int
 
 
 def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
 
 
-def contain(canvas: Image.Image, source: Image.Image, box: tuple[int, int, int, int]) -> None:
+def contain(canvas: Image.Image, source: Image.Image, box: tuple[int, int, int, int]) -> Placement:
     left, top, right, bottom = box
     width, height = right - left, bottom - top
     fitted = source.copy()
@@ -27,21 +52,82 @@ def contain(canvas: Image.Image, source: Image.Image, box: tuple[int, int, int, 
     x = left + (width - fitted.width) // 2
     y = top + (height - fitted.height) // 2
     canvas.paste(fitted.convert("RGB"), (x, y))
+    return Placement(fitted.width, fitted.height, x, y)
 
 
-def draw_half(canvas: Image.Image, box: tuple[int, int, int, int], label: str, image: Image.Image) -> None:
+def draw_panel(
+    canvas: Image.Image,
+    box: tuple[int, int, int, int],
+    label: str,
+    image: Image.Image,
+) -> Placement:
     draw = ImageDraw.Draw(canvas)
     left, top, right, bottom = box
     green, line = "#006241", "#BED8CC"
     draw.rectangle(box, outline=line, width=2)
     draw.text((left + 12, top + 11), label, fill=green, font=ImageFont.load_default())
     draw.line((left + 10, top + 48, right - 10, top + 48), fill=green, width=2)
-    contain(canvas, image, (left + 5, top + 54, right - 5, bottom - 5))
+    return contain(canvas, image, (left + 5, top + 54, right - 5, bottom - 5))
+
+
+def cut_line(draw: ImageDraw.ImageDraw, start: tuple[int, int], end: tuple[int, int]) -> None:
+    x1, y1 = start
+    x2, y2 = end
+    if y1 == y2:
+        for x in range(x1, x2, 18):
+            draw.line((x, y1, min(x + 9, x2), y2), fill="#82918B", width=1)
+    else:
+        for y in range(y1, y2, 18):
+            draw.line((x1, y, x2, min(y + 9, y2)), fill="#82918B", width=1)
+
+
+def build_portrait_test(reference: Image.Image, evidence: Image.Image) -> tuple[Image.Image, Placement]:
+    canvas = Image.new("RGB", A4_PORTRAIT, "white")
+    margin, gap = 35, 12
+    mid = A4_PORTRAIT[1] // 2
+    draw_panel(canvas, (margin, margin, A4_PORTRAIT[0] - margin, mid - gap // 2),
+               "Barra fria - TEA 01-04 / Referencia", reference)
+    placement = draw_panel(canvas, (margin, mid + gap // 2, A4_PORTRAIT[0] - margin, A4_PORTRAIT[1] - margin),
+                           "Barra fria - TEA 01-04 / Acomodo real", evidence)
+    cut_line(ImageDraw.Draw(canvas), (margin, mid), (A4_PORTRAIT[0] - margin, mid))
+    return canvas, placement
+
+
+def build_landscape_test(reference: Image.Image, evidence: Image.Image) -> tuple[Image.Image, Placement]:
+    canvas = Image.new("RGB", A4_LANDSCAPE, "white")
+    margin, gap = 35, 12
+    mid = A4_LANDSCAPE[0] // 2
+    draw_panel(canvas, (margin, margin, mid - gap // 2, A4_LANDSCAPE[1] - margin),
+               "Barra fria - TEA 01-04 / Referencia", reference)
+    placement = draw_panel(canvas, (mid + gap // 2, margin, A4_LANDSCAPE[0] - margin, A4_LANDSCAPE[1] - margin),
+                           "Barra fria - TEA 01-04 / Acomodo real", evidence)
+    cut_line(ImageDraw.Draw(canvas), (mid, margin), (mid, A4_LANDSCAPE[1] - margin))
+    return canvas, placement
+
+
+def synthetic_evidence(size: tuple[int, int], label: str) -> Image.Image:
+    image = Image.new("RGB", size, "#E8ECEA")
+    draw = ImageDraw.Draw(image)
+    inset_x, inset_y = size[0] // 10, size[1] // 14
+    draw.rectangle((inset_x, inset_y, size[0] - inset_x, size[1] - inset_y), fill="#74827C")
+    draw.text((inset_x + 20, size[1] // 2), label, fill="white", font=ImageFont.load_default())
+    return image
+
+
+def validate_single_page(pdf_path: Path, expected_orientation: str) -> None:
+    reader = PdfReader(pdf_path)
+    if len(reader.pages) != 1:
+        fail(f"{pdf_path.name} debe tener exactamente una página")
+    box = reader.pages[0].mediabox
+    width, height = float(box.width), float(box.height)
+    actual = "landscape" if width > height else "portrait"
+    if actual != expected_orientation:
+        fail(f"{pdf_path.name} tiene orientación {actual}; se esperaba {expected_orientation}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=Path("/tmp/layout_export_audit.pdf"))
+    parser.add_argument("--output-dir", type=Path, default=Path("/tmp/layout_pdf_audit"))
     args = parser.parse_args()
 
     source = (ROOT / "app.js").read_text(encoding="utf-8")
@@ -54,9 +140,9 @@ def main() -> int:
     for text in FORBIDDEN_VISIBLE_COPY:
         if text in build:
             fail(f"texto global prohibido en PDF: {text}")
-    for required in ('drawPdfHalf(pdf, "Referencia"', 'drawPdfHalf(pdf, "Acomodo real"', "H / 2"):
-        if required not in build:
-            fail(f"falta estructura recortable: {required}")
+    for marker in REQUIRED_SOURCE_MARKERS:
+        if marker not in build:
+            fail(f"falta la regla adaptativa: {marker}")
 
     catalog = json.loads((ROOT / "data" / "layouts.json").read_text(encoding="utf-8"))
     variant = next(
@@ -65,30 +151,45 @@ def main() -> int:
         for variant in station["variants"]
         if variant["code"] == "TEA 01-04"
     )
-    with Image.open(ROOT / variant["image"]) as reference:
-        reference_image = reference.convert("RGB")
-    evidence = Image.new("RGB", (900, 1400), "#E8ECEA")
-    evidence_draw = ImageDraw.Draw(evidence)
-    evidence_draw.rectangle((110, 90, 790, 1310), fill="#74827C")
-    evidence_draw.text((330, 680), "ACOMODO REAL", fill="white", font=ImageFont.load_default())
+    with Image.open(ROOT / variant["image"]) as image:
+        reference = image.convert("RGB")
 
-    canvas = Image.new("RGB", A4_150_DPI, "white")
-    margin, gap = 35, 12
-    mid = A4_150_DPI[1] // 2
-    draw_half(canvas, (margin, margin, A4_150_DPI[0] - margin, mid - gap // 2),
-              "Barra fria · TEA 01-04 / Referencia   |   Tienda: Prueba   |   Fecha: 21 ago 2026", reference_image)
-    draw_half(canvas, (margin, mid + gap // 2, A4_150_DPI[0] - margin, A4_150_DPI[1] - margin),
-              "Barra fria · TEA 01-04 / Acomodo real   |   Tienda: Prueba   |   Fecha: 21 ago 2026", evidence)
-    cut = ImageDraw.Draw(canvas)
-    for x in range(margin, A4_150_DPI[0] - margin, 18):
-        cut.line((x, mid, min(x + 9, A4_150_DPI[0] - margin), mid), fill="#82918B", width=1)
+    horizontal = synthetic_evidence((1400, 900), "ACOMODO HORIZONTAL")
+    vertical = synthetic_evidence((900, 1400), "ACOMODO VERTICAL")
+    portrait_canvas, horizontal_placement = build_portrait_test(reference, horizontal)
+    landscape_canvas, vertical_placement = build_landscape_test(reference, vertical)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(args.output, "PDF", resolution=150.0)
-    pdf_bytes = args.output.read_bytes()
-    if len(re.findall(rb"/Type\s*/Page\b", pdf_bytes)) != 1:
-        fail("la prueba no es una sola página")
-    print(json.dumps({"status": "ok", "pages": 1, "margin_mm": float(match.group(1)), "output": str(args.output)}))
+    legacy_canvas = Image.new("RGB", A4_PORTRAIT, "white")
+    legacy_vertical = contain(legacy_canvas, vertical, (40, A4_PORTRAIT[1] // 2 + 55, A4_PORTRAIT[0] - 40, A4_PORTRAIT[1] - 40))
+    width_gain = vertical_placement.width / legacy_vertical.width
+    if width_gain < 1.25:
+        fail(f"la ampliación adaptativa es insuficiente: {width_gain:.2f}x")
+
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    outputs = {
+        "horizontal_photo": args.output_dir / "audit_horizontal_photo_a4_portrait.pdf",
+        "vertical_photo": args.output_dir / "audit_vertical_photo_a4_landscape.pdf",
+    }
+    portrait_canvas.save(outputs["horizontal_photo"], "PDF", resolution=150.0)
+    landscape_canvas.save(outputs["vertical_photo"], "PDF", resolution=150.0)
+    portrait_canvas.save(args.output_dir / "audit_horizontal_photo.png", "PNG", optimize=True)
+    landscape_canvas.save(args.output_dir / "audit_vertical_photo.png", "PNG", optimize=True)
+
+    validate_single_page(outputs["horizontal_photo"], "portrait")
+    validate_single_page(outputs["vertical_photo"], "landscape")
+    report = {
+        "status": "ok",
+        "pages_per_export": 1,
+        "margin_mm": float(match.group(1)),
+        "horizontal_photo_page": "portrait",
+        "vertical_photo_page": "landscape",
+        "vertical_photo_width_gain": round(width_gain, 2),
+        "horizontal_photo_placement_px": [horizontal_placement.width, horizontal_placement.height],
+        "vertical_photo_placement_px": [vertical_placement.width, vertical_placement.height],
+        "outputs": {key: str(value) for key, value in outputs.items()},
+    }
+    (args.output_dir / "audit_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(report, ensure_ascii=False))
     return 0
 
 

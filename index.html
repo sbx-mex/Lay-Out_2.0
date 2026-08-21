@@ -158,7 +158,10 @@
           <input id="evidenceInput" class="file-input" type="file" accept="image/*">
         </article>
       </div>
-      <p class="photo-tip no-print">Recomendación: fotografía la estación completa. La evidencia se ajusta de forma dinámica para verse más amplia sin deformarse.</p>
+      <aside id="captureGuidance" class="capture-guidance no-print" data-state="tip" aria-live="polite">
+        <span class="capture-guidance__icon" aria-hidden="true">↔</span>
+        <span><strong id="captureGuidanceTitle">Mejor resultado: gira el celular</strong><small id="captureGuidanceText">Toma la fotografía en horizontal y encuadra la estación completa. Usaremos la cámara trasera.</small></span>
+      </aside>
 
       <label class="field field--notes"><span>Notas breves</span><textarea id="notes" maxlength="360" rows="3" placeholder="Ej. Falta reubicar jarabes y liberar superficie de trabajo."></textarea></label>
     </section>
@@ -177,6 +180,15 @@
       </div>
     </footer>
   </main>
+
+  <div id="exportProgress" class="export-progress hidden" role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="exportProgressTitle" aria-describedby="exportProgressText">
+    <div class="export-progress__card">
+      <span class="export-spinner" aria-hidden="true"></span>
+      <strong id="exportProgressTitle">Estamos preparando tu Lay Out</strong>
+      <p id="exportProgressText">No muevas nada. Enseguida aparecerá la descarga.</p>
+      <small>Optimizando imágenes y formato A4…</small>
+    </div>
+  </div>
 
   <div class="mobile-actions no-print" aria-label="Acciones rápidas">
     <button id="mobilePrevious" type="button">← Anterior</button>

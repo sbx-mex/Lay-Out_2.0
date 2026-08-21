@@ -15,9 +15,11 @@ let activeVariantId = null;
 let activeSubgroup = "all";
 let deferredInstall = null;
 let evidenceDataUrl = null;
+let evidenceMeta = null;
 let activeReferenceDisplayUrl = null;
 let toastTimer = null;
 let renderTicket = 0;
+let exportInProgress = false;
 const displayCache = new Map();
 const technicalCache = new Map();
 
@@ -488,8 +490,30 @@ function renderComparison() {
 function updateCompletion() {
   const ready = Boolean(evidenceDataUrl);
   const status = $("exportStatus");
-  status.textContent = ready ? "Evidencia lista · PDF preparado para una página." : "Agrega evidencia para completar la revisión.";
+  if (!ready) {
+    status.textContent = "Agrega evidencia para completar la revisión.";
+  } else if (evidenceMeta?.orientation === "portrait") {
+    status.textContent = "Foto vertical detectada · PDF horizontal optimizado automáticamente.";
+  } else {
+    status.textContent = "Foto horizontal detectada · PDF vertical a ancho completo.";
+  }
   status.classList.toggle("ready", ready);
+}
+
+function updateCaptureGuidance() {
+  const guidance = $("captureGuidance");
+  if (!evidenceMeta) {
+    guidance.dataset.state = "tip";
+    $("captureGuidanceTitle").textContent = "Mejor resultado: gira el celular";
+    $("captureGuidanceText").textContent = "Toma la fotografía en horizontal y encuadra la estación completa. Usaremos la cámara trasera.";
+    return;
+  }
+  const isPortrait = evidenceMeta.orientation === "portrait";
+  guidance.dataset.state = isPortrait ? "portrait" : "landscape";
+  $("captureGuidanceTitle").textContent = isPortrait ? "Fotografía vertical detectada" : "Fotografía horizontal lista";
+  $("captureGuidanceText").textContent = isPortrait
+    ? "La exportación cambiará automáticamente a A4 horizontal para mostrar el acomodo real más amplio, sin deformarlo."
+    : "Excelente encuadre. La exportación aprovechará todo el ancho disponible del A4.";
 }
 
 function validateEvidenceFile(file) {
@@ -528,12 +552,20 @@ async function processEvidence(file) {
     const resized = canvas.toDataURL("image/jpeg", 0.9);
     const optimized = await optimizeImageForDisplay(resized, { targetWidth: 1900, padding: 0.03 });
     evidenceDataUrl = optimized.url;
+    evidenceMeta = {
+      width: optimized.width,
+      height: optimized.height,
+      orientation: optimized.width >= optimized.height ? "landscape" : "portrait"
+    };
     $("evidenceImage").src = evidenceDataUrl;
     $("evidenceImage").classList.remove("hidden");
     $("dropZone").classList.add("hidden");
     $("removeEvidence").classList.remove("hidden");
+    updateCaptureGuidance();
     updateCompletion();
-    announce("Evidencia lista para comparar y exportar.");
+    announce(evidenceMeta.orientation === "landscape"
+      ? "Foto horizontal lista. Tendrá máxima expansión en el PDF."
+      : "Foto vertical lista. El PDF cambiará a horizontal automáticamente.");
   } catch (error) {
     announce(error.message);
   } finally {
@@ -543,12 +575,14 @@ async function processEvidence(file) {
 
 function clearEvidence() {
   evidenceDataUrl = null;
+  evidenceMeta = null;
   $("evidenceImage").src = "";
   $("evidenceImage").classList.add("hidden");
   $("dropZone").classList.remove("hidden");
   $("removeEvidence").classList.add("hidden");
   $("evidenceInput").value = "";
   $("cameraInput").value = "";
+  updateCaptureGuidance();
   updateCompletion();
 }
 
@@ -659,7 +693,7 @@ function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
 function drawPdfHalf(pdf, section, stationLabel, code, store, date, source, x, y, width, height, alias) {
   const padding = 2;
   const headerHeight = 10;
-  const leftLabel = `${stationLabel} · ${code} / ${section}`;
+  const leftLabel = `${stationLabel} - ${code} / ${section}`;
   const rightLabel = `Tienda: ${store}  |  Fecha: ${date}`;
   const rightWidth = Math.min(84, Math.max(58, width * 0.42));
 
@@ -687,9 +721,11 @@ async function buildLayoutExportDocument() {
   const store = $("storeName").value.trim() || "Tienda sin definir";
   const referenceSource = activeReferenceDisplayUrl || await pdfImageSource(variant.image);
   const evidenceSource = evidenceDataUrl;
-  const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true, putOnlyUsedFonts: true });
-  const W = 210;
-  const H = 297;
+  const useLandscapePage = evidenceMeta?.orientation === "portrait";
+  const pageOrientation = useLandscapePage ? "landscape" : "portrait";
+  const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: pageOrientation, compress: true, putOnlyUsedFonts: true });
+  const W = pdf.internal.pageSize.getWidth();
+  const H = pdf.internal.pageSize.getHeight();
   const m = PDF_MARGIN;
 
   pdf.setProperties({
@@ -699,39 +735,73 @@ async function buildLayoutExportDocument() {
     creator: "Guía de acomodo operativo"
   });
   const date = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date());
-  const usableHeight = H - m * 2 - PDF_CUT_GAP;
-  const halfHeight = usableHeight / 2;
-  const secondY = m + halfHeight + PDF_CUT_GAP;
-  const sectionWidth = W - m * 2;
-  drawPdfHalf(pdf, "Referencia", current.label, variant.code, store, date, referenceSource, m, m, sectionWidth, halfHeight, "layout-reference");
-  drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, m, secondY, sectionWidth, halfHeight, "layout-evidence");
-
+  let cutLine;
+  if (useLandscapePage) {
+    const usableWidth = W - m * 2 - PDF_CUT_GAP;
+    const halfWidth = usableWidth / 2;
+    const secondX = m + halfWidth + PDF_CUT_GAP;
+    const sectionHeight = H - m * 2;
+    drawPdfHalf(pdf, "Referencia", current.label, variant.code, store, date, referenceSource, m, m, halfWidth, sectionHeight, "layout-reference");
+    drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, secondX, m, halfWidth, sectionHeight, "layout-evidence");
+    cutLine = [W / 2, m, W / 2, H - m];
+  } else {
+    const usableHeight = H - m * 2 - PDF_CUT_GAP;
+    const halfHeight = usableHeight / 2;
+    const secondY = m + halfHeight + PDF_CUT_GAP;
+    const sectionWidth = W - m * 2;
+    drawPdfHalf(pdf, "Referencia", current.label, variant.code, store, date, referenceSource, m, m, sectionWidth, halfHeight, "layout-reference");
+    drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, m, secondY, sectionWidth, halfHeight, "layout-evidence");
+    cutLine = [m, H / 2, W - m, H / 2];
+  }
   pdf.setDrawColor(130, 145, 139);
   pdf.setLineDashPattern([2, 1.5], 0);
   pdf.setLineWidth(0.25);
-  pdf.line(m, H / 2, W - m, H / 2);
+  pdf.line(...cutLine);
   pdf.setLineDashPattern([], 0);
 
   if (pdf.internal.getNumberOfPages() !== 1) throw new Error("La validación impidió una exportación de más de una página.");
-  return { pdf, filename: `${cleanFilename(current.label)}_${cleanFilename(variant.code)}_${cleanFilename(store)}.pdf` };
+  return { pdf, filename: `${cleanFilename(current.label)}_${cleanFilename(variant.code)}_${cleanFilename(store)}.pdf`, pageOrientation };
+}
+
+function setExportBusy(state) {
+  exportInProgress = state;
+  document.body.classList.toggle("exporting", state);
+  $("exportProgress").classList.toggle("hidden", !state);
+  $("exportProgress").setAttribute("aria-hidden", String(!state));
+  ["exportButton", "mobileExport"].forEach(id => {
+    const button = $(id);
+    button.disabled = state;
+    button.setAttribute("aria-busy", String(state));
+  });
+}
+
+function waitForInterfacePaint() {
+  return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 }
 
 async function exportPdf() {
+  if (exportInProgress) return;
   if (!evidenceDataUrl && !window.confirm("Aún no agregas evidencia real. ¿Deseas exportar solo la referencia?")) return;
   const button = $("exportButton");
   const originalText = button.textContent;
-  button.disabled = true;
+  setExportBusy(true);
   button.textContent = "Generando…";
   try {
-    const { pdf, filename } = await buildLayoutExportDocument();
+    await waitForInterfacePaint();
+    const { pdf, filename, pageOrientation } = await buildLayoutExportDocument();
     pdf.save(filename);
-    announce("Lay Out exportado en una página A4.");
+    announce(`Lay Out exportado en A4 ${pageOrientation === "landscape" ? "horizontal" : "vertical"}.`);
   } catch (error) {
     announce(`${error.message} No se generó un PDF incompleto.`);
   } finally {
-    button.disabled = false;
+    setExportBusy(false);
     button.textContent = originalText;
   }
+}
+
+function openPhotoPicker(inputId) {
+  announce("Consejo: gira el celular y toma la estación completa en horizontal.");
+  $(inputId).click();
 }
 
 function bindDialogClose(dialogId, buttonId) {
@@ -834,16 +904,16 @@ function bind() {
 
   $("storeName").addEventListener("input", saveState);
   $("notes").addEventListener("input", saveState);
-  $("cameraButton").addEventListener("click", () => $("cameraInput").click());
-  $("attachButton").addEventListener("click", () => $("evidenceInput").click());
+  $("cameraButton").addEventListener("click", () => openPhotoPicker("cameraInput"));
+  $("attachButton").addEventListener("click", () => openPhotoPicker("evidenceInput"));
   $("cameraInput").addEventListener("change", event => processEvidence(event.target.files[0]));
   $("evidenceInput").addEventListener("change", event => processEvidence(event.target.files[0]));
   $("removeEvidence").addEventListener("click", clearEvidence);
-  $("dropZone").addEventListener("click", () => $("evidenceInput").click());
+  $("dropZone").addEventListener("click", () => openPhotoPicker("evidenceInput"));
   $("dropZone").addEventListener("keydown", event => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      $("evidenceInput").click();
+      openPhotoPicker("evidenceInput");
     }
   });
 
@@ -898,7 +968,7 @@ function bind() {
   bindDialogClose("referenceDialog", "closeReference");
 
   $("mobilePrevious").addEventListener("click", () => shiftVariant(-1));
-  $("mobilePhoto").addEventListener("click", () => $("cameraInput").click());
+  $("mobilePhoto").addEventListener("click", () => openPhotoPicker("cameraInput"));
   $("mobileExport").addEventListener("click", exportPdf);
 
   window.addEventListener("online", updateNetwork);
@@ -925,12 +995,17 @@ function updateNetwork() {
 async function start() {
   bind();
   updateNetwork();
+  updateCaptureGuidance();
   try {
     await loadCatalog();
   } catch (error) {
     document.querySelector(".app").innerHTML = `<section class="panel"><h1>No se pudo abrir Lay Out 2.0</h1><p>${error.message}</p></section>`;
   }
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+      .then(registration => registration.update())
+      .catch(() => {});
+  }
 }
 
 document.addEventListener("DOMContentLoaded", start);

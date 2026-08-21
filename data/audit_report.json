@@ -4,6 +4,12 @@
   "variants": 85,
   "technical": 16,
   "images": 101,
+  "premiumPdf": {
+    "adaptiveOrientation": true,
+    "horizontalCaptureGuidance": true,
+    "exportProgress": true,
+    "fastCacheRefresh": true
+  },
   "lots": {
     "lote-01": {
       "files": 99,

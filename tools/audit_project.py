@@ -20,8 +20,24 @@ def fail(message: str) -> None:
 
 if not (ROOT / "tools" / "audit_pdf_export.py").is_file():
     fail("falta el auditor de exportación PDF")
-if 'const CACHE = "layout-2-remaster-v4";' not in (ROOT / "sw.js").read_text(encoding="utf-8"):
+app_source = (ROOT / "app.js").read_text(encoding="utf-8")
+html_source = (ROOT / "index.html").read_text(encoding="utf-8")
+styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
+service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
+if 'const CACHE = "layout-2-premium-v5";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
+for marker in ("networkFirst", "staleWhileRevalidate"):
+    if marker not in service_worker_source:
+        fail(f"falta estrategia de actualización rápida: {marker}")
+for marker in ("evidenceMeta", "useLandscapePage", "setExportBusy", "waitForInterfacePaint"):
+    if marker not in app_source:
+        fail(f"falta función premium de exportación: {marker}")
+for marker in ("captureGuidance", "exportProgress"):
+    if marker not in html_source:
+        fail(f"falta interfaz ejecutiva: {marker}")
+for marker in (".capture-guidance", ".export-progress"):
+    if marker not in styles_source:
+        fail(f"falta estilo ejecutivo: {marker}")
 
 
 catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
@@ -82,6 +98,12 @@ report = {
     "variants": len(variants),
     "technical": len(technical),
     "images": len(records),
+    "premiumPdf": {
+        "adaptiveOrientation": True,
+        "horizontalCaptureGuidance": True,
+        "exportProgress": True,
+        "fastCacheRefresh": True,
+    },
     "lots": {
         lot.name: {
             "files": len([item for item in lot.iterdir() if item.is_file()]),
