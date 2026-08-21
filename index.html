@@ -20,7 +20,7 @@
   <script defer src="app.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#catalogo">Ir al catálogo</a>
+  <a class="skip-link" href="#workspace">Ir a la referencia</a>
   <noscript><p class="noscript">Activa JavaScript para utilizar Lay Out 2.0.</p></noscript>
 
   <header class="topbar">
@@ -50,38 +50,34 @@
       </div>
       <div class="hero__card" aria-label="Flujo recomendado">
         <span class="eyebrow">Ruta rápida</span>
-        <strong>1. Elige estación</strong>
-        <strong>2. Filtra equipo</strong>
-        <strong>3. Compara y exporta</strong>
+          <strong>1. Configura campaña y tienda</strong>
+          <strong>2. Elige estación y equipo</strong>
+          <strong>3. Desliza, compara y exporta</strong>
       </div>
     </section>
 
     <section class="context panel" aria-labelledby="contextTitle">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">Contexto de revisión</span>
-          <h2 id="contextTitle">Identifica tu tienda y tu referencia</h2>
+          <span class="eyebrow">Paso 1 · Contexto operativo</span>
+          <h2 id="contextTitle">Configura la revisión</h2>
         </div>
         <button id="resetButton" class="button button--text" type="button">Reiniciar</button>
       </div>
       <div class="context__grid">
         <label class="field"><span>Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
-        <div class="field search-field">
+        <label class="field"><span>Campaña</span><select id="campaignSelect" name="campaign" aria-label="Campaña anual"></select></label>
+        <label class="field"><span>Estación _ Equipo</span><select id="stationSelect" name="station" aria-label="Estación y equipo"></select></label>
+        <div class="field search-field context__search">
           <label for="searchInput"><span>Buscar estación, equipo o código</span></label>
           <input id="searchInput" autocomplete="off" placeholder="Ej. Mastrena II, Merrychef o ESP 03-02" aria-controls="searchResults" aria-expanded="false">
           <div id="searchResults" class="search-results hidden" role="listbox" aria-label="Resultados de búsqueda"></div>
         </div>
       </div>
+      <div id="selectionSummary" class="selection-summary" role="status" aria-live="polite">Preparando selección…</div>
     </section>
 
-    <section class="station-strip" id="catalogo" aria-labelledby="stationTitle">
-      <div class="section-heading section-heading--compact">
-        <div><span class="eyebrow">Estaciones</span><h2 id="stationTitle">Selecciona dónde vas a trabajar</h2></div>
-      </div>
-      <div id="stationNav" class="station-nav" role="tablist" aria-label="Estaciones disponibles"></div>
-    </section>
-
-    <section class="workspace panel" aria-live="polite">
+    <section class="workspace panel" id="workspace" aria-live="polite">
       <div class="workspace__head">
         <div>
           <span id="stationShort" class="eyebrow"></span>
@@ -91,10 +87,13 @@
         <div class="workspace__translation"><strong>En palabras simples</strong><span id="stationTranslation"></span></div>
       </div>
 
-      <div id="subgroupBar" class="subgroup-bar hidden" aria-label="Familias de la estación"></div>
-
       <div class="viewer-grid">
         <div class="reference-column">
+          <label class="field reference-picker" for="variantSelect">
+            <span>Referencia dentro de esta estación</span>
+            <select id="variantSelect" name="variant" aria-describedby="variantPosition"></select>
+            <small id="variantPosition">Selecciona un código o desliza la imagen.</small>
+          </label>
           <div class="viewer-toolbar">
             <button id="prevButton" class="icon-button" type="button" aria-label="Referencia anterior">←</button>
             <div class="viewer-title"><small>Referencia seleccionada</small><strong id="activeCode">—</strong></div>
@@ -109,9 +108,8 @@
           </figure>
           <div class="viewer-helper-row" aria-hidden="true">
             <span class="helper-pill">Toca para ampliar</span>
-            <span class="helper-pill">Desliza para cambiar</span>
+            <span class="helper-pill">Desliza o usa las flechas para cambiar</span>
           </div>
-          <div id="variantRail" class="variant-rail" role="listbox" aria-label="Opciones de Lay Out"></div>
         </div>
 
         <aside class="validation-card">

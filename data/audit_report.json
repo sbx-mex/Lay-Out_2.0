@@ -1,6 +1,7 @@
 {
   "status": "ok",
   "stations": 7,
+  "campaigns": 6,
   "variants": 85,
   "technical": 16,
   "images": 101,
@@ -12,7 +13,11 @@
     "completionDialog": true,
     "warmStarbucksPalette": true,
     "optimizedUiAssets": 2,
-    "fastCacheRefresh": true
+    "fastCacheRefresh": true,
+    "stationEquipmentDropdown": true,
+    "referenceDropdown": true,
+    "thumbnailDuplicationRemoved": true,
+    "singleLinePdfHeader": true
   },
   "lots": {
     "lote-01": {

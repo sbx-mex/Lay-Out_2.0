@@ -32,6 +32,9 @@ REQUIRED_SOURCE_MARKERS = (
     'pdf.internal.pageSize.getHeight()',
     'drawPdfHalf(pdf, "Referencia"',
     'drawPdfHalf(pdf, "Acomodo real"',
+    "function fitPdfFontSize",
+    "const headerLabel = `${stationLabel} - ${code} / ${section} | Tienda: ${store} | Campaña: ${campaignLabel} | Fecha: ${date}`;",
+    'new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" })',
     "pdf.line(...cutLine)",
     "PDF_COLORS.page",
     "PDF_COLORS.panel",
@@ -95,9 +98,9 @@ def build_portrait_test(reference: Image.Image, evidence: Image.Image) -> tuple[
     margin, gap = 35, 12
     mid = A4_PORTRAIT[1] // 2
     draw_panel(canvas, (margin, margin, A4_PORTRAIT[0] - margin, mid - gap // 2),
-               "Barra fria - TEA 01-04 / Referencia", reference)
+               "Barra fria - TEA 01-04 / Referencia | Tienda: Montevideo DT | Campaña: Summer | Fecha: 21 ago 2026", reference)
     placement = draw_panel(canvas, (margin, mid + gap // 2, A4_PORTRAIT[0] - margin, A4_PORTRAIT[1] - margin),
-                           "Barra fria - TEA 01-04 / Acomodo real", evidence)
+                           "Barra fria - TEA 01-04 / Acomodo real | Tienda: Montevideo DT | Campaña: Summer | Fecha: 21 ago 2026", evidence)
     cut_line(ImageDraw.Draw(canvas), (margin, mid), (A4_PORTRAIT[0] - margin, mid))
     return canvas, placement
 
@@ -107,9 +110,9 @@ def build_landscape_test(reference: Image.Image, evidence: Image.Image) -> tuple
     margin, gap = 35, 12
     mid = A4_LANDSCAPE[0] // 2
     draw_panel(canvas, (margin, margin, mid - gap // 2, A4_LANDSCAPE[1] - margin),
-               "Barra fria - TEA 01-04 / Referencia", reference)
+               "Barra fria - TEA 01-04 / Referencia | Tienda: Montevideo DT | Campaña: Summer | Fecha: 21 ago 2026", reference)
     placement = draw_panel(canvas, (mid + gap // 2, margin, A4_LANDSCAPE[0] - margin, A4_LANDSCAPE[1] - margin),
-                           "Barra fria - TEA 01-04 / Acomodo real", evidence)
+                           "Barra fria - TEA 01-04 / Acomodo real | Tienda: Montevideo DT | Campaña: Summer | Fecha: 21 ago 2026", evidence)
     cut_line(ImageDraw.Draw(canvas), (mid, margin), (mid, A4_LANDSCAPE[1] - margin))
     return canvas, placement
 
@@ -194,6 +197,9 @@ def main() -> int:
         "vertical_photo_page": "landscape",
         "vertical_photo_width_gain": round(width_gain, 2),
         "warm_starbucks_palette": True,
+        "single_line_header": True,
+        "campaign_in_header": True,
+        "date_only": True,
         "horizontal_photo_placement_px": [horizontal_placement.width, horizontal_placement.height],
         "vertical_photo_placement_px": [vertical_placement.width, vertical_placement.height],
         "outputs": {key: str(value) for key, value in outputs.items()},

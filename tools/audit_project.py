@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+from html.parser import HTMLParser
 from pathlib import Path
 
 from PIL import Image
@@ -20,34 +22,96 @@ def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
 
 
+class IdAuditParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ids: list[str] = []
+        self.label_targets: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        if attributes.get("id"):
+            self.ids.append(str(attributes["id"]))
+        if tag == "label" and attributes.get("for"):
+            self.label_targets.append(str(attributes["for"]))
+
+
 if not (ROOT / "tools" / "audit_pdf_export.py").is_file():
     fail("falta el auditor de exportación PDF")
 app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-premium-v6";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v7";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
         fail(f"falta estrategia de actualización rápida: {marker}")
-for marker in ("evidenceMeta", "useLandscapePage", "setExportBusy", "waitForInterfacePaint", "PDF_COLORS", "pendingPhotoInputId"):
+for marker in (
+    "evidenceMeta",
+    "useLandscapePage",
+    "setExportBusy",
+    "waitForInterfacePaint",
+    "PDF_COLORS",
+    "pendingPhotoInputId",
+    "activeCampaignId",
+    "renderCampaignSelect",
+    "renderStationSelect",
+    "renderVariantSelect",
+    "stationDisplayLabel",
+):
     if marker not in app_source:
         fail(f"falta función premium de exportación: {marker}")
-for marker in ("captureGuidance", "photoOrientationDialog", "exportProgress", "exportCompleteDialog"):
+for marker in (
+    "campaignSelect",
+    "stationSelect",
+    "variantSelect",
+    "selectionSummary",
+    "captureGuidance",
+    "photoOrientationDialog",
+    "exportProgress",
+    "exportCompleteDialog",
+):
     if marker not in html_source:
         fail(f"falta interfaz ejecutiva: {marker}")
+for obsolete in ('id="stationNav"', 'id="variantRail"', 'class="variant-card"'):
+    if obsolete in html_source:
+        fail(f"interfaz redundante todavía visible: {obsolete}")
 for marker in (".capture-guidance", ".orientation-dialog", ".export-progress", ".completion-dialog"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
 
+parser = IdAuditParser()
+parser.feed(html_source)
+duplicate_ids = sorted({item for item in parser.ids if parser.ids.count(item) > 1})
+if duplicate_ids:
+    fail(f"IDs HTML duplicados: {duplicate_ids}")
+missing_label_targets = sorted(set(parser.label_targets) - set(parser.ids))
+if missing_label_targets:
+    fail(f"labels sin control asociado: {missing_label_targets}")
+js_required_ids = set(re.findall(r'\$\("([A-Za-z][A-Za-z0-9_-]*)"\)', app_source))
+missing_js_ids = sorted(js_required_ids - set(parser.ids))
+if missing_js_ids:
+    fail(f"app.js usa controles inexistentes: {missing_js_ids}")
+variant_select_source = app_source[
+    app_source.index("function renderVariantSelect") : app_source.index("function renderActive")
+]
+if "<img" in variant_select_source or "hydrateThumb" in app_source:
+    fail("el selector de referencia todavía repite miniaturas")
+if 'return `${current.label} _ ${current.subgroupLabels?.[subgroup] || subgroup}`;' not in app_source:
+    fail("la estación no diferencia el equipo con el formato Estación _ Equipo")
+
 
 catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+campaigns = catalog.get("campaigns", [])
 stations = catalog.get("stations", [])
 variants = [variant for station in stations for variant in station.get("variants", [])]
 technical = [item for station in stations for item in station.get("technical", [])]
 records = variants + technical
 
+expected_campaigns = ["WINTER", "SPRING", "SUMMER", "SUMMER II", "FALL", "XMAS"]
+if [item.get("id") for item in campaigns] != expected_campaigns:
+    fail("las campañas anuales no coinciden con Layout 1")
 if len(stations) != 7:
     fail(f"se esperaban 7 estaciones y se encontraron {len(stations)}")
 if len(variants) != 85 or len(technical) != 16 or len(records) != 101:
@@ -60,6 +124,18 @@ if len(variant_ids) != len(set(variant_ids)):
 paths = [item.get("image") for item in records]
 if len(paths) != len(set(paths)):
     fail("hay rutas de imagen duplicadas")
+
+required_equipment = {
+    "espresso": {"Mastrena I", "Mastrena II"},
+    "warming": {"Merrychef E2S", "TurboChef NGO"},
+}
+for station_id, expected in required_equipment.items():
+    current = next((item for item in stations if item.get("id") == station_id), None)
+    if not current:
+        fail(f"falta estación con equipos diferenciados: {station_id}")
+    actual = {item.get("subgroup") for item in current.get("variants", [])}
+    if actual != expected:
+        fail(f"equipos incorrectos en {station_id}: {sorted(actual)}")
 
 orders = [item.get("sourceOrder") for item in records]
 if sorted(orders) != list(range(1, 102)):
@@ -108,6 +184,7 @@ for name in UI_ASSETS:
 report = {
     "status": "ok",
     "stations": len(stations),
+    "campaigns": len(campaigns),
     "variants": len(variants),
     "technical": len(technical),
     "images": len(records),
@@ -120,6 +197,10 @@ report = {
         "warmStarbucksPalette": True,
         "optimizedUiAssets": len(UI_ASSETS),
         "fastCacheRefresh": True,
+        "stationEquipmentDropdown": True,
+        "referenceDropdown": True,
+        "thumbnailDuplicationRemoved": True,
+        "singleLinePdfHeader": True,
     },
     "lots": {
         lot.name: {

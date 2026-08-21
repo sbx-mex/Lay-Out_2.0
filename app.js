@@ -1,7 +1,7 @@
 "use strict";
 
 const DATA_URL = "data/layouts.json";
-const MEMORY_KEY = "layout20-state-v3";
+const MEMORY_KEY = "layout20-state-v4";
 const PDF_MARGIN = 6;
 const PDF_CUT_GAP = 2;
 const MAX_EVIDENCE_PX = 2200;
@@ -20,6 +20,7 @@ const PDF_COLORS = {
 const $ = id => document.getElementById(id);
 
 let catalog = null;
+let activeCampaignId = null;
 let activeStationId = null;
 let activeVariantId = null;
 let activeSubgroup = "all";
@@ -47,12 +48,22 @@ function station() {
   return catalog?.stations.find(item => item.id === activeStationId) || catalog?.stations[0];
 }
 
+function campaign() {
+  return catalog?.campaigns?.find(item => item.id === activeCampaignId) || catalog?.campaigns?.[0];
+}
+
+function stationGroups(current = station()) {
+  return [...new Set((current?.variants || []).map(item => item.subgroup))];
+}
+
+function defaultSubgroup(current = station()) {
+  return stationGroups(current)[0] || "all";
+}
+
 function stationVariants() {
   const current = station();
   if (!current) return [];
-  return activeSubgroup === "all"
-    ? current.variants
-    : current.variants.filter(item => item.subgroup === activeSubgroup);
+  return current.variants.filter(item => item.subgroup === activeSubgroup);
 }
 
 function activeVariant() {
@@ -63,6 +74,21 @@ function activeVariant() {
 function allVariants() {
   if (!catalog) return [];
   return catalog.stations.flatMap(current => current.variants.map(variant => ({ station: current, variant })));
+}
+
+function stationChoiceValue(stationId = activeStationId, subgroup = activeSubgroup) {
+  return `${stationId}::${subgroup}`;
+}
+
+function stationDisplayLabel(current = station(), subgroup = activeSubgroup) {
+  if (!current) return "Estación";
+  const groups = stationGroups(current);
+  if (groups.length < 2) return current.label;
+  return `${current.label} _ ${current.subgroupLabels?.[subgroup] || subgroup}`;
+}
+
+function stationChoiceCount() {
+  return (catalog?.stations || []).reduce((total, current) => total + Math.max(1, stationGroups(current).length), 0);
 }
 
 function clamp(value, min, max) {
@@ -87,7 +113,9 @@ function announce(message) {
 
 function saveState() {
   const state = {
+    campaign: activeCampaignId,
     station: activeStationId,
+    subgroup: activeSubgroup,
     variant: activeVariantId,
     store: $("storeName").value.trim(),
     notes: $("notes").value
@@ -202,15 +230,6 @@ async function optimizeImageForDisplay(source, options = {}) {
   return result;
 }
 
-async function hydrateThumb(imageNode, source) {
-  try {
-    const optimized = await optimizeImageForDisplay(source, { targetWidth: 520, padding: 0.07 });
-    imageNode.src = optimized.url;
-  } catch {
-    imageNode.src = source;
-  }
-}
-
 async function applyActiveVisual(item, ticket) {
   try {
     setStageProcessing(true);
@@ -237,65 +256,72 @@ async function loadCatalog() {
   const response = await fetch(DATA_URL, { cache: "no-store" });
   if (!response.ok) throw new Error("No se pudo cargar el catálogo de estaciones.");
   catalog = await response.json();
+  if (!Array.isArray(catalog.campaigns) || !catalog.campaigns.length) throw new Error("El catálogo no contiene campañas válidas.");
   if (!Array.isArray(catalog.stations) || !catalog.stations.length) throw new Error("El catálogo no contiene estaciones válidas.");
 
   const saved = loadState();
+  activeCampaignId = catalog.campaigns.some(item => item.id === saved.campaign) ? saved.campaign : catalog.campaigns[0].id;
   activeStationId = catalog.stations.some(item => item.id === saved.station) ? saved.station : catalog.stations[0].id;
   $("storeName").value = saved.store || "";
   $("notes").value = saved.notes || "";
 
   const current = station();
+  activeSubgroup = stationGroups(current).includes(saved.subgroup) ? saved.subgroup : defaultSubgroup(current);
   const savedVariant = current.variants.find(item => item.id === saved.variant || item.code === saved.code);
-  activeVariantId = savedVariant?.id || current.variants[0].id;
-  $("catalogSummary").textContent = `${catalog.stations.length} estaciones · ${allVariants().length} configuraciones`;
+  activeVariantId = savedVariant?.subgroup === activeSubgroup ? savedVariant.id : stationVariants()[0].id;
+  $("catalogSummary").textContent = `${catalog.stations.length} estaciones · ${stationChoiceCount()} rutas de equipo · ${allVariants().length} configuraciones`;
   renderAll();
 }
 
 function renderAll() {
-  renderStationNav();
+  renderCampaignSelect();
+  renderStationSelect();
   renderStation();
   renderComparison();
+  renderSelectionSummary();
   updateCompletion();
   saveState();
 }
 
-function renderStationNav() {
-  const nav = $("stationNav");
-  nav.innerHTML = "";
-  catalog.stations.forEach((item, index) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "station-tab";
-    button.setAttribute("role", "tab");
-    button.setAttribute("aria-selected", String(item.id === activeStationId));
-    button.dataset.stationId = item.id;
-    button.innerHTML = `<span aria-hidden="true">${item.icon}</span><strong></strong><small></small>`;
-    button.querySelector("strong").textContent = item.label;
-    button.querySelector("small").textContent = `${item.variants.length} opciones`;
-    button.addEventListener("click", () => selectStation(item.id));
-    button.addEventListener("keydown", event => navigateStationTabs(event, index));
-    nav.appendChild(button);
+function renderCampaignSelect() {
+  const select = $("campaignSelect");
+  select.innerHTML = "";
+  catalog.campaigns.forEach(item => {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = `${item.label} ${item.icon}`;
+    select.appendChild(option);
   });
+  select.value = activeCampaignId;
 }
 
-function navigateStationTabs(event, index) {
-  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-  event.preventDefault();
-  const total = catalog.stations.length;
-  let target = index;
-  if (event.key === "ArrowLeft") target = (index - 1 + total) % total;
-  if (event.key === "ArrowRight") target = (index + 1) % total;
-  if (event.key === "Home") target = 0;
-  if (event.key === "End") target = total - 1;
-  selectStation(catalog.stations[target].id, false);
-  requestAnimationFrame(() => $("stationNav").querySelector(`[data-station-id="${catalog.stations[target].id}"]`)?.focus());
+function renderStationSelect() {
+  const select = $("stationSelect");
+  select.innerHTML = "";
+  catalog.stations.forEach(current => {
+    const group = document.createElement("optgroup");
+    group.label = `${current.icon} ${current.label}`;
+    stationGroups(current).forEach(subgroup => {
+      const option = document.createElement("option");
+      option.value = stationChoiceValue(current.id, subgroup);
+      const label = stationDisplayLabel(current, subgroup);
+      const count = current.variants.filter(item => item.subgroup === subgroup).length;
+      option.textContent = `${label} · ${count} opciones`;
+      group.appendChild(option);
+    });
+    select.appendChild(group);
+  });
+  select.value = stationChoiceValue();
 }
 
-function selectStation(id, scroll = true) {
-  activeStationId = id;
-  activeSubgroup = "all";
+function selectStationChoice(value, scroll = true) {
+  const [stationId, subgroup] = String(value).split("::");
+  const nextStation = catalog.stations.find(item => item.id === stationId);
+  if (!nextStation || !stationGroups(nextStation).includes(subgroup)) return;
+  activeStationId = nextStation.id;
+  activeSubgroup = subgroup;
   const current = station();
-  activeVariantId = current.variants[0].id;
+  activeVariantId = stationVariants()[0].id;
   $("searchInput").value = "";
   closeSearchResults();
   renderAll();
@@ -313,73 +339,38 @@ function variantContext(item) {
 
 function renderStation() {
   const current = station();
-  $("stationShort").textContent = current.short;
-  $("stationLabel").textContent = current.label;
+  $("stationShort").textContent = "Estación _ Equipo";
+  $("stationLabel").textContent = stationDisplayLabel();
   $("stationDescription").textContent = current.description;
   $("stationTranslation").textContent = current.translation;
   $("stationTips").innerHTML = current.tips.map(tip => `<li>${tip}</li>`).join("");
 
-  const groups = [...new Set(current.variants.map(item => item.subgroup))];
-  const bar = $("subgroupBar");
-  bar.innerHTML = "";
-  if (groups.length > 1) {
-    bar.classList.remove("hidden");
-    [{ id: "all", label: "Todas" }, ...groups.map(group => ({ id: group, label: subgroupLabel(group) }))].forEach(group => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `subgroup-chip${activeSubgroup === group.id ? " active" : ""}`;
-      button.textContent = group.label;
-      button.addEventListener("click", () => {
-        activeSubgroup = group.id;
-        const list = stationVariants();
-        if (list.length && !list.some(item => item.id === activeVariantId)) activeVariantId = list[0].id;
-        renderStation();
-        renderComparison();
-        saveState();
-      });
-      bar.appendChild(button);
-    });
-  } else {
-    bar.classList.add("hidden");
-  }
-
   renderTechnical(current);
-  renderVariants();
+  renderVariantSelect();
   renderActive();
 }
 
-function renderVariants() {
-  const rail = $("variantRail");
-  rail.innerHTML = "";
+function renderVariantSelect() {
+  const select = $("variantSelect");
+  select.innerHTML = "";
   const list = stationVariants();
   if (!list.length) {
-    rail.innerHTML = '<p class="metric">No hay referencias disponibles en esta familia.</p>';
+    const option = document.createElement("option");
+    option.textContent = "Sin referencias disponibles";
+    select.appendChild(option);
+    select.disabled = true;
     return;
   }
+  select.disabled = false;
   if (!list.some(item => item.id === activeVariantId)) activeVariantId = list[0].id;
-
-  list.forEach(item => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "variant-card";
-    button.setAttribute("role", "option");
-    button.setAttribute("aria-selected", String(item.id === activeVariantId));
-    button.innerHTML = '<img alt=""><strong></strong><small></small>';
-    const imageNode = button.querySelector("img");
-    imageNode.src = item.thumb;
-    imageNode.alt = `Miniatura de ${item.code}`;
-    hydrateThumb(imageNode, item.thumb || item.image);
-    button.querySelector("strong").textContent = item.code;
-    button.querySelector("small").textContent = variantContext(item);
-    button.addEventListener("click", () => {
-      activeVariantId = item.id;
-      renderActive();
-      renderVariants();
-      renderComparison();
-      saveState();
-    });
-    rail.appendChild(button);
+  list.forEach((item, index) => {
+    const option = document.createElement("option");
+    option.value = item.id;
+    option.textContent = `${String(index + 1).padStart(2, "0")} · ${item.code}`;
+    select.appendChild(option);
   });
+  select.value = activeVariantId;
+  $("variantPosition").textContent = `${list.findIndex(item => item.id === activeVariantId) + 1} de ${list.length} · Desliza la imagen o usa las flechas.`;
 }
 
 function renderActive() {
@@ -405,9 +396,16 @@ function shiftVariant(delta) {
   index = (index + delta + list.length) % list.length;
   activeVariantId = list[index].id;
   renderActive();
-  renderVariants();
+  renderVariantSelect();
   renderComparison();
+  renderSelectionSummary();
   saveState();
+}
+
+function renderSelectionSummary() {
+  const currentCampaign = campaign();
+  const item = activeVariant();
+  $("selectionSummary").textContent = `${currentCampaign?.icon || ""} ${currentCampaign?.label || "Sin campaña"} · ${stationDisplayLabel()} · ${item?.code || "Sin referencia"}`;
 }
 
 function renderTechnical(current) {
@@ -640,7 +638,7 @@ function closeSearchResults() {
 
 function selectSearchResult(itemStation, variant) {
   activeStationId = itemStation.id;
-  activeSubgroup = itemStation.variants.some(item => item.subgroup === variant.subgroup) ? variant.subgroup : "all";
+  activeSubgroup = itemStation.variants.some(item => item.subgroup === variant.subgroup) ? variant.subgroup : defaultSubgroup(itemStation);
   activeVariantId = variant.id;
   $("searchInput").value = variant.code;
   closeSearchResults();
@@ -701,12 +699,20 @@ function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
   pdf.addImage(source, pdfImageFormat(source), imageX, imageY, imageWidth, imageHeight, alias, "FAST");
 }
 
-function drawPdfHalf(pdf, section, stationLabel, code, store, date, source, x, y, width, height, alias) {
+function fitPdfFontSize(pdf, value, maxWidth, preferred = 7.4, minimum = 5.2) {
+  let size = preferred;
+  pdf.setFontSize(size);
+  while (size > minimum && pdf.getTextWidth(value) > maxWidth) {
+    size = Math.max(minimum, size - 0.2);
+    pdf.setFontSize(size);
+  }
+  return size;
+}
+
+function drawPdfHalf(pdf, section, stationLabel, code, store, campaignLabel, date, source, x, y, width, height, alias) {
   const padding = 2;
   const headerHeight = 11;
-  const leftLabel = `${stationLabel} - ${code} / ${section}`;
-  const rightLabel = `Tienda: ${store}  |  Fecha: ${date}`;
-  const rightWidth = Math.min(84, Math.max(58, width * 0.42));
+  const headerLabel = `${stationLabel} - ${code} / ${section} | Tienda: ${store} | Campaña: ${campaignLabel} | Fecha: ${date}`;
 
   pdf.setFillColor(...PDF_COLORS.panel);
   pdf.setDrawColor(...PDF_COLORS.line);
@@ -715,13 +721,9 @@ function drawPdfHalf(pdf, section, stationLabel, code, store, date, source, x, y
   pdf.setFillColor(...PDF_COLORS.green);
   pdf.rect(x, y, width, 1.2, "F");
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8.2);
   pdf.setTextColor(...PDF_COLORS.greenDark);
-  pdf.text(fitPdfText(pdf, leftLabel, width - rightWidth - padding * 3), x + padding, y + 7.2);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7.2);
-  pdf.setTextColor(...PDF_COLORS.muted);
-  pdf.text(fitPdfText(pdf, rightLabel, rightWidth), x + width - padding, y + 7.2, { align: "right" });
+  fitPdfFontSize(pdf, headerLabel, width - padding * 2);
+  pdf.text(fitPdfText(pdf, headerLabel, width - padding * 2), x + padding, y + 7.2);
   pdf.setDrawColor(...PDF_COLORS.green);
   pdf.setLineWidth(0.35);
   pdf.line(x + padding, y + headerHeight, x + width - padding, y + headerHeight);
@@ -732,6 +734,7 @@ async function buildLayoutExportDocument() {
   if (!window.jspdf?.jsPDF) throw new Error("El generador PDF local no está disponible. Actualiza la aplicación e intenta nuevamente.");
   const current = station();
   const variant = activeVariant();
+  const currentCampaign = campaign();
   const store = $("storeName").value.trim() || "Tienda sin definir";
   const referenceSource = activeReferenceDisplayUrl || await pdfImageSource(variant.image);
   const evidenceSource = evidenceDataUrl;
@@ -743,7 +746,7 @@ async function buildLayoutExportDocument() {
   const m = PDF_MARGIN;
 
   pdf.setProperties({
-    title: `${current.label} - ${variant.code} - ${store}`,
+    title: `${stationDisplayLabel()} - ${variant.code} - ${currentCampaign.label} - ${store}`,
     subject: "Comparativo de referencia y acomodo real",
     author: "Guía de acomodo operativo",
     creator: "Guía de acomodo operativo"
@@ -757,16 +760,16 @@ async function buildLayoutExportDocument() {
     const halfWidth = usableWidth / 2;
     const secondX = m + halfWidth + PDF_CUT_GAP;
     const sectionHeight = H - m * 2;
-    drawPdfHalf(pdf, "Referencia", current.label, variant.code, store, date, referenceSource, m, m, halfWidth, sectionHeight, "layout-reference");
-    drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, secondX, m, halfWidth, sectionHeight, "layout-evidence");
+    drawPdfHalf(pdf, "Referencia", stationDisplayLabel(), variant.code, store, currentCampaign.label, date, referenceSource, m, m, halfWidth, sectionHeight, "layout-reference");
+    drawPdfHalf(pdf, "Acomodo real", stationDisplayLabel(), variant.code, store, currentCampaign.label, date, evidenceSource, secondX, m, halfWidth, sectionHeight, "layout-evidence");
     cutLine = [W / 2, m, W / 2, H - m];
   } else {
     const usableHeight = H - m * 2 - PDF_CUT_GAP;
     const halfHeight = usableHeight / 2;
     const secondY = m + halfHeight + PDF_CUT_GAP;
     const sectionWidth = W - m * 2;
-    drawPdfHalf(pdf, "Referencia", current.label, variant.code, store, date, referenceSource, m, m, sectionWidth, halfHeight, "layout-reference");
-    drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, m, secondY, sectionWidth, halfHeight, "layout-evidence");
+    drawPdfHalf(pdf, "Referencia", stationDisplayLabel(), variant.code, store, currentCampaign.label, date, referenceSource, m, m, sectionWidth, halfHeight, "layout-reference");
+    drawPdfHalf(pdf, "Acomodo real", stationDisplayLabel(), variant.code, store, currentCampaign.label, date, evidenceSource, m, secondY, sectionWidth, halfHeight, "layout-evidence");
     cutLine = [m, H / 2, W - m, H / 2];
   }
   pdf.setDrawColor(...PDF_COLORS.gold);
@@ -776,7 +779,7 @@ async function buildLayoutExportDocument() {
   pdf.setLineDashPattern([], 0);
 
   if (pdf.internal.getNumberOfPages() !== 1) throw new Error("La validación impidió una exportación de más de una página.");
-  return { pdf, filename: `${cleanFilename(current.label)}_${cleanFilename(variant.code)}_${cleanFilename(store)}.pdf`, pageOrientation };
+  return { pdf, filename: `${cleanFilename(stationDisplayLabel())}_${cleanFilename(variant.code)}_${cleanFilename(currentCampaign.label)}_${cleanFilename(store)}.pdf`, pageOrientation };
 }
 
 function setExportBusy(state) {
@@ -907,6 +910,20 @@ function bindMediaDialog() {
 }
 
 function bind() {
+  $("campaignSelect").addEventListener("change", event => {
+    activeCampaignId = event.target.value;
+    renderSelectionSummary();
+    saveState();
+  });
+  $("stationSelect").addEventListener("change", event => selectStationChoice(event.target.value));
+  $("variantSelect").addEventListener("change", event => {
+    activeVariantId = event.target.value;
+    renderVariantSelect();
+    renderActive();
+    renderComparison();
+    renderSelectionSummary();
+    saveState();
+  });
   $("prevButton").addEventListener("click", () => shiftVariant(-1));
   $("nextButton").addEventListener("click", () => shiftVariant(1));
   $("zoomReference").addEventListener("click", openReference);
@@ -995,8 +1012,9 @@ function bind() {
     $("storeName").value = "";
     $("searchInput").value = "";
     $("notes").value = "";
+    activeCampaignId = catalog.campaigns[0].id;
     activeStationId = catalog.stations[0].id;
-    activeSubgroup = "all";
+    activeSubgroup = defaultSubgroup(catalog.stations[0]);
     activeVariantId = catalog.stations[0].variants[0].id;
     clearEvidence();
     closeSearchResults();

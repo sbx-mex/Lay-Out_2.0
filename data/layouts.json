@@ -4,6 +4,14 @@
   "language": "es-MX",
   "updated": "2026-08-21",
   "sourceNote": "Orden basado en Station Layout Guides - Orden. Imágenes exclusivamente de Lay Out 2.0 Nuevas Imagenes.",
+  "campaigns": [
+    { "id": "WINTER", "label": "Winter", "icon": "❄️" },
+    { "id": "SPRING", "label": "Spring", "icon": "🌸" },
+    { "id": "SUMMER", "label": "Summer", "icon": "☀️" },
+    { "id": "SUMMER II", "label": "Summer II", "icon": "🏖️" },
+    { "id": "FALL", "label": "Fall", "icon": "🍂" },
+    { "id": "XMAS", "label": "Christmas", "icon": "🎄" }
+  ],
   "stations": [
     {
       "id": "brewing",
