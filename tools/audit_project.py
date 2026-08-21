@@ -18,6 +18,12 @@ def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
 
 
+if not (ROOT / "tools" / "audit_pdf_export.py").is_file():
+    fail("falta el auditor de exportación PDF")
+if 'const CACHE = "layout-2-remaster-v4";' not in (ROOT / "sw.js").read_text(encoding="utf-8"):
+    fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
+
+
 catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
 stations = catalog.get("stations", [])
 variants = [variant for station in stations for variant in station.get("variants", [])]

@@ -2,7 +2,8 @@
 
 const DATA_URL = "data/layouts.json";
 const MEMORY_KEY = "layout20-state-v3";
-const PDF_MARGIN = 12;
+const PDF_MARGIN = 6;
+const PDF_CUT_GAP = 2;
 const MAX_EVIDENCE_PX = 2200;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
 const IMAGE_BG_THRESHOLD = 242;
@@ -655,44 +656,28 @@ function drawPdfImageContain(pdf, source, x, y, width, height, alias) {
   pdf.addImage(source, pdfImageFormat(source), imageX, imageY, imageWidth, imageHeight, alias, "FAST");
 }
 
-function drawPdfCard(pdf, eyebrow, title, source, x, y, width, height, alias) {
-  pdf.setDrawColor(190, 216, 204);
-  pdf.setLineWidth(0.35);
-  pdf.roundedRect(x, y, width, height, 3, 3, "S");
-  pdf.setTextColor(0, 98, 65);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(7.5);
-  pdf.text(eyebrow.toUpperCase(), x + 4, y + 6);
-  pdf.setTextColor(28, 51, 44);
-  pdf.setFontSize(12.5);
-  pdf.text(fitPdfText(pdf, title, width - 8), x + 4, y + 12);
-  pdf.setDrawColor(0, 98, 65);
-  pdf.line(x + 4, y + 15, x + width - 4, y + 15);
-  drawPdfImageContain(pdf, source, x + 4, y + 18, width - 8, height - 22, alias);
-}
+function drawPdfHalf(pdf, section, stationLabel, code, store, date, source, x, y, width, height, alias) {
+  const padding = 2;
+  const headerHeight = 10;
+  const leftLabel = `${stationLabel} · ${code} / ${section}`;
+  const rightLabel = `Tienda: ${store}  |  Fecha: ${date}`;
+  const rightWidth = Math.min(84, Math.max(58, width * 0.42));
 
-function pdfGeometry(pdf, evidenceSource) {
-  const top = 34;
-  const bottom = 257;
-  const gap = 5;
-  let referenceHeight = 96;
-  let orientation = "sin-evidencia";
-  if (evidenceSource) {
-    const properties = pdf.getImageProperties(evidenceSource);
-    const ratio = properties.width / properties.height;
-    if (ratio >= 1.2) {
-      referenceHeight = 104;
-      orientation = "horizontal";
-    } else if (ratio <= 0.82) {
-      referenceHeight = 82;
-      orientation = "vertical";
-    } else {
-      referenceHeight = 92;
-      orientation = "cuadrada";
-    }
-  }
-  const evidenceY = top + referenceHeight + gap;
-  return { referenceHeight, evidenceY, evidenceHeight: bottom - evidenceY, orientation };
+  pdf.setDrawColor(190, 216, 204);
+  pdf.setLineWidth(0.3);
+  pdf.rect(x, y, width, height, "S");
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(8.2);
+  pdf.setTextColor(0, 98, 65);
+  pdf.text(fitPdfText(pdf, leftLabel, width - rightWidth - padding * 3), x + padding, y + 6.4);
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7.2);
+  pdf.setTextColor(54, 76, 68);
+  pdf.text(fitPdfText(pdf, rightLabel, rightWidth), x + width - padding, y + 6.4, { align: "right" });
+  pdf.setDrawColor(0, 98, 65);
+  pdf.setLineWidth(0.35);
+  pdf.line(x + padding, y + headerHeight, x + width - padding, y + headerHeight);
+  drawPdfImageContain(pdf, source, x + 1, y + headerHeight + 1, width - 2, height - headerHeight - 2, alias);
 }
 
 async function buildLayoutExportDocument() {
@@ -700,7 +685,6 @@ async function buildLayoutExportDocument() {
   const current = station();
   const variant = activeVariant();
   const store = $("storeName").value.trim() || "Tienda sin definir";
-  const notes = $("notes").value.trim();
   const referenceSource = activeReferenceDisplayUrl || await pdfImageSource(variant.image);
   const evidenceSource = evidenceDataUrl;
   const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true, putOnlyUsedFonts: true });
@@ -709,64 +693,27 @@ async function buildLayoutExportDocument() {
   const m = PDF_MARGIN;
 
   pdf.setProperties({
-    title: `Lay Out 2.0 - ${variant.code} - ${store}`,
+    title: `${current.label} - ${variant.code} - ${store}`,
     subject: "Comparativo de referencia y acomodo real",
-    author: "Lay Out 2.0",
-    creator: "Lay Out 2.0"
+    author: "Guía de acomodo operativo",
+    creator: "Guía de acomodo operativo"
   });
+  const date = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date());
+  const usableHeight = H - m * 2 - PDF_CUT_GAP;
+  const halfHeight = usableHeight / 2;
+  const secondY = m + halfHeight + PDF_CUT_GAP;
+  const sectionWidth = W - m * 2;
+  drawPdfHalf(pdf, "Referencia", current.label, variant.code, store, date, referenceSource, m, m, sectionWidth, halfHeight, "layout-reference");
+  drawPdfHalf(pdf, "Acomodo real", current.label, variant.code, store, date, evidenceSource, m, secondY, sectionWidth, halfHeight, "layout-evidence");
 
-  pdf.setTextColor(0, 98, 65);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8.5);
-  pdf.text("LAY OUT 2.0", m, 11);
-  pdf.setFontSize(18);
-  pdf.text(`${current.label} · ${variant.code}`, m, 19);
-  pdf.setTextColor(70, 91, 83);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8.5);
-  pdf.text(fitPdfText(pdf, current.description, 128), m, 25);
-  pdf.setTextColor(0, 98, 65);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8.5);
-  pdf.text("STARBUCKS", W - m, 11, { align: "right" });
-  pdf.setTextColor(70, 91, 83);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7.5);
-  pdf.text(fitPdfText(pdf, store, 48), W - m, 18, { align: "right" });
-  pdf.text(new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date()), W - m, 24, { align: "right" });
-  pdf.setDrawColor(0, 98, 65);
-  pdf.setLineWidth(0.7);
-  pdf.line(m, 29, W - m, 29);
-
-  const geometry = pdfGeometry(pdf, evidenceSource);
-  drawPdfCard(pdf, "Referencia", variant.code, referenceSource, m, 34, W - m * 2, geometry.referenceHeight, "layout-reference");
-  drawPdfCard(pdf, "Acomodo real", variant.code, evidenceSource, m, geometry.evidenceY, W - m * 2, geometry.evidenceHeight, `layout-evidence-${geometry.orientation}`);
-
-  pdf.setDrawColor(210, 223, 217);
+  pdf.setDrawColor(130, 145, 139);
+  pdf.setLineDashPattern([2, 1.5], 0);
   pdf.setLineWidth(0.25);
-  pdf.line(m, 262, W - m, 262);
-  pdf.setTextColor(0, 98, 65);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(7.5);
-  pdf.text("NOTAS", m, 268);
-  pdf.setTextColor(60, 76, 70);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7.2);
-  const noteLines = pdf.splitTextToSize(notes || "Sin notas.", W - m * 2).slice(0, 2);
-  pdf.text(noteLines, m, 273, { lineHeightFactor: 1.25 });
-
-  pdf.setDrawColor(210, 223, 217);
-  pdf.line(m, H - 12, W - m, H - 12);
-  pdf.setTextColor(0, 98, 65);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(7);
-  pdf.text("Lay Out 2.0", m, H - 7);
-  pdf.setTextColor(90, 108, 101);
-  pdf.setFont("helvetica", "normal");
-  pdf.text(`Una página A4 · margen seguro ${PDF_MARGIN} mm`, W - m, H - 7, { align: "right" });
+  pdf.line(m, H / 2, W - m, H / 2);
+  pdf.setLineDashPattern([], 0);
 
   if (pdf.internal.getNumberOfPages() !== 1) throw new Error("La validación impidió una exportación de más de una página.");
-  return { pdf, filename: `Layout_2.0_${cleanFilename(variant.code)}_${cleanFilename(store)}.pdf` };
+  return { pdf, filename: `${cleanFilename(current.label)}_${cleanFilename(variant.code)}_${cleanFilename(store)}.pdf` };
 }
 
 async function exportPdf() {
