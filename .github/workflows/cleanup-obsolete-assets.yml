@@ -1,0 +1,28 @@
+name: Borrar imágenes obsoletas
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/cleanup_assets.py --apply
+      - name: Publicar limpieza
+        run: |
+          if git diff --quiet; then
+            echo "No hay imágenes obsoletas."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- assets/layouts
+          git commit -m "chore: borrar imágenes obsoletas"
+          git push

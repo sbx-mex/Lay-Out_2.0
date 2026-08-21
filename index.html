@@ -38,21 +38,19 @@
     <section class="hero">
       <div class="hero__copy">
         <span class="eyebrow">Starbucks Layouts · Herramienta operativa · Uso interno</span>
-        <h1>Encuentra la estación correcta, amplía la referencia y compara con claridad.</h1>
-        <p>Esta versión 2.0 remasterizada da prioridad a la visibilidad: referencias más amplias, zoom intuitivo, evidencia real más clara y una lectura más digerible en español.</p>
+        <h1>Encuentra tu estación.</h1>
+        <p>Filtra el equipo, compara el acomodo y documenta.</p>
         <div class="hero__meta">
           <span id="catalogSummary" class="metric">Cargando catálogo…</span>
-          <span class="metric">PDF A4 vertical · margen seguro de 12 mm</span>
-          <span class="metric">Zoom inteligente · recorte visual adaptativo</span>
+          <span class="metric">101 referencias nuevas</span>
+          <span class="metric">PDF A4</span>
         </div>
       </div>
       <div class="hero__card" aria-label="Flujo recomendado">
         <span class="eyebrow">Ruta rápida</span>
-        <strong>1. Busca o elige estación</strong>
-        <strong>2. Selecciona el código</strong>
-        <strong>3. Amplía la referencia</strong>
-        <strong>4. Agrega evidencia real</strong>
-        <strong>5. Exporta una hoja clara</strong>
+        <strong>1. Elige estación</strong>
+        <strong>2. Filtra equipo</strong>
+        <strong>3. Compara y exporta</strong>
       </div>
     </section>
 
@@ -67,8 +65,8 @@
       <div class="context__grid">
         <label class="field"><span>Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
         <div class="field search-field">
-          <label for="searchInput"><span>Buscar código en todas las estaciones</span></label>
-          <input id="searchInput" autocomplete="off" placeholder="Ej. ESP 03-02" aria-controls="searchResults" aria-expanded="false">
+          <label for="searchInput"><span>Buscar estación, equipo o código</span></label>
+          <input id="searchInput" autocomplete="off" placeholder="Ej. Mastrena II, Merrychef o ESP 03-02" aria-controls="searchResults" aria-expanded="false">
           <div id="searchResults" class="search-results hidden" role="listbox" aria-label="Resultados de búsqueda"></div>
         </div>
       </div>
@@ -108,8 +106,7 @@
             <figcaption id="sourceCaption">Selecciona una referencia.</figcaption>
           </figure>
           <div class="viewer-helper-row" aria-hidden="true">
-            <span class="helper-pill">Vista amplia y adaptativa</span>
-            <span class="helper-pill">Zoom disponible</span>
+            <span class="helper-pill">Toca para ampliar</span>
             <span class="helper-pill">Desliza para cambiar</span>
           </div>
           <div id="variantRail" class="variant-rail" role="listbox" aria-label="Opciones de Lay Out"></div>
@@ -120,7 +117,7 @@
           <ul id="stationTips"></ul>
           <div class="technical-block">
             <strong>Vistas técnicas</strong>
-            <p>Ábrelas solo cuando ayuden a confirmar piezas, ingredientes, equipo o utensilios.</p>
+            <p>Equipo, utensilios e ingredientes.</p>
             <div id="technicalButtons" class="technical-buttons"></div>
           </div>
         </aside>

@@ -1,7 +1,7 @@
 "use strict";
 
 const DATA_URL = "data/layouts.json";
-const MEMORY_KEY = "layout20-state-v2";
+const MEMORY_KEY = "layout20-state-v3";
 const PDF_MARGIN = 12;
 const MAX_EVIDENCE_PX = 2200;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
@@ -10,7 +10,7 @@ const $ = id => document.getElementById(id);
 
 let catalog = null;
 let activeStationId = null;
-let activeCode = null;
+let activeVariantId = null;
 let activeSubgroup = "all";
 let deferredInstall = null;
 let evidenceDataUrl = null;
@@ -43,7 +43,7 @@ function stationVariants() {
 
 function activeVariant() {
   const current = station();
-  return current?.variants.find(item => item.code === activeCode) || stationVariants()[0] || current?.variants[0];
+  return current?.variants.find(item => item.id === activeVariantId) || stationVariants()[0] || current?.variants[0];
 }
 
 function allVariants() {
@@ -74,7 +74,7 @@ function announce(message) {
 function saveState() {
   const state = {
     station: activeStationId,
-    code: activeCode,
+    variant: activeVariantId,
     store: $("storeName").value.trim(),
     notes: $("notes").value
   };
@@ -206,14 +206,14 @@ async function applyActiveVisual(item, ticket) {
     $("referenceImage").src = optimized.url;
     $("compareReference").src = optimized.url;
     $("referenceDialogImage").src = optimized.url;
-    $("sourceCaption").textContent = `Código original ${item.code} · Vista optimizada con recorte inteligente · Toca la imagen para ampliar.`;
+    $("sourceCaption").textContent = `${variantContext(item)} · ${item.code} · Toca para ampliar.`;
   } catch {
     if (ticket !== renderTicket) return;
     activeReferenceDisplayUrl = item.image;
     $("referenceImage").src = item.image;
     $("compareReference").src = item.image;
     $("referenceDialogImage").src = item.image;
-    $("sourceCaption").textContent = `Código original ${item.code} · Referencia lista para comparación.`;
+    $("sourceCaption").textContent = `${variantContext(item)} · ${item.code} · Lista para comparar.`;
   } finally {
     if (ticket === renderTicket) setStageProcessing(false);
   }
@@ -231,7 +231,8 @@ async function loadCatalog() {
   $("notes").value = saved.notes || "";
 
   const current = station();
-  activeCode = current.variants.some(item => item.code === saved.code) ? saved.code : current.variants[0].code;
+  const savedVariant = current.variants.find(item => item.id === saved.variant || item.code === saved.code);
+  activeVariantId = savedVariant?.id || current.variants[0].id;
   $("catalogSummary").textContent = `${catalog.stations.length} estaciones · ${allVariants().length} configuraciones`;
   renderAll();
 }
@@ -280,7 +281,7 @@ function selectStation(id, scroll = true) {
   activeStationId = id;
   activeSubgroup = "all";
   const current = station();
-  activeCode = current.variants[0].code;
+  activeVariantId = current.variants[0].id;
   $("searchInput").value = "";
   closeSearchResults();
   renderAll();
@@ -290,6 +291,10 @@ function selectStation(id, scroll = true) {
 function subgroupLabel(group) {
   const current = station();
   return current.subgroupLabels?.[group] || group;
+}
+
+function variantContext(item) {
+  return item.equipment || subgroupLabel(item.subgroup);
 }
 
 function renderStation() {
@@ -313,7 +318,7 @@ function renderStation() {
       button.addEventListener("click", () => {
         activeSubgroup = group.id;
         const list = stationVariants();
-        if (list.length && !list.some(item => item.code === activeCode)) activeCode = list[0].code;
+        if (list.length && !list.some(item => item.id === activeVariantId)) activeVariantId = list[0].id;
         renderStation();
         renderComparison();
         saveState();
@@ -337,23 +342,23 @@ function renderVariants() {
     rail.innerHTML = '<p class="metric">No hay referencias disponibles en esta familia.</p>';
     return;
   }
-  if (!list.some(item => item.code === activeCode)) activeCode = list[0].code;
+  if (!list.some(item => item.id === activeVariantId)) activeVariantId = list[0].id;
 
   list.forEach(item => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "variant-card";
     button.setAttribute("role", "option");
-    button.setAttribute("aria-selected", String(item.code === activeCode));
+    button.setAttribute("aria-selected", String(item.id === activeVariantId));
     button.innerHTML = '<img alt=""><strong></strong><small></small>';
     const imageNode = button.querySelector("img");
     imageNode.src = item.thumb;
     imageNode.alt = `Miniatura de ${item.code}`;
     hydrateThumb(imageNode, item.thumb || item.image);
     button.querySelector("strong").textContent = item.code;
-    button.querySelector("small").textContent = subgroupLabel(item.subgroup);
+    button.querySelector("small").textContent = variantContext(item);
     button.addEventListener("click", () => {
-      activeCode = item.code;
+      activeVariantId = item.id;
       renderActive();
       renderVariants();
       renderComparison();
@@ -366,12 +371,12 @@ function renderVariants() {
 function renderActive() {
   const item = activeVariant();
   if (!item) return;
-  activeCode = item.code;
+  activeVariantId = item.id;
   $("activeCode").textContent = item.code;
   $("referenceImage").src = item.image;
   $("referenceImage").alt = `Referencia ${item.code} de ${station().label}`;
-  $("sourceCaption").textContent = `Código original ${item.code} · Preparando vista optimizada…`;
-  $("referenceDialogTitle").textContent = `${station().label} · ${item.code}`;
+  $("sourceCaption").textContent = `${variantContext(item)} · ${item.code} · Preparando vista…`;
+  $("referenceDialogTitle").textContent = `${variantContext(item)} · ${item.code}`;
   $("referenceDialogImage").src = item.image;
   renderTicket += 1;
   const ticket = renderTicket;
@@ -382,9 +387,9 @@ function renderActive() {
 function shiftVariant(delta) {
   const list = stationVariants();
   if (!list.length) return;
-  let index = list.findIndex(item => item.code === activeCode);
+  let index = list.findIndex(item => item.id === activeVariantId);
   index = (index + delta + list.length) % list.length;
-  activeCode = list[index].code;
+  activeVariantId = list[index].id;
   renderActive();
   renderVariants();
   renderComparison();
@@ -395,9 +400,7 @@ function renderTechnical(current) {
   const box = $("technicalButtons");
   box.innerHTML = "";
   let items = current.technical || [];
-  if (current.id === "coldbar" && activeSubgroup !== "all") {
-    items = items.filter(item => activeSubgroup.startsWith("CBS") ? item.key.includes("cbs") : item.key.includes("cbe"));
-  }
+  if (activeSubgroup !== "all") items = items.filter(item => item.subgroup === activeSubgroup);
   if (!items.length) {
     const empty = document.createElement("span");
     empty.className = "technical-empty";
@@ -470,13 +473,13 @@ function openMediaDialog(source, title, caption) {
 function openReference() {
   const item = activeVariant();
   if (!item) return;
-  openMediaDialog(activeReferenceDisplayUrl || item.image, `${station().label} · ${item.code}`, "Usa la rueda del mouse o los botones para hacer zoom. Arrastra la imagen si necesitas revisar detalles.");
+  openMediaDialog(activeReferenceDisplayUrl || item.image, `${variantContext(item)} · ${item.code}`, "Amplía y arrastra para revisar detalles.");
 }
 
 function renderComparison() {
   const item = activeVariant();
   if (!item) return;
-  $("compareCode").textContent = item.code;
+  $("compareCode").textContent = `${item.code} · ${variantContext(item)}`;
   $("compareReference").src = activeReferenceDisplayUrl || item.image;
   $("compareReference").alt = `Referencia ${item.code}`;
 }
@@ -558,7 +561,7 @@ function showSearchResults() {
   }
 
   const matches = allVariants().filter(({ station: itemStation, variant }) => {
-    const haystack = `${variant.code} ${variant.subgroup} ${itemStation.label} ${itemStation.short}`.toLowerCase();
+    const haystack = `${variant.code} ${variant.label || ""} ${variant.equipment || ""} ${variant.subgroup} ${itemStation.label} ${itemStation.short}`.toLowerCase();
     return haystack.includes(query);
   }).slice(0, 10);
 
@@ -592,7 +595,7 @@ function closeSearchResults() {
 function selectSearchResult(itemStation, variant) {
   activeStationId = itemStation.id;
   activeSubgroup = itemStation.variants.some(item => item.subgroup === variant.subgroup) ? variant.subgroup : "all";
-  activeCode = variant.code;
+  activeVariantId = variant.id;
   $("searchInput").value = variant.code;
   closeSearchResults();
   renderAll();
@@ -613,7 +616,7 @@ async function pdfImageSource(source) {
   if (!source) return null;
   if (source.startsWith("data:image/")) return source;
   const response = await fetch(source, { cache: "force-cache" });
-  if (!response.ok) throw new Error(`No fue posible cargar la referencia ${activeCode}.`);
+  if (!response.ok) throw new Error(`No fue posible cargar la referencia ${activeVariant()?.code || "seleccionada"}.`);
   return dataUrlFromBlob(await response.blob());
 }
 
@@ -937,7 +940,7 @@ function bind() {
     $("notes").value = "";
     activeStationId = catalog.stations[0].id;
     activeSubgroup = "all";
-    activeCode = catalog.stations[0].variants[0].code;
+    activeVariantId = catalog.stations[0].variants[0].id;
     clearEvidence();
     closeSearchResults();
     renderAll();
