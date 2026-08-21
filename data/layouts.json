@@ -1,572 +1,1199 @@
 {
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "3.0.0",
   "project": "Lay Out 2.0",
   "language": "es-MX",
-  "updated": "2026-08-17",
-  "sourceNote": "Versión remasterizada a partir de la guía Station Layout Guide. Los códigos originales se conservan; el contexto operativo se presenta en español.",
+  "updated": "2026-08-21",
+  "sourceNote": "Orden basado en Station Layout Guides - Orden. Imágenes exclusivamente de Lay Out 2.0 Nuevas Imagenes.",
   "stations": [
     {
-      "id": "mop",
-      "label": "Pedidos móviles",
-      "short": "Pedidos móviles",
-      "icon": "▣",
-      "description": "Selecciona la configuración que más se parezca al módulo de Mobile Order & Pay de tu tienda.",
-      "translation": "MOP significa Pedidos móviles. Elige el código cuya forma y número de módulos se parezcan más a tu tienda.",
+      "id": "brewing",
+      "label": "Café",
+      "short": "Café",
+      "icon": "◉",
+      "description": "Elige el acomodo que coincide con tu barra de café.",
+      "translation": "Compara equipo, tarjas y flujo de izquierda a derecha.",
       "tips": [
-        "Compara ancho, número de módulos y superficies de apoyo.",
-        "Valida la ubicación de contenedores y zonas de entrega.",
-        "Usa la vista técnica solo para confirmar equipo y utensilios."
-      ],
-      "variants": [
-        {
-          "code": "MOP 01-01",
-          "label": "MOP 01-01",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-01-01.webp",
-          "thumb": "assets/stations/mop/mop-01-01.thumb.webp",
-          "source": "Lay Out_2.0_3.jpg"
-        },
-        {
-          "code": "MOP 03-02",
-          "label": "MOP 03-02",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-03-02.webp",
-          "thumb": "assets/stations/mop/mop-03-02.thumb.webp",
-          "source": "Lay Out_2.0_4.jpg"
-        },
-        {
-          "code": "MOP 04-02",
-          "label": "MOP 04-02",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-04-02.webp",
-          "thumb": "assets/stations/mop/mop-04-02.thumb.webp",
-          "source": "Lay Out_2.0_5.jpg"
-        },
-        {
-          "code": "MOP 06-02",
-          "label": "MOP 06-02",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-06-02.webp",
-          "thumb": "assets/stations/mop/mop-06-02.thumb.webp",
-          "source": "Lay Out_2.0_6.jpg"
-        },
-        {
-          "code": "MOP 03-01",
-          "label": "MOP 03-01",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-03-01.webp",
-          "thumb": "assets/stations/mop/mop-03-01.thumb.webp",
-          "source": "Lay Out_2.0_7.jpg"
-        },
-        {
-          "code": "MOP 04-01",
-          "label": "MOP 04-01",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-04-01.webp",
-          "thumb": "assets/stations/mop/mop-04-01.thumb.webp",
-          "source": "Lay Out_2.0_8.jpg"
-        },
-        {
-          "code": "MOP 06-01",
-          "label": "MOP 06-01",
-          "subgroup": "MOP",
-          "image": "assets/stations/mop/mop-06-01.webp",
-          "thumb": "assets/stations/mop/mop-06-01.thumb.webp",
-          "source": "Lay Out_2.0_9.jpg"
-        }
-      ],
-      "technical": [
-        {
-          "key": "mop-componentes",
-          "label": "Lista de equipo y utensilios · Pedidos móviles",
-          "image": "assets/technical/mop-componentes.webp",
-          "sourcePage": 10
-        }
+        "Ubica el equipo principal.",
+        "Compara tarjas y superficies.",
+        "Confirma el código."
       ],
       "subgroupLabels": {
-        "MOP": "Pedidos móviles"
-      }
-    },
-    {
-      "id": "brewing",
-      "label": "Preparación de café",
-      "short": "Café filtrado",
-      "icon": "◉",
-      "description": "Compara la estación de preparación de café y elige el acomodo que corresponda a la configuración física de tu tienda.",
-      "translation": "Las referencias BRW, BUN, SRV y WST pertenecen a la zona de preparación de café. Conserva el código original al validar.",
-      "tips": [
-        "Prioriza la secuencia de trabajo de izquierda a derecha.",
-        "Valida equipos principales, tarjas y superficies de apoyo.",
-        "No fuerces un modelo: elige el código que más se aproxima a tu barra."
-      ],
+        "Brewing": "Brewing"
+      },
       "variants": [
         {
-          "code": "BRW 03-02",
-          "label": "BRW 03-02",
-          "subgroup": "Brewing",
-          "image": "assets/stations/brewing/brw-03-02.webp",
-          "thumb": "assets/stations/brewing/brw-03-02.thumb.webp",
-          "source": "Lay Out_2.0_13.jpg"
-        },
-        {
-          "code": "BRW 01-02",
-          "label": "BRW 01-02",
-          "subgroup": "Brewing",
-          "image": "assets/stations/brewing/brw-01-02.webp",
-          "thumb": "assets/stations/brewing/brw-01-02.thumb.webp",
-          "source": "Lay Out_2.0_14.jpg"
-        },
-        {
+          "id": "brewing-brewing-bun-02-02-p001",
           "code": "BUN 02-02",
           "label": "BUN 02-02",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/bun-02-02.webp",
-          "thumb": "assets/stations/brewing/bun-02-02.thumb.webp",
-          "source": "Lay Out_2.0_15.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/001-brewing-brewing-bun-02-02.webp",
+          "thumb": "assets/layouts/lote-01/001-brewing-brewing-bun-02-02.webp",
+          "source": "Lay Out 2.0 Base_1.jpg",
+          "sourceOrder": 1
         },
         {
+          "id": "brewing-brewing-brw-01-02-p002",
+          "code": "BRW 01-02",
+          "label": "BRW 01-02",
+          "subgroup": "Brewing",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/002-brewing-brewing-brw-01-02.webp",
+          "thumb": "assets/layouts/lote-01/002-brewing-brewing-brw-01-02.webp",
+          "source": "Lay Out 2.0 Base_2.jpg",
+          "sourceOrder": 2
+        },
+        {
+          "id": "brewing-brewing-bun-02-02-p003",
+          "code": "BUN 02-02",
+          "label": "BUN 02-02",
+          "subgroup": "Brewing",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/003-brewing-brewing-bun-02-02.webp",
+          "thumb": "assets/layouts/lote-01/003-brewing-brewing-bun-02-02.webp",
+          "source": "Lay Out 2.0 Base_3.jpg",
+          "sourceOrder": 3
+        },
+        {
+          "id": "brewing-brewing-srv-01-01-p004",
           "code": "SRV 01-01",
           "label": "SRV 01-01",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/srv-01-01.webp",
-          "thumb": "assets/stations/brewing/srv-01-01.thumb.webp",
-          "source": "Lay Out_2.0_16.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/004-brewing-brewing-srv-01-01.webp",
+          "thumb": "assets/layouts/lote-01/004-brewing-brewing-srv-01-01.webp",
+          "source": "Lay Out 2.0 Base_4.jpg",
+          "sourceOrder": 4
         },
         {
+          "id": "brewing-brewing-brw-11-01-p005",
           "code": "BRW 11-01",
           "label": "BRW 11-01",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/brw-11-01.webp",
-          "thumb": "assets/stations/brewing/brw-11-01.thumb.webp",
-          "source": "Lay Out_2.0_17.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/005-brewing-brewing-brw-11-01.webp",
+          "thumb": "assets/layouts/lote-01/005-brewing-brewing-brw-11-01.webp",
+          "source": "Lay Out 2.0 Base_5.jpg",
+          "sourceOrder": 5
         },
         {
+          "id": "brewing-brewing-brw-09-05-p006",
           "code": "BRW 09-05",
           "label": "BRW 09-05",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/brw-09-05.webp",
-          "thumb": "assets/stations/brewing/brw-09-05.thumb.webp",
-          "source": "Lay Out_2.0_18.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/006-brewing-brewing-brw-09-05.webp",
+          "thumb": "assets/layouts/lote-01/006-brewing-brewing-brw-09-05.webp",
+          "source": "Lay Out 2.0 Base_6.jpg",
+          "sourceOrder": 6
         },
         {
+          "id": "brewing-brewing-brw-05-06-p007",
           "code": "BRW 05-06",
           "label": "BRW 05-06",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/brw-05-06.webp",
-          "thumb": "assets/stations/brewing/brw-05-06.thumb.webp",
-          "source": "Lay Out_2.0_19.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/007-brewing-brewing-brw-05-06.webp",
+          "thumb": "assets/layouts/lote-01/007-brewing-brewing-brw-05-06.webp",
+          "source": "Lay Out 2.0 Base_7.jpg",
+          "sourceOrder": 7
         },
         {
+          "id": "brewing-brewing-brw-03-06-p008",
           "code": "BRW 03-06",
           "label": "BRW 03-06",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/brw-03-06.webp",
-          "thumb": "assets/stations/brewing/brw-03-06.thumb.webp",
-          "source": "Lay Out_2.0_20.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/008-brewing-brewing-brw-03-06.webp",
+          "thumb": "assets/layouts/lote-01/008-brewing-brewing-brw-03-06.webp",
+          "source": "Lay Out 2.0 Base_8.jpg",
+          "sourceOrder": 8
         },
         {
+          "id": "brewing-brewing-wst-09-p009",
           "code": "WST 09",
           "label": "WST 09",
           "subgroup": "Brewing",
-          "image": "assets/stations/brewing/wst-09.webp",
-          "thumb": "assets/stations/brewing/wst-09.thumb.webp",
-          "source": "Lay Out_2.0_21.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/009-brewing-brewing-wst-09.webp",
+          "thumb": "assets/layouts/lote-01/009-brewing-brewing-wst-09.webp",
+          "source": "Lay Out 2.0 Base_9.jpg",
+          "sourceOrder": 9
         }
       ],
       "technical": [
         {
-          "key": "brewing-componentes",
-          "label": "Lista de equipo y utensilios · Brewing",
-          "image": "assets/technical/brewing-componentes.webp",
-          "sourcePage": 22
+          "key": "brewing-brewing-equipo-y-utensilios-p010",
+          "label": "Equipo y utensilios",
+          "subgroup": "Brewing",
+          "image": "assets/layouts/lote-01/010-brewing-brewing-equipo-y-utensilios.webp",
+          "sourceOrder": 10
         }
-      ],
-      "subgroupLabels": {
-        "Brewing": "Preparación de café"
-      }
+      ]
     },
     {
       "id": "coldbar",
       "label": "Barra fría",
       "short": "Barra fría",
       "icon": "◇",
-      "description": "La barra fría se concentra en una sola estación y separa las familias CBE/Mezclado/Té y CBS para comparar más rápido.",
-      "translation": "Identifica primero si tu barra corresponde a CBE/Mezclado/Té o CBS; después compara la forma y los módulos.",
+      "description": "Filtra la familia y compara la forma de la barra.",
+      "translation": "Primero elige CBE/Blend/Tea o CBS; después el código.",
       "tips": [
-        "Primero identifica la familia de tu barra: CBE/Blend/Tea o CBS.",
-        "Compara geometría: lineal, esquina o módulos laterales.",
-        "Después confirma ingredientes, pitchers, bombas y almacenamiento inferior."
+        "Elige la familia.",
+        "Compara módulos y geometría.",
+        "Confirma ingredientes y equipo."
       ],
+      "subgroupLabels": {
+        "CBE": "CBE / Blend / Tea",
+        "CBS": "CBS"
+      },
       "variants": [
         {
+          "id": "coldbar-cbe-cbe-01-05-p011",
           "code": "CBE 01-05",
           "label": "CBE 01-05",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/cbe-01-05.webp",
-          "thumb": "assets/stations/coldbar/cbe-01-05.thumb.webp",
-          "source": "Lay Out_2.0_26.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/011-coldbar-cbe-cbe-01-05.webp",
+          "thumb": "assets/layouts/lote-01/011-coldbar-cbe-cbe-01-05.webp",
+          "source": "Lay Out 2.0 Base_11.jpg",
+          "sourceOrder": 11
         },
         {
+          "id": "coldbar-cbe-cbe-03-01-p012",
           "code": "CBE 03-01",
           "label": "CBE 03-01",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/cbe-03-01.webp",
-          "thumb": "assets/stations/coldbar/cbe-03-01.thumb.webp",
-          "source": "Lay Out_2.0_27.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/012-coldbar-cbe-cbe-03-01.webp",
+          "thumb": "assets/layouts/lote-01/012-coldbar-cbe-cbe-03-01.webp",
+          "source": "Lay Out 2.0 Base_12.jpg",
+          "sourceOrder": 12
         },
         {
-          "code": "BLEND 01-03",
-          "label": "BLEND 01-03",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/blend-01-03.webp",
-          "thumb": "assets/stations/coldbar/blend-01-03.thumb.webp",
-          "source": "Lay Out_2.0_28.jpg"
+          "id": "coldbar-cbe-bld-01-03-p013",
+          "code": "BLD 01-03",
+          "label": "BLD 01-03",
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/013-coldbar-cbe-bld-01-03.webp",
+          "thumb": "assets/layouts/lote-01/013-coldbar-cbe-bld-01-03.webp",
+          "source": "Lay Out 2.0 Base_13.jpg",
+          "sourceOrder": 13
         },
         {
+          "id": "coldbar-cbe-tea-01-04-p014",
           "code": "TEA 01-04",
           "label": "TEA 01-04",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/tea-01-04.webp",
-          "thumb": "assets/stations/coldbar/tea-01-04.thumb.webp",
-          "source": "Lay Out_2.0_29.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/014-coldbar-cbe-tea-01-04.webp",
+          "thumb": "assets/layouts/lote-01/014-coldbar-cbe-tea-01-04.webp",
+          "source": "Lay Out 2.0 Base_14.jpg",
+          "sourceOrder": 14
         },
         {
+          "id": "coldbar-cbe-cbe-05-03-p015",
           "code": "CBE 05-03",
           "label": "CBE 05-03",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/cbe-05-03.webp",
-          "thumb": "assets/stations/coldbar/cbe-05-03.thumb.webp",
-          "source": "Lay Out_2.0_30.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/015-coldbar-cbe-cbe-05-03.webp",
+          "thumb": "assets/layouts/lote-01/015-coldbar-cbe-cbe-05-03.webp",
+          "source": "Lay Out 2.0 Base_15.jpg",
+          "sourceOrder": 15
         },
         {
+          "id": "coldbar-cbe-cbe-07-03-p016",
           "code": "CBE 07-03",
           "label": "CBE 07-03",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/cbe-07-03.webp",
-          "thumb": "assets/stations/coldbar/cbe-07-03.thumb.webp",
-          "source": "Lay Out_2.0_31.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/016-coldbar-cbe-cbe-07-03.webp",
+          "thumb": "assets/layouts/lote-01/016-coldbar-cbe-cbe-07-03.webp",
+          "source": "Lay Out 2.0 Base_16.jpg",
+          "sourceOrder": 16
         },
         {
+          "id": "coldbar-cbe-cbe-09-01-p017",
           "code": "CBE 09-01",
           "label": "CBE 09-01",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/cbe-09-01.webp",
-          "thumb": "assets/stations/coldbar/cbe-09-01.thumb.webp",
-          "source": "Lay Out_2.0_32.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/017-coldbar-cbe-cbe-09-01.webp",
+          "thumb": "assets/layouts/lote-01/017-coldbar-cbe-cbe-09-01.webp",
+          "source": "Lay Out 2.0 Base_17.jpg",
+          "sourceOrder": 17
         },
         {
+          "id": "coldbar-cbe-cbe-11-01-p018",
           "code": "CBE 11-01",
           "label": "CBE 11-01",
-          "subgroup": "CBE / Blend / Tea",
-          "image": "assets/stations/coldbar/cbe-11-01.webp",
-          "thumb": "assets/stations/coldbar/cbe-11-01.thumb.webp",
-          "source": "Lay Out_2.0_33.jpg"
+          "subgroup": "CBE",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/018-coldbar-cbe-cbe-11-01.webp",
+          "thumb": "assets/layouts/lote-01/018-coldbar-cbe-cbe-11-01.webp",
+          "source": "Lay Out 2.0 Base_18.jpg",
+          "sourceOrder": 18
         },
         {
+          "id": "coldbar-cbs-cbs-01-02-p021",
           "code": "CBS 01-02",
           "label": "CBS 01-02",
           "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-01-02.webp",
-          "thumb": "assets/stations/coldbar/cbs-01-02.thumb.webp",
-          "source": "Lay Out_2.0_36.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/021-coldbar-cbs-cbs-01-02.webp",
+          "thumb": "assets/layouts/lote-01/021-coldbar-cbs-cbs-01-02.webp",
+          "source": "Lay Out 2.0 Base_21.jpg",
+          "sourceOrder": 21
         },
         {
+          "id": "coldbar-cbs-cbs-03-01-p022",
           "code": "CBS 03-01",
           "label": "CBS 03-01",
           "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-03-01.webp",
-          "thumb": "assets/stations/coldbar/cbs-03-01.thumb.webp",
-          "source": "Lay Out_2.0_37.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/022-coldbar-cbs-cbs-03-01.webp",
+          "thumb": "assets/layouts/lote-01/022-coldbar-cbs-cbs-03-01.webp",
+          "source": "Lay Out 2.0 Base_22.jpg",
+          "sourceOrder": 22
         },
         {
+          "id": "coldbar-cbs-cbs-05-01-p023",
           "code": "CBS 05-01",
           "label": "CBS 05-01",
           "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-05-01.webp",
-          "thumb": "assets/stations/coldbar/cbs-05-01.thumb.webp",
-          "source": "Lay Out_2.0_38.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/023-coldbar-cbs-cbs-05-01.webp",
+          "thumb": "assets/layouts/lote-01/023-coldbar-cbs-cbs-05-01.webp",
+          "source": "Lay Out 2.0 Base_23.jpg",
+          "sourceOrder": 23
         },
         {
-          "code": "CBS 09-01",
-          "label": "CBS 09-01",
-          "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-09-01.webp",
-          "thumb": "assets/stations/coldbar/cbs-09-01.thumb.webp",
-          "source": "Lay Out_2.0_39.jpg"
-        },
-        {
+          "id": "coldbar-cbs-cbs-11-02-p024",
           "code": "CBS 11-02",
           "label": "CBS 11-02",
           "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-11-02.webp",
-          "thumb": "assets/stations/coldbar/cbs-11-02.thumb.webp",
-          "source": "Lay Out_2.0_40.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/024-coldbar-cbs-cbs-11-02.webp",
+          "thumb": "assets/layouts/lote-01/024-coldbar-cbs-cbs-11-02.webp",
+          "source": "Lay Out 2.0 Base_24.jpg",
+          "sourceOrder": 24
         },
         {
+          "id": "coldbar-cbs-cbs-13-02-p025",
           "code": "CBS 13-02",
           "label": "CBS 13-02",
           "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-13-02.webp",
-          "thumb": "assets/stations/coldbar/cbs-13-02.thumb.webp",
-          "source": "Lay Out_2.0_41.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/025-coldbar-cbs-cbs-13-02.webp",
+          "thumb": "assets/layouts/lote-01/025-coldbar-cbs-cbs-13-02.webp",
+          "source": "Lay Out 2.0 Base_25.jpg",
+          "sourceOrder": 25
         },
         {
+          "id": "coldbar-cbs-cbs-15-01-p026",
           "code": "CBS 15-01",
           "label": "CBS 15-01",
           "subgroup": "CBS",
-          "image": "assets/stations/coldbar/cbs-15-01.webp",
-          "thumb": "assets/stations/coldbar/cbs-15-01.thumb.webp",
-          "source": "Lay Out_2.0_42.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/026-coldbar-cbs-cbs-15-01.webp",
+          "thumb": "assets/layouts/lote-01/026-coldbar-cbs-cbs-15-01.webp",
+          "source": "Lay Out 2.0 Base_26.jpg",
+          "sourceOrder": 26
         }
       ],
       "technical": [
         {
-          "key": "coldbar-cbe-equipo",
-          "label": "Equipo y utensilios · Barra fría CBE",
-          "image": "assets/technical/coldbar-cbe-equipo.webp",
-          "sourcePage": 34
+          "key": "coldbar-cbe-equipo-y-utensilios-p019",
+          "label": "Equipo y utensilios",
+          "subgroup": "CBE",
+          "image": "assets/layouts/lote-01/019-coldbar-cbe-equipo-y-utensilios.webp",
+          "sourceOrder": 19
         },
         {
-          "key": "coldbar-cbe-ingredientes",
-          "label": "Ingredientes · Barra fría CBE",
-          "image": "assets/technical/coldbar-cbe-ingredientes.webp",
-          "sourcePage": 35
+          "key": "coldbar-cbe-ingredientes-p020",
+          "label": "Ingredientes",
+          "subgroup": "CBE",
+          "image": "assets/layouts/lote-01/020-coldbar-cbe-ingredientes.webp",
+          "sourceOrder": 20
         },
         {
-          "key": "coldbar-cbs-equipo",
-          "label": "Equipo y utensilios · Barra fría CBS",
-          "image": "assets/technical/coldbar-cbs-equipo.webp",
-          "sourcePage": 43
+          "key": "coldbar-cbs-equipo-y-utensilios-p027",
+          "label": "Equipo y utensilios",
+          "subgroup": "CBS",
+          "image": "assets/layouts/lote-01/027-coldbar-cbs-equipo-y-utensilios.webp",
+          "sourceOrder": 27
         },
         {
-          "key": "coldbar-cbs-ingredientes",
-          "label": "Ingredientes · Barra fría CBS",
-          "image": "assets/technical/coldbar-cbs-ingredientes.webp",
-          "sourcePage": 44
+          "key": "coldbar-cbs-ingredientes-p028",
+          "label": "Ingredientes",
+          "subgroup": "CBS",
+          "image": "assets/layouts/lote-01/028-coldbar-cbs-ingredientes.webp",
+          "sourceOrder": 28
         }
-      ],
-      "subgroupLabels": {
-        "CBE / Blend / Tea": "CBE / Mezclado / Té",
-        "CBS": "CBS"
-      }
+      ]
     },
     {
       "id": "condiments",
-      "label": "Carro de condimentos",
+      "label": "Condimentos",
       "short": "Condimentos",
-      "icon": "▤",
-      "description": "Agrupa las configuraciones del carro de condimentos sin mezclar la lista técnica con la selección visual.",
-      "translation": "Los nombres técnicos del código se conservan; en pantalla se muestran como opciones del carro de condimentos.",
+      "icon": "◫",
+      "description": "Selecciona el carro que corresponde a tu tienda.",
+      "translation": "Compara número de módulos y orientación.",
       "tips": [
-        "Identifica primero el número de módulos o depósitos.",
-        "Compara la posición de contenedores y dispensadores.",
-        "Consulta la lista de componentes solo cuando necesites validar piezas."
+        "Cuenta los módulos.",
+        "Valida orientación.",
+        "Confirma contenedores."
       ],
+      "subgroupLabels": {
+        "Condimentos": "Carros"
+      },
       "variants": [
         {
-          "code": "Condiment Cart - 3 Drop",
-          "label": "Condiment Cart - 3 Drop",
+          "id": "condiments-condimentos-3-drop-p029",
+          "code": "3 Drop",
+          "label": "3 Drop",
           "subgroup": "Condimentos",
-          "image": "assets/stations/condiments/condiment-cart-3-drop.webp",
-          "thumb": "assets/stations/condiments/condiment-cart-3-drop.thumb.webp",
-          "source": "Lay Out_2.0_47.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/029-condiments-condimentos-3-drop.webp",
+          "thumb": "assets/layouts/lote-01/029-condiments-condimentos-3-drop.webp",
+          "source": "Lay Out 2.0 Base_29.jpg",
+          "sourceOrder": 29
         },
         {
-          "code": "Condiment Cart 01-02",
-          "label": "Condiment Cart 01-02",
+          "id": "condiments-condimentos-01-02-p030",
+          "code": "01-02",
+          "label": "01-02",
           "subgroup": "Condimentos",
-          "image": "assets/stations/condiments/condiment-cart-01-02.webp",
-          "thumb": "assets/stations/condiments/condiment-cart-01-02.thumb.webp",
-          "source": "Lay Out_2.0_48.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/030-condiments-condimentos-01-02.webp",
+          "thumb": "assets/layouts/lote-01/030-condiments-condimentos-01-02.webp",
+          "source": "Lay Out 2.0 Base_30.jpg",
+          "sourceOrder": 30
         },
         {
-          "code": "Condiment Cart Single",
-          "label": "Condiment Cart Single",
+          "id": "condiments-condimentos-single-p031",
+          "code": "Single",
+          "label": "Single",
           "subgroup": "Condimentos",
-          "image": "assets/stations/condiments/condiment-cart-single.webp",
-          "thumb": "assets/stations/condiments/condiment-cart-single.thumb.webp",
-          "source": "Lay Out_2.0_49.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/031-condiments-condimentos-single.webp",
+          "thumb": "assets/layouts/lote-01/031-condiments-condimentos-single.webp",
+          "source": "Lay Out 2.0 Base_31.jpg",
+          "sourceOrder": 31
         },
         {
-          "code": "Condiment Cart 03-02",
-          "label": "Condiment Cart 03-02",
+          "id": "condiments-condimentos-03-02-p032",
+          "code": "03-02",
+          "label": "03-02",
           "subgroup": "Condimentos",
-          "image": "assets/stations/condiments/condiment-cart-03-02.webp",
-          "thumb": "assets/stations/condiments/condiment-cart-03-02.thumb.webp",
-          "source": "Lay Out_2.0_50.jpg"
+          "equipment": "",
+          "image": "assets/layouts/lote-01/032-condiments-condimentos-03-02.webp",
+          "thumb": "assets/layouts/lote-01/032-condiments-condimentos-03-02.webp",
+          "source": "Lay Out 2.0 Base_32.jpg",
+          "sourceOrder": 32
         }
       ],
       "technical": [
         {
-          "key": "condimentos-componentes",
-          "label": "Lista de componentes · Condimentos",
-          "image": "assets/technical/condimentos-componentes.webp",
-          "sourcePage": 51
+          "key": "condiments-condimentos-equipo-y-utensilios-p033",
+          "label": "Equipo y utensilios",
+          "subgroup": "Condimentos",
+          "image": "assets/layouts/lote-01/033-condiments-condimentos-equipo-y-utensilios.webp",
+          "sourceOrder": 33
         }
+      ]
+    },
+    {
+      "id": "drive-thru",
+      "label": "Drive Thru",
+      "short": "Drive Thru",
+      "icon": "↗",
+      "description": "Compara la estación de entrega y apoyo.",
+      "translation": "Elige el código que más se parece a la estación real.",
+      "tips": [
+        "Ubica entrega y cobro.",
+        "Compara superficies.",
+        "Confirma el código."
       ],
       "subgroupLabels": {
-        "Condimentos": "Condimentos"
-      }
+        "Drive Thru": "Drive Thru"
+      },
+      "variants": [
+        {
+          "id": "drive-thru-drive-thru-dt-01-01-p034",
+          "code": "DT 01-01",
+          "label": "DT 01-01",
+          "subgroup": "Drive Thru",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/034-drive-thru-drive-thru-dt-01-01.webp",
+          "thumb": "assets/layouts/lote-01/034-drive-thru-drive-thru-dt-01-01.webp",
+          "source": "Lay Out 2.0 Base_34.jpg",
+          "sourceOrder": 34
+        },
+        {
+          "id": "drive-thru-drive-thru-dt-35-01-p035",
+          "code": "DT 35-01",
+          "label": "DT 35-01",
+          "subgroup": "Drive Thru",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/035-drive-thru-drive-thru-dt-35-01.webp",
+          "thumb": "assets/layouts/lote-01/035-drive-thru-drive-thru-dt-35-01.webp",
+          "source": "Lay Out 2.0 Base_35.jpg",
+          "sourceOrder": 35
+        },
+        {
+          "id": "drive-thru-drive-thru-dt-05-02-p036",
+          "code": "DT 05-02",
+          "label": "DT 05-02",
+          "subgroup": "Drive Thru",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/036-drive-thru-drive-thru-dt-05-02.webp",
+          "thumb": "assets/layouts/lote-01/036-drive-thru-drive-thru-dt-05-02.webp",
+          "source": "Lay Out 2.0 Base_36.jpg",
+          "sourceOrder": 36
+        }
+      ],
+      "technical": [
+        {
+          "key": "drive-thru-drive-thru-equipo-y-utensilios-p037",
+          "label": "Equipo y utensilios",
+          "subgroup": "Drive Thru",
+          "image": "assets/layouts/lote-01/037-drive-thru-drive-thru-equipo-y-utensilios.webp",
+          "sourceOrder": 37
+        }
+      ]
     },
     {
       "id": "espresso",
       "label": "Espresso",
-      "short": "Barra de espresso",
-      "icon": "◌",
-      "description": "Las opciones de Espresso se separaron de las láminas maestras para que cada código pueda revisarse de forma individual.",
-      "translation": "Cada código ESP representa una configuración de la barra de espresso. Compara máquinas, tarjas y módulos laterales.",
+      "short": "Espresso",
+      "icon": "◆",
+      "description": "Elige primero el modelo de Mastrena.",
+      "translation": "Mastrena I y Mastrena II se muestran por separado, aunque repitan código.",
       "tips": [
-        "Compara número de máquinas, módulos laterales y posición de tarjas.",
-        "Revisa el código antes de imprimir: varias variantes son visualmente cercanas.",
-        "La opción ESP 01-02 conserva una lámina individual de mayor detalle; el resto proviene de la matriz maestra."
+        "Filtra Mastrena I o II.",
+        "Compara el acomodo completo.",
+        "Confirma el código."
       ],
+      "subgroupLabels": {
+        "Mastrena I": "Mastrena I",
+        "Mastrena II": "Mastrena II"
+      },
       "variants": [
         {
+          "id": "espresso-mastrena-i-esp-01-02-p038",
           "code": "ESP 01-02",
           "label": "ESP 01-02",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-01-02.webp",
-          "thumb": "assets/stations/espresso/esp-01-02.thumb.webp",
-          "source": "Lay Out_2.0_55.jpg"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/038-espresso-mastrena-i-esp-01-02.webp",
+          "thumb": "assets/layouts/lote-01/038-espresso-mastrena-i-esp-01-02.webp",
+          "source": "Lay Out 2.0 Base_38.jpg",
+          "sourceOrder": 38
         },
         {
+          "id": "espresso-mastrena-i-esp-03-02-p039",
           "code": "ESP 03-02",
           "label": "ESP 03-02",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-03-02.webp",
-          "thumb": "assets/stations/espresso/esp-03-02.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/039-espresso-mastrena-i-esp-03-02.webp",
+          "thumb": "assets/layouts/lote-01/039-espresso-mastrena-i-esp-03-02.webp",
+          "source": "Lay Out 2.0 Base_39.jpg",
+          "sourceOrder": 39
         },
         {
+          "id": "espresso-mastrena-i-esp-05-02-p040",
           "code": "ESP 05-02",
           "label": "ESP 05-02",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-05-02.webp",
-          "thumb": "assets/stations/espresso/esp-05-02.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/040-espresso-mastrena-i-esp-05-02.webp",
+          "thumb": "assets/layouts/lote-01/040-espresso-mastrena-i-esp-05-02.webp",
+          "source": "Lay Out 2.0 Base_40.jpg",
+          "sourceOrder": 40
         },
         {
+          "id": "espresso-mastrena-i-esp-06-01-p041",
           "code": "ESP 06-01",
           "label": "ESP 06-01",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-06-01.webp",
-          "thumb": "assets/stations/espresso/esp-06-01.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/041-espresso-mastrena-i-esp-06-01.webp",
+          "thumb": "assets/layouts/lote-01/041-espresso-mastrena-i-esp-06-01.webp",
+          "source": "Lay Out 2.0 Base_41.jpg",
+          "sourceOrder": 41
         },
         {
+          "id": "espresso-mastrena-i-esp-07-03-p042",
           "code": "ESP 07-03",
           "label": "ESP 07-03",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-07-03.webp",
-          "thumb": "assets/stations/espresso/esp-07-03.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/042-espresso-mastrena-i-esp-07-03.webp",
+          "thumb": "assets/layouts/lote-01/042-espresso-mastrena-i-esp-07-03.webp",
+          "source": "Lay Out 2.0 Base_42.jpg",
+          "sourceOrder": 42
         },
         {
+          "id": "espresso-mastrena-i-esp-10-01-p043",
           "code": "ESP 10-01",
           "label": "ESP 10-01",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-10-01.webp",
-          "thumb": "assets/stations/espresso/esp-10-01.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/043-espresso-mastrena-i-esp-10-01.webp",
+          "thumb": "assets/layouts/lote-01/043-espresso-mastrena-i-esp-10-01.webp",
+          "source": "Lay Out 2.0 Base_43.jpg",
+          "sourceOrder": 43
         },
         {
+          "id": "espresso-mastrena-i-esp-11-01-p044",
           "code": "ESP 11-01",
           "label": "ESP 11-01",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-11-01.webp",
-          "thumb": "assets/stations/espresso/esp-11-01.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/044-espresso-mastrena-i-esp-11-01.webp",
+          "thumb": "assets/layouts/lote-01/044-espresso-mastrena-i-esp-11-01.webp",
+          "source": "Lay Out 2.0 Base_44.jpg",
+          "sourceOrder": 44
         },
         {
+          "id": "espresso-mastrena-i-esp-03-04-p045",
           "code": "ESP 03-04",
           "label": "ESP 03-04",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-03-04.webp",
-          "thumb": "assets/stations/espresso/esp-03-04.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/045-espresso-mastrena-i-esp-03-04.webp",
+          "thumb": "assets/layouts/lote-01/045-espresso-mastrena-i-esp-03-04.webp",
+          "source": "Lay Out 2.0 Base_45.jpg",
+          "sourceOrder": 45
         },
         {
+          "id": "espresso-mastrena-i-esp-05-04-p046",
           "code": "ESP 05-04",
           "label": "ESP 05-04",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-05-04.webp",
-          "thumb": "assets/stations/espresso/esp-05-04.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/046-espresso-mastrena-i-esp-05-04.webp",
+          "thumb": "assets/layouts/lote-01/046-espresso-mastrena-i-esp-05-04.webp",
+          "source": "Lay Out 2.0 Base_46.jpg",
+          "sourceOrder": 46
         },
         {
+          "id": "espresso-mastrena-i-esp-09-04-p047",
           "code": "ESP 09-04",
           "label": "ESP 09-04",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-09-04.webp",
-          "thumb": "assets/stations/espresso/esp-09-04.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/047-espresso-mastrena-i-esp-09-04.webp",
+          "thumb": "assets/layouts/lote-01/047-espresso-mastrena-i-esp-09-04.webp",
+          "source": "Lay Out 2.0 Base_47.jpg",
+          "sourceOrder": 47
         },
         {
+          "id": "espresso-mastrena-i-esp-21-04-p048",
           "code": "ESP 21-04",
           "label": "ESP 21-04",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-21-04.webp",
-          "thumb": "assets/stations/espresso/esp-21-04.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/048-espresso-mastrena-i-esp-21-04.webp",
+          "thumb": "assets/layouts/lote-01/048-espresso-mastrena-i-esp-21-04.webp",
+          "source": "Lay Out 2.0 Base_48.jpg",
+          "sourceOrder": 48
         },
         {
+          "id": "espresso-mastrena-i-esp-25-03-p049",
           "code": "ESP 25-03",
           "label": "ESP 25-03",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-25-03.webp",
-          "thumb": "assets/stations/espresso/esp-25-03.thumb.webp",
-          "source": "Lay Out_2.0_53.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/049-espresso-mastrena-i-esp-25-03.webp",
+          "thumb": "assets/layouts/lote-01/049-espresso-mastrena-i-esp-25-03.webp",
+          "source": "Lay Out 2.0 Base_49.jpg",
+          "sourceOrder": 49
         },
         {
+          "id": "espresso-mastrena-i-esp-43-02-p050",
           "code": "ESP 43-02",
           "label": "ESP 43-02",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-43-02.webp",
-          "thumb": "assets/stations/espresso/esp-43-02.thumb.webp",
-          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/050-espresso-mastrena-i-esp-43-02.webp",
+          "thumb": "assets/layouts/lote-01/050-espresso-mastrena-i-esp-43-02.webp",
+          "source": "Lay Out 2.0 Base_50.jpg",
+          "sourceOrder": 50
         },
         {
+          "id": "espresso-mastrena-i-esp-08-02-p051",
           "code": "ESP 08-02",
           "label": "ESP 08-02",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-08-02.webp",
-          "thumb": "assets/stations/espresso/esp-08-02.thumb.webp",
-          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/051-espresso-mastrena-i-esp-08-02.webp",
+          "thumb": "assets/layouts/lote-01/051-espresso-mastrena-i-esp-08-02.webp",
+          "source": "Lay Out 2.0 Base_51.jpg",
+          "sourceOrder": 51
         },
         {
+          "id": "espresso-mastrena-i-esp-09-03-p052",
           "code": "ESP 09-03",
           "label": "ESP 09-03",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-09-03.webp",
-          "thumb": "assets/stations/espresso/esp-09-03.thumb.webp",
-          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/052-espresso-mastrena-i-esp-09-03.webp",
+          "thumb": "assets/layouts/lote-01/052-espresso-mastrena-i-esp-09-03.webp",
+          "source": "Lay Out 2.0 Base_52.jpg",
+          "sourceOrder": 52
         },
         {
+          "id": "espresso-mastrena-i-esp-31-04-p053",
           "code": "ESP 31-04",
           "label": "ESP 31-04",
-          "subgroup": "ESP",
-          "image": "assets/stations/espresso/esp-31-04.webp",
-          "thumb": "assets/stations/espresso/esp-31-04.thumb.webp",
-          "source": "Lay Out_2.0_54.jpg (recorte de opciones)"
+          "subgroup": "Mastrena I",
+          "equipment": "Mastrena I",
+          "image": "assets/layouts/lote-01/053-espresso-mastrena-i-esp-31-04.webp",
+          "thumb": "assets/layouts/lote-01/053-espresso-mastrena-i-esp-31-04.webp",
+          "source": "Lay Out 2.0 Base_53.jpg",
+          "sourceOrder": 53
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-01-02-p056",
+          "code": "ESP 01-02",
+          "label": "ESP 01-02",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/056-espresso-mastrena-ii-esp-01-02.webp",
+          "thumb": "assets/layouts/lote-01/056-espresso-mastrena-ii-esp-01-02.webp",
+          "source": "Lay Out 2.0 Base_56.jpg",
+          "sourceOrder": 56
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-03-02-p057",
+          "code": "ESP 03-02",
+          "label": "ESP 03-02",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/057-espresso-mastrena-ii-esp-03-02.webp",
+          "thumb": "assets/layouts/lote-01/057-espresso-mastrena-ii-esp-03-02.webp",
+          "source": "Lay Out 2.0 Base_57.jpg",
+          "sourceOrder": 57
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-05-02-p058",
+          "code": "ESP 05-02",
+          "label": "ESP 05-02",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/058-espresso-mastrena-ii-esp-05-02.webp",
+          "thumb": "assets/layouts/lote-01/058-espresso-mastrena-ii-esp-05-02.webp",
+          "source": "Lay Out 2.0 Base_58.jpg",
+          "sourceOrder": 58
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-06-01-p059",
+          "code": "ESP 06-01",
+          "label": "ESP 06-01",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/059-espresso-mastrena-ii-esp-06-01.webp",
+          "thumb": "assets/layouts/lote-01/059-espresso-mastrena-ii-esp-06-01.webp",
+          "source": "Lay Out 2.0 Base_59.jpg",
+          "sourceOrder": 59
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-07-03-p060",
+          "code": "ESP 07-03",
+          "label": "ESP 07-03",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/060-espresso-mastrena-ii-esp-07-03.webp",
+          "thumb": "assets/layouts/lote-01/060-espresso-mastrena-ii-esp-07-03.webp",
+          "source": "Lay Out 2.0 Base_60.jpg",
+          "sourceOrder": 60
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-10-01-p061",
+          "code": "ESP 10-01",
+          "label": "ESP 10-01",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/061-espresso-mastrena-ii-esp-10-01.webp",
+          "thumb": "assets/layouts/lote-01/061-espresso-mastrena-ii-esp-10-01.webp",
+          "source": "Lay Out 2.0 Base_61.jpg",
+          "sourceOrder": 61
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-11-01-p062",
+          "code": "ESP 11-01",
+          "label": "ESP 11-01",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/062-espresso-mastrena-ii-esp-11-01.webp",
+          "thumb": "assets/layouts/lote-01/062-espresso-mastrena-ii-esp-11-01.webp",
+          "source": "Lay Out 2.0 Base_62.jpg",
+          "sourceOrder": 62
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-03-04-p063",
+          "code": "ESP 03-04",
+          "label": "ESP 03-04",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/063-espresso-mastrena-ii-esp-03-04.webp",
+          "thumb": "assets/layouts/lote-01/063-espresso-mastrena-ii-esp-03-04.webp",
+          "source": "Lay Out 2.0 Base_63.jpg",
+          "sourceOrder": 63
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-05-04-p064",
+          "code": "ESP 05-04",
+          "label": "ESP 05-04",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/064-espresso-mastrena-ii-esp-05-04.webp",
+          "thumb": "assets/layouts/lote-01/064-espresso-mastrena-ii-esp-05-04.webp",
+          "source": "Lay Out 2.0 Base_64.jpg",
+          "sourceOrder": 64
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-09-04-p065",
+          "code": "ESP 09-04",
+          "label": "ESP 09-04",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/065-espresso-mastrena-ii-esp-09-04.webp",
+          "thumb": "assets/layouts/lote-01/065-espresso-mastrena-ii-esp-09-04.webp",
+          "source": "Lay Out 2.0 Base_65.jpg",
+          "sourceOrder": 65
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-21-04-p066",
+          "code": "ESP 21-04",
+          "label": "ESP 21-04",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/066-espresso-mastrena-ii-esp-21-04.webp",
+          "thumb": "assets/layouts/lote-01/066-espresso-mastrena-ii-esp-21-04.webp",
+          "source": "Lay Out 2.0 Base_66.jpg",
+          "sourceOrder": 66
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-25-03-p067",
+          "code": "ESP 25-03",
+          "label": "ESP 25-03",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/067-espresso-mastrena-ii-esp-25-03.webp",
+          "thumb": "assets/layouts/lote-01/067-espresso-mastrena-ii-esp-25-03.webp",
+          "source": "Lay Out 2.0 Base_67.jpg",
+          "sourceOrder": 67
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-43-02-p068",
+          "code": "ESP 43-02",
+          "label": "ESP 43-02",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/068-espresso-mastrena-ii-esp-43-02.webp",
+          "thumb": "assets/layouts/lote-01/068-espresso-mastrena-ii-esp-43-02.webp",
+          "source": "Lay Out 2.0 Base_68.jpg",
+          "sourceOrder": 68
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-08-02-p069",
+          "code": "ESP 08-02",
+          "label": "ESP 08-02",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/069-espresso-mastrena-ii-esp-08-02.webp",
+          "thumb": "assets/layouts/lote-01/069-espresso-mastrena-ii-esp-08-02.webp",
+          "source": "Lay Out 2.0 Base_69.jpg",
+          "sourceOrder": 69
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-09-03-p070",
+          "code": "ESP 09-03",
+          "label": "ESP 09-03",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/070-espresso-mastrena-ii-esp-09-03.webp",
+          "thumb": "assets/layouts/lote-01/070-espresso-mastrena-ii-esp-09-03.webp",
+          "source": "Lay Out 2.0 Base_70.jpg",
+          "sourceOrder": 70
+        },
+        {
+          "id": "espresso-mastrena-ii-esp-31-04-p071",
+          "code": "ESP 31-04",
+          "label": "ESP 31-04",
+          "subgroup": "Mastrena II",
+          "equipment": "Mastrena II",
+          "image": "assets/layouts/lote-01/071-espresso-mastrena-ii-esp-31-04.webp",
+          "thumb": "assets/layouts/lote-01/071-espresso-mastrena-ii-esp-31-04.webp",
+          "source": "Lay Out 2.0 Base_71.jpg",
+          "sourceOrder": 71
         }
       ],
       "technical": [
         {
-          "key": "espresso-equipo",
-          "label": "Equipo y utensilios · Espresso",
-          "image": "assets/technical/espresso-equipo.webp",
-          "sourcePage": 54
+          "key": "espresso-mastrena-i-equipo-y-utensilios-p054",
+          "label": "Equipo y utensilios",
+          "subgroup": "Mastrena I",
+          "image": "assets/layouts/lote-01/054-espresso-mastrena-i-equipo-y-utensilios.webp",
+          "sourceOrder": 54
         },
         {
-          "key": "espresso-ingredientes",
-          "label": "Ingredientes · Espresso",
-          "image": "assets/technical/espresso-ingredientes.webp",
-          "sourcePage": 54
+          "key": "espresso-mastrena-i-ingredientes-p055",
+          "label": "Ingredientes",
+          "subgroup": "Mastrena I",
+          "image": "assets/layouts/lote-01/055-espresso-mastrena-i-ingredientes.webp",
+          "sourceOrder": 55
+        },
+        {
+          "key": "espresso-mastrena-ii-equipo-y-utensilios-p072",
+          "label": "Equipo y utensilios",
+          "subgroup": "Mastrena II",
+          "image": "assets/layouts/lote-01/072-espresso-mastrena-ii-equipo-y-utensilios.webp",
+          "sourceOrder": 72
+        },
+        {
+          "key": "espresso-mastrena-ii-ingredientes-p073",
+          "label": "Ingredientes",
+          "subgroup": "Mastrena II",
+          "image": "assets/layouts/lote-01/073-espresso-mastrena-ii-ingredientes.webp",
+          "sourceOrder": 73
         }
+      ]
+    },
+    {
+      "id": "mop",
+      "label": "Pedidos móviles",
+      "short": "MOP",
+      "icon": "▣",
+      "description": "Selecciona el módulo de pedidos móviles.",
+      "translation": "Compara ancho, módulos y zona de entrega.",
+      "tips": [
+        "Cuenta los módulos.",
+        "Ubica la entrega.",
+        "Confirma el código."
       ],
       "subgroupLabels": {
-        "ESP": "Espresso"
-      }
+        "MOP": "MOP"
+      },
+      "variants": [
+        {
+          "id": "mop-mop-mop-01-01-p074",
+          "code": "MOP 01-01",
+          "label": "MOP 01-01",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/074-mop-mop-mop-01-01.webp",
+          "thumb": "assets/layouts/lote-01/074-mop-mop-mop-01-01.webp",
+          "source": "Lay Out 2.0 Base_74.jpg",
+          "sourceOrder": 74
+        },
+        {
+          "id": "mop-mop-mop-03-02-p075",
+          "code": "MOP 03-02",
+          "label": "MOP 03-02",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/075-mop-mop-mop-03-02.webp",
+          "thumb": "assets/layouts/lote-01/075-mop-mop-mop-03-02.webp",
+          "source": "Lay Out 2.0 Base_75.jpg",
+          "sourceOrder": 75
+        },
+        {
+          "id": "mop-mop-mop-04-02-p076",
+          "code": "MOP 04-02",
+          "label": "MOP 04-02",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/076-mop-mop-mop-04-02.webp",
+          "thumb": "assets/layouts/lote-01/076-mop-mop-mop-04-02.webp",
+          "source": "Lay Out 2.0 Base_76.jpg",
+          "sourceOrder": 76
+        },
+        {
+          "id": "mop-mop-mop-06-02-p077",
+          "code": "MOP 06-02",
+          "label": "MOP 06-02",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/077-mop-mop-mop-06-02.webp",
+          "thumb": "assets/layouts/lote-01/077-mop-mop-mop-06-02.webp",
+          "source": "Lay Out 2.0 Base_77.jpg",
+          "sourceOrder": 77
+        },
+        {
+          "id": "mop-mop-mop-03-01-p078",
+          "code": "MOP 03-01",
+          "label": "MOP 03-01",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/078-mop-mop-mop-03-01.webp",
+          "thumb": "assets/layouts/lote-01/078-mop-mop-mop-03-01.webp",
+          "source": "Lay Out 2.0 Base_78.jpg",
+          "sourceOrder": 78
+        },
+        {
+          "id": "mop-mop-mop-04-01-p079",
+          "code": "MOP 04-01",
+          "label": "MOP 04-01",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/079-mop-mop-mop-04-01.webp",
+          "thumb": "assets/layouts/lote-01/079-mop-mop-mop-04-01.webp",
+          "source": "Lay Out 2.0 Base_79.jpg",
+          "sourceOrder": 79
+        },
+        {
+          "id": "mop-mop-mop-06-01-p080",
+          "code": "MOP 06-01",
+          "label": "MOP 06-01",
+          "subgroup": "MOP",
+          "equipment": "",
+          "image": "assets/layouts/lote-01/080-mop-mop-mop-06-01.webp",
+          "thumb": "assets/layouts/lote-01/080-mop-mop-mop-06-01.webp",
+          "source": "Lay Out 2.0 Base_80.jpg",
+          "sourceOrder": 80
+        }
+      ],
+      "technical": [
+        {
+          "key": "mop-mop-equipo-y-utensilios-p081",
+          "label": "Equipo y utensilios",
+          "subgroup": "MOP",
+          "image": "assets/layouts/lote-01/081-mop-mop-equipo-y-utensilios.webp",
+          "sourceOrder": 81
+        }
+      ]
+    },
+    {
+      "id": "warming",
+      "label": "Hornos",
+      "short": "Hornos",
+      "icon": "▤",
+      "description": "Elige primero el modelo de horno.",
+      "translation": "Merrychef E2S aparece primero; TurboChef NGO después.",
+      "tips": [
+        "Filtra el horno.",
+        "Compara ancho y cantidad.",
+        "Confirma el código."
+      ],
+      "subgroupLabels": {
+        "Merrychef E2S": "Merrychef E2S",
+        "TurboChef NGO": "TurboChef NGO"
+      },
+      "variants": [
+        {
+          "id": "warming-merrychef-e2s-wrm-03-01-60-dual-p082",
+          "code": "WRM 03-01 · 60 Dual",
+          "label": "WRM 03-01 · 60 Dual",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/082-warming-merrychef-e2s-wrm-03-01-60-dual.webp",
+          "thumb": "assets/layouts/lote-01/082-warming-merrychef-e2s-wrm-03-01-60-dual.webp",
+          "source": "Lay Out 2.0 Base_82.jpg",
+          "sourceOrder": 82
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-05-01-75-dual-p083",
+          "code": "WRM 05-01 · 75 Dual",
+          "label": "WRM 05-01 · 75 Dual",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/083-warming-merrychef-e2s-wrm-05-01-75-dual.webp",
+          "thumb": "assets/layouts/lote-01/083-warming-merrychef-e2s-wrm-05-01-75-dual.webp",
+          "source": "Lay Out 2.0 Base_83.jpg",
+          "sourceOrder": 83
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-07-01-90-dual-p084",
+          "code": "WRM 07-01 · 90 Dual",
+          "label": "WRM 07-01 · 90 Dual",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/084-warming-merrychef-e2s-wrm-07-01-90-dual.webp",
+          "thumb": "assets/layouts/lote-01/084-warming-merrychef-e2s-wrm-07-01-90-dual.webp",
+          "source": "Lay Out 2.0 Base_84.jpg",
+          "sourceOrder": 84
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-09-01-90-triple-p085",
+          "code": "WRM 09-01 · 90 Triple",
+          "label": "WRM 09-01 · 90 Triple",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/085-warming-merrychef-e2s-wrm-09-01-90-triple.webp",
+          "thumb": "assets/layouts/lote-01/085-warming-merrychef-e2s-wrm-09-01-90-triple.webp",
+          "source": "Lay Out 2.0 Base_85.jpg",
+          "sourceOrder": 85
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-01-01-30-single-p086",
+          "code": "WRM 01-01 · 30 Single",
+          "label": "WRM 01-01 · 30 Single",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/086-warming-merrychef-e2s-wrm-01-01-30-single.webp",
+          "thumb": "assets/layouts/lote-01/086-warming-merrychef-e2s-wrm-01-01-30-single.webp",
+          "source": "Lay Out 2.0 Base_86.jpg",
+          "sourceOrder": 86
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-02-02-45-single-p087",
+          "code": "WRM 02-02 · 45 Single",
+          "label": "WRM 02-02 · 45 Single",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/087-warming-merrychef-e2s-wrm-02-02-45-single.webp",
+          "thumb": "assets/layouts/lote-01/087-warming-merrychef-e2s-wrm-02-02-45-single.webp",
+          "source": "Lay Out 2.0 Base_87.jpg",
+          "sourceOrder": 87
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-07-01-46-single-p088",
+          "code": "WRM 07-01 · 46 Single",
+          "label": "WRM 07-01 · 46 Single",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/088-warming-merrychef-e2s-wrm-07-01-46-single.webp",
+          "thumb": "assets/layouts/lote-01/088-warming-merrychef-e2s-wrm-07-01-46-single.webp",
+          "source": "Lay Out 2.0 Base_88.jpg",
+          "sourceOrder": 88
+        },
+        {
+          "id": "warming-merrychef-e2s-wrm-03-01-60-go-cart-p089",
+          "code": "WRM 03-01 · 60 Go Cart",
+          "label": "WRM 03-01 · 60 Go Cart",
+          "subgroup": "Merrychef E2S",
+          "equipment": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/089-warming-merrychef-e2s-wrm-03-01-60-go-cart.webp",
+          "thumb": "assets/layouts/lote-01/089-warming-merrychef-e2s-wrm-03-01-60-go-cart.webp",
+          "source": "Lay Out 2.0 Base_89.jpg",
+          "sourceOrder": 89
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-03-01-60-dual-p092",
+          "code": "WRM 03-01 · 60 Dual",
+          "label": "WRM 03-01 · 60 Dual",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/092-warming-turbochef-ngo-wrm-03-01-60-dual.webp",
+          "thumb": "assets/layouts/lote-01/092-warming-turbochef-ngo-wrm-03-01-60-dual.webp",
+          "source": "Lay Out 2.0 Base_92.jpg",
+          "sourceOrder": 92
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-05-01-75-dual-p093",
+          "code": "WRM 05-01 · 75 Dual",
+          "label": "WRM 05-01 · 75 Dual",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/093-warming-turbochef-ngo-wrm-05-01-75-dual.webp",
+          "thumb": "assets/layouts/lote-01/093-warming-turbochef-ngo-wrm-05-01-75-dual.webp",
+          "source": "Lay Out 2.0 Base_93.jpg",
+          "sourceOrder": 93
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-07-01-90-dual-p094",
+          "code": "WRM 07-01 · 90 Dual",
+          "label": "WRM 07-01 · 90 Dual",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/094-warming-turbochef-ngo-wrm-07-01-90-dual.webp",
+          "thumb": "assets/layouts/lote-01/094-warming-turbochef-ngo-wrm-07-01-90-dual.webp",
+          "source": "Lay Out 2.0 Base_94.jpg",
+          "sourceOrder": 94
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-09-01-90-triple-p095",
+          "code": "WRM 09-01 · 90 Triple",
+          "label": "WRM 09-01 · 90 Triple",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/095-warming-turbochef-ngo-wrm-09-01-90-triple.webp",
+          "thumb": "assets/layouts/lote-01/095-warming-turbochef-ngo-wrm-09-01-90-triple.webp",
+          "source": "Lay Out 2.0 Base_95.jpg",
+          "sourceOrder": 95
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-01-01-30-single-p096",
+          "code": "WRM 01-01 · 30 Single",
+          "label": "WRM 01-01 · 30 Single",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/096-warming-turbochef-ngo-wrm-01-01-30-single.webp",
+          "thumb": "assets/layouts/lote-01/096-warming-turbochef-ngo-wrm-01-01-30-single.webp",
+          "source": "Lay Out 2.0 Base_96.jpg",
+          "sourceOrder": 96
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-02-02-45-single-p097",
+          "code": "WRM 02-02 · 45 Single",
+          "label": "WRM 02-02 · 45 Single",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/097-warming-turbochef-ngo-wrm-02-02-45-single.webp",
+          "thumb": "assets/layouts/lote-01/097-warming-turbochef-ngo-wrm-02-02-45-single.webp",
+          "source": "Lay Out 2.0 Base_97.jpg",
+          "sourceOrder": 97
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-07-01-46-single-p098",
+          "code": "WRM 07-01 · 46 Single",
+          "label": "WRM 07-01 · 46 Single",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/098-warming-turbochef-ngo-wrm-07-01-46-single.webp",
+          "thumb": "assets/layouts/lote-01/098-warming-turbochef-ngo-wrm-07-01-46-single.webp",
+          "source": "Lay Out 2.0 Base_98.jpg",
+          "sourceOrder": 98
+        },
+        {
+          "id": "warming-turbochef-ngo-wrm-03-01-60-go-cart-p099",
+          "code": "WRM 03-01 · 60 Go Cart",
+          "label": "WRM 03-01 · 60 Go Cart",
+          "subgroup": "TurboChef NGO",
+          "equipment": "TurboChef NGO",
+          "image": "assets/layouts/lote-01/099-warming-turbochef-ngo-wrm-03-01-60-go-cart.webp",
+          "thumb": "assets/layouts/lote-01/099-warming-turbochef-ngo-wrm-03-01-60-go-cart.webp",
+          "source": "Lay Out 2.0 Base_99.jpg",
+          "sourceOrder": 99
+        }
+      ],
+      "technical": [
+        {
+          "key": "warming-merrychef-e2s-equipo-y-utensilios-p090",
+          "label": "Equipo y utensilios",
+          "subgroup": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/090-warming-merrychef-e2s-equipo-y-utensilios.webp",
+          "sourceOrder": 90
+        },
+        {
+          "key": "warming-merrychef-e2s-alimentos-p091",
+          "label": "Alimentos",
+          "subgroup": "Merrychef E2S",
+          "image": "assets/layouts/lote-01/091-warming-merrychef-e2s-alimentos.webp",
+          "sourceOrder": 91
+        },
+        {
+          "key": "warming-turbochef-ngo-equipo-y-utensilios-p100",
+          "label": "Equipo y utensilios",
+          "subgroup": "TurboChef NGO",
+          "image": "assets/layouts/lote-02/100-warming-turbochef-ngo-equipo-y-utensilios.webp",
+          "sourceOrder": 100
+        },
+        {
+          "key": "warming-turbochef-ngo-alimentos-p101",
+          "label": "Alimentos",
+          "subgroup": "TurboChef NGO",
+          "image": "assets/layouts/lote-02/101-warming-turbochef-ngo-alimentos.webp",
+          "sourceOrder": 101
+        }
+      ]
     }
   ]
 }

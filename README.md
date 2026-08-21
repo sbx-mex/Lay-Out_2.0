@@ -1,46 +1,40 @@
 # Lay Out 2.0
 
-Remaster del proyecto de referencia `layout-main`, enfocado exclusivamente en **una pestaña de Lay Out** y en las nuevas estaciones incluidas en `Lay Out_2.0`.
+Guía visual por estación con 101 referencias nuevas en WebP.
 
-## Qué cambia
+## Orden y filtros
 
-- Una sola experiencia: estación → código → referencia → evidencia → PDF.
-- 5 estaciones agrupadas: Pedidos móviles, Brewing, Barra fría, Condimentos y Espresso.
-- 51 configuraciones visuales separadas y enfocadas.
-- Barra fría concentra CBE / Blend / Tea y CBS en una misma estación con filtros.
-- Las matrices de Espresso se dividieron en opciones individuales para evitar revisar láminas saturadas.
-- Navegación y contexto en español; los códigos y nomenclatura técnica se conservan.
-- Imágenes recortadas al contenido útil, fondo blanco, realce de nitidez y miniaturas optimizadas.
-- Vistas técnicas separadas del catálogo principal para no repetir información.
-- Exportación PDF A4 horizontal de una sola página, con margen seguro de 12 mm.
-- PWA sin dependencias remotas; las imágenes se cachean a demanda.
+1. Café
+2. Barra fría
+3. Condimentos
+4. Drive Thru
+5. Espresso: Mastrena I → Mastrena II
+6. Pedidos móviles
+7. Hornos: Merrychef E2S → TurboChef NGO
 
-## Estructura
+Los códigos originales se conservan. Las versiones de equipo se identifican por separado, incluso cuando el código se repite.
 
-- `data/layouts.json`: catálogo único de estaciones y variantes.
-- `assets/stations/`: imágenes optimizadas y miniaturas.
-- `assets/technical/`: listas/equipamiento que aportan contexto técnico.
-- `tools/build_assets.py`: lógica de recorte, mejora y separación de variantes.
-- `tools/audit_project.py`: auditoría de estructura, imágenes, impresión y referencias.
+## Imágenes
 
-## Validación
+- `assets/layouts/lote-01/`: 99 imágenes.
+- `assets/layouts/lote-02/`: 2 imágenes.
+- Cada carpeta permanece debajo de 99 archivos y 25 MB.
+- `Station Layout Guides - Orden` sólo define la secuencia.
+- Las imágenes publicadas provienen únicamente de `Lay Out 2.0 Nuevas Imagenes`.
+
+## Validar
 
 ```bash
 node --check app.js
 node --check sw.js
+python tools/cleanup_assets.py
 python tools/audit_project.py
 ```
 
-## Publicación
+El workflow `Validar Lay Out 2.0` revisa formato, rutas, duplicados, orden y límites. El workflow manual `Borrar imágenes obsoletas` elimina y publica cualquier imagen de catálogo que ya no esté referenciada.
 
-El contenido de esta carpeta puede cargarse directamente a un repositorio nuevo y publicarse con GitHub Pages.
-
-### Regenerar imágenes desde la fuente
-
-Los 55 originales no se duplican dentro del repositorio final. Si necesitas reconstruir los recortes, coloca la carpeta original en `source/Lay Out_2.0/` o define `LAYOUT_SOURCE` y ejecuta:
+## Reimportar
 
 ```bash
-LAYOUT_SOURCE="/ruta/Lay Out_2.0" python tools/build_assets.py
+python tools/import_layouts.py --source "/ruta/Lay Out 2.0 Nuevas Imagenes"
 ```
-
-El workflow `.github/workflows/validate.yml` valida automáticamente JavaScript, estructura e imágenes en cada push o pull request.

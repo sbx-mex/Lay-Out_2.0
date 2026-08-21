@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE = "layout-2-remaster-v2";
+const CACHE = "layout-2-remaster-v3";
 const SHELL = [
   "./",
   "index.html",
