@@ -38,11 +38,13 @@ class IdAuditParser(HTMLParser):
 
 if not (ROOT / "tools" / "audit_pdf_export.py").is_file():
     fail("falta el auditor de exportación PDF")
+if not (ROOT / "tools" / "clean_reference_titles.py").is_file():
+    fail("falta el limpiador validable de títulos de referencia")
 app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v11";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v12";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
@@ -148,6 +150,15 @@ if performance.get("precachePerStation") != 1 or performance.get("referenceDispl
     fail("la configuración de rendimiento debe usar carga nativa y una precarga por estación")
 if performance.get("adjacentPrefetch") != 1 or performance.get("swipeThreshold") != 48:
     fail("el JSON no contiene la configuración estable del carrete")
+expected_cleanup = {
+    "version": 1,
+    "references": 85,
+    "titlesRemoved": 69,
+    "canvas": "1440x1080",
+    "fit": "contain-max",
+}
+if performance.get("referenceCleanup") != expected_cleanup:
+    fail("el JSON no documenta la limpieza y ajuste dinámico de referencias")
 for item in workflow:
     if item["target"] not in parser.ids:
         fail(f"el flujo JSON apunta a un destino inexistente: {item['target']}")
@@ -255,6 +266,10 @@ report = {
         "adjacentImagePrefetch": True,
         "carouselProgress": True,
         "gestureAxisProtection": True,
+        "cleanReferenceTitles": True,
+        "dynamicReferenceFit": True,
+        "cleanedReferences": performance["referenceCleanup"]["references"],
+        "embeddedTitlesRemoved": performance["referenceCleanup"]["titlesRemoved"],
     },
     "lots": {
         lot.name: {

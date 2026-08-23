@@ -18,6 +18,13 @@
     "referenceDisplayMode": "native",
     "adjacentPrefetch": 1,
     "swipeThreshold": 48,
+    "referenceCleanup": {
+      "version": 1,
+      "references": 85,
+      "titlesRemoved": 69,
+      "canvas": "1440x1080",
+      "fit": "contain-max"
+    },
     "evidenceMaxPixels": 2200,
     "evidenceTargetWidth": 1900
   },

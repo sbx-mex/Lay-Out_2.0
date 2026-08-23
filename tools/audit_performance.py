@@ -30,6 +30,9 @@ if performance.get("adjacentPrefetch") != 1:
     fail("adjacentPrefetch debe limitarse a una referencia vecina por dirección")
 if not 36 <= performance.get("swipeThreshold", 0) <= 72:
     fail("swipeThreshold está fuera del rango estable para móviles")
+cleanup = performance.get("referenceCleanup", {})
+if cleanup.get("references") != 85 or cleanup.get("fit") != "contain-max":
+    fail("la configuración de referencias limpias está incompleta")
 if not 1200 <= performance.get("evidenceTargetWidth", 0) <= 2200:
     fail("evidenceTargetWidth está fuera del rango seguro")
 if not 1600 <= performance.get("evidenceMaxPixels", 0) <= 2600:

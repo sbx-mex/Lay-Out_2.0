@@ -4,6 +4,12 @@ Guía visual operativa con un recorrido simple: **Estación → Referencia → R
 
 Las referencias funcionan como carrete: desliza sobre la imagen, usa las flechas visibles o presiona ←/→ con el teclado. Las imágenes vecinas se precargan para que el cambio sea inmediato sin descargar todo el catálogo.
 
+Las 85 referencias se publican sin el título incrustado: la interfaz conserva estación y código, mientras Python reencuadra cada Lay Out proporcionalmente dentro del lienzo 1440×1080. Para validar que no reaparezcan títulos o deformaciones:
+
+```bash
+python tools/clean_reference_titles.py --check
+```
+
 ## Orden y filtros
 
 1. Café
