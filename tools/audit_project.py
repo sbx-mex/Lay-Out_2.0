@@ -42,7 +42,7 @@ app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v8";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v9";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
@@ -57,7 +57,7 @@ for marker in (
     "activeCampaignId",
     "renderCampaignSelect",
     "renderStationSelect",
-    "renderVariantSelect",
+    "renderVariantPosition",
     "stationDisplayLabel",
 ):
     if marker not in app_source:
@@ -65,7 +65,6 @@ for marker in (
 for marker in (
     "campaignSelect",
     "stationSelect",
-    "variantSelect",
     "selectionSummary",
     "captureGuidance",
     "photoOrientationDialog",
@@ -80,6 +79,9 @@ for obsolete in ('id="stationNav"', 'id="variantRail"', 'class="variant-card"'):
 for obsolete in ('id="searchInput"', 'id="searchResults"', 'Buscar estación, equipo o código', 'La fotografía se procesa localmente'):
     if obsolete in html_source:
         fail(f"mensaje o control retirado todavía visible: {obsolete}")
+for obsolete in ('id="variantSelect"', 'id="referenceStage"', 'id="referenceImage"', 'En palabras simples'):
+    if obsolete in html_source:
+        fail(f"vista teórica duplicada todavía visible: {obsolete}")
 for marker in (".capture-guidance", ".orientation-dialog", ".export-progress", ".completion-dialog"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
@@ -96,11 +98,9 @@ js_required_ids = set(re.findall(r'\$\("([A-Za-z][A-Za-z0-9_-]*)"\)', app_source
 missing_js_ids = sorted(js_required_ids - set(parser.ids))
 if missing_js_ids:
     fail(f"app.js usa controles inexistentes: {missing_js_ids}")
-variant_select_source = app_source[
-    app_source.index("function renderVariantSelect") : app_source.index("function renderActive")
-]
-if "<img" in variant_select_source or "hydrateThumb" in app_source:
-    fail("el selector de referencia todavía repite miniaturas")
+for marker in ('id="compareWorkspace"', 'id="compareReference"', 'id="prevButton"', 'id="nextButton"', 'id="variantPosition"'):
+    if marker not in html_source:
+        fail(f"falta navegación directa en el comparador: {marker}")
 if 'return `${current.label} _ ${current.subgroupLabels?.[subgroup] || subgroup}`;' not in app_source:
     fail("la estación no diferencia el equipo con el formato Estación _ Equipo")
 
@@ -201,7 +201,8 @@ report = {
         "optimizedUiAssets": len(UI_ASSETS),
         "fastCacheRefresh": True,
         "stationEquipmentDropdown": True,
-        "referenceDropdown": True,
+        "referenceDropdown": False,
+        "singleReferenceWorkspace": True,
         "thumbnailDuplicationRemoved": True,
         "singleLinePdfHeader": True,
     },

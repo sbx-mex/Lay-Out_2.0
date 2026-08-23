@@ -135,10 +135,6 @@ function loadState() {
   }
 }
 
-function setStageProcessing(state) {
-  $("referenceStage").classList.toggle("is-processing", state);
-}
-
 function imageCacheKey(source, targetWidth, padding) {
   return `${source}|${targetWidth}|${padding}`;
 }
@@ -236,23 +232,16 @@ async function optimizeImageForDisplay(source, options = {}) {
 
 async function applyActiveVisual(item, ticket) {
   try {
-    setStageProcessing(true);
     const optimized = await optimizeImageForDisplay(item.image, { targetWidth: 2100, padding: 0.075 });
     if (ticket !== renderTicket) return;
     activeReferenceDisplayUrl = optimized.url;
-    $("referenceImage").src = optimized.url;
     $("compareReference").src = optimized.url;
     $("referenceDialogImage").src = optimized.url;
-    $("sourceCaption").textContent = `${variantContext(item)} · ${item.code} · Toca para ampliar.`;
   } catch {
     if (ticket !== renderTicket) return;
     activeReferenceDisplayUrl = item.image;
-    $("referenceImage").src = item.image;
     $("compareReference").src = item.image;
     $("referenceDialogImage").src = item.image;
-    $("sourceCaption").textContent = `${variantContext(item)} · ${item.code} · Lista para comparar.`;
-  } finally {
-    if (ticket === renderTicket) setStageProcessing(false);
   }
 }
 
@@ -327,7 +316,7 @@ function selectStationChoice(value, scroll = true) {
   const current = station();
   activeVariantId = stationVariants()[0].id;
   renderAll();
-  if (scroll) document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (scroll) $("compareWorkspace").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function subgroupLabel(group) {
@@ -341,48 +330,26 @@ function variantContext(item) {
 
 function renderStation() {
   const current = station();
-  $("stationShort").textContent = "Paso 4 · Referencia teórica";
   $("stationLabel").textContent = stationDisplayLabel();
-  $("stationDescription").textContent = current.description;
-  $("stationTranslation").textContent = current.translation;
-  $("stationTips").innerHTML = current.tips.map(tip => `<li>${tip}</li>`).join("");
-
   renderTechnical(current);
-  renderVariantSelect();
+  renderVariantPosition();
   renderActive();
 }
 
-function renderVariantSelect() {
-  const select = $("variantSelect");
-  select.innerHTML = "";
+function renderVariantPosition() {
   const list = stationVariants();
   if (!list.length) {
-    const option = document.createElement("option");
-    option.textContent = "Sin referencias disponibles";
-    select.appendChild(option);
-    select.disabled = true;
+    $("variantPosition").textContent = "Sin referencias";
     return;
   }
-  select.disabled = false;
   if (!list.some(item => item.id === activeVariantId)) activeVariantId = list[0].id;
-  list.forEach((item, index) => {
-    const option = document.createElement("option");
-    option.value = item.id;
-    option.textContent = `${String(index + 1).padStart(2, "0")} · ${item.code}`;
-    select.appendChild(option);
-  });
-  select.value = activeVariantId;
-  $("variantPosition").textContent = `${list.findIndex(item => item.id === activeVariantId) + 1} de ${list.length} · Elige una opción o usa las flechas del carrusel.`;
+  $("variantPosition").textContent = `${list.findIndex(item => item.id === activeVariantId) + 1} de ${list.length}`;
 }
 
 function renderActive() {
   const item = activeVariant();
   if (!item) return;
   activeVariantId = item.id;
-  $("activeCode").textContent = item.code;
-  $("referenceImage").src = item.image;
-  $("referenceImage").alt = `Referencia ${item.code} de ${station().label}`;
-  $("sourceCaption").textContent = `${variantContext(item)} · ${item.code} · Preparando vista…`;
   $("referenceDialogTitle").textContent = `${variantContext(item)} · ${item.code}`;
   $("referenceDialogImage").src = item.image;
   renderTicket += 1;
@@ -398,7 +365,7 @@ function shiftVariant(delta) {
   index = (index + delta + list.length) % list.length;
   activeVariantId = list[index].id;
   renderActive();
-  renderVariantSelect();
+  renderVariantPosition();
   renderComparison();
   renderSelectionSummary();
   saveState();
@@ -866,14 +833,6 @@ function bind() {
     saveState();
   });
   $("stationSelect").addEventListener("change", event => selectStationChoice(event.target.value));
-  $("variantSelect").addEventListener("change", event => {
-    activeVariantId = event.target.value;
-    renderVariantSelect();
-    renderActive();
-    renderComparison();
-    renderSelectionSummary();
-    saveState();
-  });
   $("prevButton").addEventListener("click", () => shiftVariant(-1));
   $("nextButton").addEventListener("click", () => shiftVariant(1));
   $("zoomReference").addEventListener("click", openReference);

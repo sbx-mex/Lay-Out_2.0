@@ -20,7 +20,7 @@
   <script defer src="app.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#workspace">Ir a la referencia</a>
+  <a class="skip-link" href="#compareWorkspace">Ir a la comparación</a>
   <noscript><p class="noscript">Activa JavaScript para utilizar Lay Out 2.0.</p></noscript>
 
   <header class="topbar">
@@ -52,8 +52,7 @@
         <span class="eyebrow">Ruta rápida</span>
           <strong>1. Coloca la tienda</strong>
           <strong>2. Elige la campaña</strong>
-          <strong>3. Elige estación y equipo</strong>
-          <strong>4. Revisa el carrusel y compara</strong>
+          <strong>3. Elige estación, revisa y compara</strong>
       </div>
     </section>
 
@@ -73,54 +72,7 @@
       <div id="selectionSummary" class="selection-summary" role="status" aria-live="polite">Preparando selección…</div>
     </section>
 
-    <section class="workspace panel" id="workspace" aria-live="polite">
-      <div class="workspace__head">
-        <div>
-          <span id="stationShort" class="eyebrow">Paso 4 · Referencia teórica</span>
-          <h2 id="stationLabel">Estación</h2>
-          <p id="stationDescription"></p>
-        </div>
-        <div class="workspace__translation"><strong>En palabras simples</strong><span id="stationTranslation"></span></div>
-      </div>
-
-      <div class="viewer-grid">
-        <div class="reference-column">
-          <label class="field reference-picker" for="variantSelect">
-            <span>Referencia</span>
-            <select id="variantSelect" name="variant" aria-describedby="variantPosition"></select>
-            <small id="variantPosition">Elige una opción o usa las flechas del carrusel.</small>
-          </label>
-          <div class="viewer-toolbar">
-            <button id="prevButton" class="icon-button" type="button" aria-label="Referencia anterior">←</button>
-            <div class="viewer-title"><small>Referencia</small><strong id="activeCode">—</strong></div>
-            <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
-          </div>
-          <figure id="referenceStage" class="reference-stage">
-            <button id="zoomReference" class="reference-stage__button" type="button" aria-label="Ampliar referencia seleccionada">
-              <img id="referenceImage" alt="Referencia de estación" decoding="async">
-              <span class="zoom-hint" aria-hidden="true">Ampliar</span>
-            </button>
-            <figcaption id="sourceCaption">Selecciona una referencia.</figcaption>
-          </figure>
-          <div class="viewer-helper-row" aria-hidden="true">
-            <span class="helper-pill">Ver opciones en la lista</span>
-            <span class="helper-pill">Ampliar la referencia</span>
-          </div>
-        </div>
-
-        <aside class="validation-card">
-          <span class="eyebrow">Qué validar</span>
-          <ul id="stationTips"></ul>
-          <div class="technical-block">
-            <strong>Vistas técnicas</strong>
-            <p>Equipo, utensilios e ingredientes.</p>
-            <div id="technicalButtons" class="technical-buttons"></div>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="compare panel" aria-labelledby="compareTitle">
+    <section class="compare panel" id="compareWorkspace" aria-labelledby="compareTitle">
       <div class="section-heading compare-heading">
         <div>
           <span class="eyebrow">Evidencia de tienda</span>
@@ -133,9 +85,21 @@
       </div>
 
       <div class="compare-grid">
-        <article class="compare-card">
-          <div class="compare-card__head"><strong>Referencia</strong><span id="compareCode">—</span></div>
+        <article class="compare-card compare-card--reference">
+          <div class="compare-card__head compare-card__head--carousel">
+            <div><strong id="stationLabel">Referencia</strong><span id="compareCode">—</span></div>
+            <div class="carousel-controls" aria-label="Cambiar referencia">
+              <button id="prevButton" class="icon-button" type="button" aria-label="Referencia anterior">←</button>
+              <span id="variantPosition" role="status" aria-live="polite">1 de 1</span>
+              <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
+            </div>
+          </div>
           <img id="compareReference" alt="Referencia seleccionada" tabindex="0" role="button" aria-label="Ampliar referencia comparativa">
+          <div class="reference-actions no-print">
+            <span>Usa las flechas para cambiar</span>
+            <button id="zoomReference" class="button button--ghost-dark button--compact" type="button">Ampliar</button>
+          </div>
+          <div id="technicalButtons" class="technical-buttons technical-buttons--inline no-print"></div>
         </article>
         <article class="compare-card compare-card--evidence">
           <div class="compare-card__head"><strong>Evidencia real</strong><button id="removeEvidence" class="button button--text hidden" type="button">Quitar</button></div>
