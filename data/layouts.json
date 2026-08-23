@@ -16,6 +16,8 @@
   "performance": {
     "precachePerStation": 1,
     "referenceDisplayMode": "native",
+    "adjacentPrefetch": 1,
+    "swipeThreshold": 48,
     "evidenceMaxPixels": 2200,
     "evidenceTargetWidth": 1900
   },

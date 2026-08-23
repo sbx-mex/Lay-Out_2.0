@@ -34,8 +34,10 @@ let toastTimer = null;
 let renderTicket = 0;
 let exportInProgress = false;
 let pendingPhotoInputId = null;
+let suppressReferenceClickUntil = 0;
 const displayCache = new Map();
 const technicalCache = new Map();
+const prefetchedReferences = new Set();
 
 const mediaDialogState = {
   scale: 1,
@@ -356,10 +358,40 @@ function renderVariantPosition() {
   const list = stationVariants();
   if (!list.length) {
     $("variantPosition").textContent = "Sin referencias";
+    $("carouselProgress").style.width = "0%";
     return;
   }
   if (!list.some(item => item.id === activeVariantId)) activeVariantId = list[0].id;
-  $("variantPosition").textContent = `${list.findIndex(item => item.id === activeVariantId) + 1} de ${list.length}`;
+  const index = list.findIndex(item => item.id === activeVariantId);
+  $("variantPosition").textContent = `${index + 1} de ${list.length}`;
+  $("carouselProgress").style.width = `${((index + 1) / list.length) * 100}%`;
+}
+
+function prefetchAdjacentVariants() {
+  const list = stationVariants();
+  const currentIndex = list.findIndex(item => item.id === activeVariantId);
+  const distance = catalog.performance?.adjacentPrefetch || 1;
+  if (currentIndex < 0 || list.length < 2) return;
+  for (let offset = 1; offset <= distance; offset += 1) {
+    [currentIndex - offset, currentIndex + offset].forEach(rawIndex => {
+      const item = list[(rawIndex + list.length) % list.length];
+      if (!item?.image || prefetchedReferences.has(item.image)) return;
+      const image = new Image();
+      image.decoding = "async";
+      image.src = item.image;
+      prefetchedReferences.add(item.image);
+    });
+  }
+}
+
+function animateReferenceChange(delta) {
+  const image = $("compareReference");
+  const className = delta > 0 ? "slide-next" : "slide-previous";
+  image.classList.remove("slide-next", "slide-previous");
+  requestAnimationFrame(() => {
+    image.classList.add(className);
+    window.setTimeout(() => image.classList.remove(className), 280);
+  });
 }
 
 function renderActive() {
@@ -372,6 +404,7 @@ function renderActive() {
   const ticket = renderTicket;
   activeReferenceDisplayUrl = item.image;
   applyActiveVisual(item, ticket);
+  prefetchAdjacentVariants();
 }
 
 function shiftVariant(delta) {
@@ -383,6 +416,7 @@ function shiftVariant(delta) {
   renderActive();
   renderVariantPosition();
   renderComparison();
+  animateReferenceChange(delta);
   renderSelectionSummary();
   saveState();
 }
@@ -781,19 +815,46 @@ function bindDialogClose(dialogId, buttonId) {
 }
 
 function bindSwipe() {
-  const stage = $("zoomReference");
-  let startX = null;
-  stage.addEventListener("touchstart", event => {
-    startX = event.changedTouches[0]?.clientX ?? null;
-  }, { passive: true });
-  stage.addEventListener("touchend", event => {
-    if (startX === null) return;
-    const endX = event.changedTouches[0]?.clientX ?? startX;
-    const delta = endX - startX;
-    startX = null;
-    if (Math.abs(delta) < 55) return;
-    shiftVariant(delta < 0 ? 1 : -1);
-  }, { passive: true });
+  const image = $("compareReference");
+  let gesture = null;
+
+  image.addEventListener("pointerdown", event => {
+    if (!event.isPrimary || event.button > 0) return;
+    gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, started: performance.now() };
+    image.setPointerCapture(event.pointerId);
+  });
+
+  image.addEventListener("pointermove", event => {
+    if (!gesture || gesture.id !== event.pointerId) return;
+    const deltaX = event.clientX - gesture.x;
+    const deltaY = event.clientY - gesture.y;
+    if (Math.abs(deltaX) <= Math.abs(deltaY) || Math.abs(deltaX) < 8) return;
+    image.classList.add("is-dragging");
+    image.style.transform = `translateX(${clamp(deltaX, -90, 90)}px)`;
+    image.style.opacity = String(clamp(1 - Math.abs(deltaX) / 420, 0.72, 1));
+  });
+
+  const finishGesture = event => {
+    if (!gesture || gesture.id !== event.pointerId) return;
+    const deltaX = event.clientX - gesture.x;
+    const deltaY = event.clientY - gesture.y;
+    const elapsed = performance.now() - gesture.started;
+    const threshold = catalog.performance?.swipeThreshold || 48;
+    const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+    const isSwipe = isHorizontal && (Math.abs(deltaX) >= threshold || (elapsed < 260 && Math.abs(deltaX) >= 30));
+    if (image.hasPointerCapture(event.pointerId)) image.releasePointerCapture(event.pointerId);
+    gesture = null;
+    image.classList.remove("is-dragging");
+    image.style.transform = "";
+    image.style.opacity = "";
+    if (!isSwipe) return;
+    suppressReferenceClickUntil = performance.now() + 400;
+    if (navigator.vibrate) navigator.vibrate(12);
+    shiftVariant(deltaX < 0 ? 1 : -1);
+  };
+
+  image.addEventListener("pointerup", finishGesture);
+  image.addEventListener("pointercancel", finishGesture);
 }
 
 function bindMediaDialog() {
@@ -873,10 +934,16 @@ function bind() {
   });
 
   $("compareReference").addEventListener("click", () => {
+    if (performance.now() < suppressReferenceClickUntil) return;
     const item = activeVariant();
     openMediaDialog(activeReferenceDisplayUrl || item?.image, `Referencia comparativa · ${item?.code || "—"}`, "Vista ampliada de la referencia optimizada.");
   });
   $("compareReference").addEventListener("keydown", event => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      shiftVariant(event.key === "ArrowRight" ? 1 : -1);
+      return;
+    }
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       $("compareReference").click();

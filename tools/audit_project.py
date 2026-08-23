@@ -42,7 +42,7 @@ app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v10";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v11";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
@@ -59,6 +59,9 @@ for marker in (
     "renderStationSelect",
     "renderVariantPosition",
     "renderExperience",
+    "prefetchAdjacentVariants",
+    "animateReferenceChange",
+    "bindSwipe",
     "stationDisplayLabel",
 ):
     if marker not in app_source:
@@ -68,6 +71,8 @@ for marker in (
     "stationSelect",
     "selectionSummary",
     "workflowNav",
+    "carouselHint",
+    "carouselProgress",
     "captureGuidance",
     "photoOrientationDialog",
     "exportProgress",
@@ -93,9 +98,15 @@ for obsolete in (
 for obsolete in ('id="variantSelect"', 'id="referenceStage"', 'id="referenceImage"', 'En palabras simples'):
     if obsolete in html_source:
         fail(f"vista teórica duplicada todavía visible: {obsolete}")
-for marker in (".capture-guidance", ".orientation-dialog", ".export-progress", ".completion-dialog"):
+for marker in (".capture-guidance", ".orientation-dialog", ".export-progress", ".completion-dialog", ".carousel-progress", ".is-dragging"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
+for marker in ('event.key === "ArrowLeft"', 'navigator.vibrate', 'Math.abs(deltaX) > Math.abs(deltaY) * 1.25', 'suppressReferenceClickUntil'):
+    if marker not in app_source:
+        fail(f"falta mejora de navegación del carrete: {marker}")
+for marker in ("LayOut 2.0 · Estamos mejorando para ti", "Diseñado por Jorge Alcantar Aguiar &amp; Enrique César Flores"):
+    if marker not in html_source:
+        fail(f"falta pie de página solicitado: {marker}")
 
 parser = IdAuditParser()
 parser.feed(html_source)
@@ -135,6 +146,8 @@ if catalog.get("schemaVersion") != "3.1.0" or workflow != expected_workflow:
     fail("el JSON no contiene el flujo intuitivo Estación → Referencia → Real")
 if performance.get("precachePerStation") != 1 or performance.get("referenceDisplayMode") != "native":
     fail("la configuración de rendimiento debe usar carga nativa y una precarga por estación")
+if performance.get("adjacentPrefetch") != 1 or performance.get("swipeThreshold") != 48:
+    fail("el JSON no contiene la configuración estable del carrete")
 for item in workflow:
     if item["target"] not in parser.ids:
         fail(f"el flujo JSON apunta a un destino inexistente: {item['target']}")
@@ -237,6 +250,11 @@ report = {
         "jsonDrivenWorkflow": True,
         "nativeReferenceRendering": True,
         "priorityPrecachePerStation": performance["precachePerStation"],
+        "swipeCarousel": True,
+        "keyboardCarousel": True,
+        "adjacentImagePrefetch": True,
+        "carouselProgress": True,
+        "gestureAxisProtection": True,
     },
     "lots": {
         lot.name: {

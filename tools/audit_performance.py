@@ -26,6 +26,10 @@ if performance.get("precachePerStation") != 1:
     fail("precachePerStation debe ser 1 para evitar descargar el catálogo visual completo al instalar")
 if performance.get("referenceDisplayMode") != "native":
     fail("las referencias deben renderizarse de forma nativa, sin reprocesarlas en canvas")
+if performance.get("adjacentPrefetch") != 1:
+    fail("adjacentPrefetch debe limitarse a una referencia vecina por dirección")
+if not 36 <= performance.get("swipeThreshold", 0) <= 72:
+    fail("swipeThreshold está fuera del rango estable para móviles")
 if not 1200 <= performance.get("evidenceTargetWidth", 0) <= 2200:
     fail("evidenceTargetWidth está fuera del rango seguro")
 if not 1600 <= performance.get("evidenceMaxPixels", 0) <= 2600:

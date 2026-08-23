@@ -2,6 +2,8 @@
 
 Guía visual operativa con un recorrido simple: **Estación → Referencia → Real**.
 
+Las referencias funcionan como carrete: desliza sobre la imagen, usa las flechas visibles o presiona ←/→ con el teclado. Las imágenes vecinas se precargan para que el cambio sea inmediato sin descargar todo el catálogo.
+
 ## Orden y filtros
 
 1. Café

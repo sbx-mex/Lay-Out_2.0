@@ -21,7 +21,12 @@
     "singleLinePdfHeader": true,
     "jsonDrivenWorkflow": true,
     "nativeReferenceRendering": true,
-    "priorityPrecachePerStation": 1
+    "priorityPrecachePerStation": 1,
+    "swipeCarousel": true,
+    "keyboardCarousel": true,
+    "adjacentImagePrefetch": true,
+    "carouselProgress": true,
+    "gestureAxisProtection": true
   },
   "lots": {
     "lote-01": {
