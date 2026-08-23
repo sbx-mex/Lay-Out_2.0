@@ -26,12 +26,16 @@
     "keyboardCarousel": true,
     "adjacentImagePrefetch": true,
     "carouselProgress": true,
-    "gestureAxisProtection": true
+    "gestureAxisProtection": true,
+    "cleanReferenceTitles": true,
+    "dynamicReferenceFit": true,
+    "cleanedReferences": 85,
+    "embeddedTitlesRemoved": 69
   },
   "lots": {
     "lote-01": {
       "files": 99,
-      "megabytes": 13.47
+      "megabytes": 18.28
     },
     "lote-02": {
       "files": 2,

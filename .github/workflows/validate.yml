@@ -18,10 +18,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install Pillow pypdf
+      - run: pip install Pillow pypdf numpy scipy
       - run: node --check app.js
       - run: node --check sw.js
       - run: python tools/optimize_ui_assets.py --check
+      - run: python tools/clean_reference_titles.py --check
       - run: python tools/audit_performance.py
       - run: python tools/cleanup_assets.py
       - run: python tools/audit_project.py
