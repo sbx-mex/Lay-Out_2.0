@@ -88,9 +88,10 @@
               <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
             </div>
           </div>
-          <img id="compareReference" alt="Referencia seleccionada" tabindex="0" role="button" aria-label="Ampliar referencia comparativa">
+          <img id="compareReference" alt="Referencia seleccionada" tabindex="0" role="button" aria-label="Desliza para cambiar o toca para ampliar" draggable="false">
           <div class="reference-actions no-print">
-            <span>Usa las flechas para cambiar</span>
+            <span class="carousel-hint"><b aria-hidden="true">↔</b><span id="carouselHint">Desliza para cambiar</span></span>
+            <span class="carousel-progress" aria-hidden="true"><i id="carouselProgress"></i></span>
             <button id="zoomReference" class="button button--ghost-dark button--compact" type="button">Ampliar</button>
           </div>
           <div id="technicalButtons" class="technical-buttons technical-buttons--inline no-print"></div>
@@ -119,18 +120,8 @@
       <label class="field field--notes"><span>Notas breves</span><textarea id="notes" maxlength="360" rows="3" placeholder="Ej. Falta reubicar jarabes y liberar superficie de trabajo."></textarea></label>
     </section>
 
-    <footer class="footer footer--rich">
-      <div>
-        <strong>LayOut 2.0</strong>
-        <span>Estación · Referencia · Real</span>
-      </div>
-      <div>
-        <strong>Estamos mejorando para ti</strong>
-        <span>Tu experiencia ayuda a mejorar esta guía.</span>
-      </div>
-      <div>
-        <a href="https://github.com/sbx-mex/Lay-Out_2.0/issues" target="_blank" rel="noopener">Comentarios y sugerencias ↗</a>
-      </div>
+    <footer class="footer footer--single-line">
+      <p><strong>LayOut 2.0 · Estamos mejorando para ti</strong><span>Diseñado por Jorge Alcantar Aguiar &amp; Enrique César Flores</span><a href="https://github.com/sbx-mex/Lay-Out_2.0/issues" target="_blank" rel="noopener">Comentarios y sugerencias ↗</a></p>
     </footer>
   </main>
 
