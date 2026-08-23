@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE = "layout-2-remastered-v9";
+const CACHE = "layout-2-remastered-v10";
 const SHELL = [
   "./",
   "index.html",
@@ -15,19 +15,16 @@ const SHELL = [
   "vendor/jspdf.umd.min.js"
 ];
 
-async function catalogAssets() {
+async function priorityCatalogAssets() {
   try {
     const response = await fetch("data/layouts.json", { cache: "no-store" });
     if (!response.ok) return [];
     const data = await response.json();
     const assets = [];
+    const limit = Math.max(0, Number(data.performance?.precachePerStation) || 0);
     for (const station of data.stations || []) {
-      for (const variant of station.variants || []) {
+      for (const variant of (station.variants || []).slice(0, limit)) {
         if (variant.image) assets.push(variant.image);
-        if (variant.thumb) assets.push(variant.thumb);
-      }
-      for (const technical of station.technical || []) {
-        if (technical.image) assets.push(technical.image);
       }
     }
     return [...new Set(assets)];
@@ -40,7 +37,7 @@ self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
     await cache.addAll(SHELL);
-    const assets = await catalogAssets();
+    const assets = await priorityCatalogAssets();
     await Promise.allSettled(assets.map(asset => cache.add(asset)));
     await self.skipWaiting();
   })());

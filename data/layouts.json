@@ -1,9 +1,24 @@
 {
-  "schemaVersion": "3.0.0",
-  "project": "Lay Out 2.0",
+  "schemaVersion": "3.1.0",
+  "project": "LayOut 2.0",
   "language": "es-MX",
-  "updated": "2026-08-21",
+  "updated": "2026-08-23",
   "sourceNote": "Orden basado en Station Layout Guides - Orden. Imágenes exclusivamente de Lay Out 2.0 Nuevas Imagenes.",
+  "experience": {
+    "title": "LayOut 2.0",
+    "subtitle": "Selecciona, compara y valida con claridad.",
+    "workflow": [
+      { "step": 1, "label": "Estación", "hint": "Selecciona", "target": "contextPanel" },
+      { "step": 2, "label": "Referencia", "hint": "Revisa", "target": "referenceCard" },
+      { "step": 3, "label": "Real", "hint": "Compara", "target": "realCard" }
+    ]
+  },
+  "performance": {
+    "precachePerStation": 1,
+    "referenceDisplayMode": "native",
+    "evidenceMaxPixels": 2200,
+    "evidenceTargetWidth": 1900
+  },
   "campaigns": [
     { "id": "WINTER", "label": "Winter", "icon": "❄️" },
     { "id": "SPRING", "label": "Spring", "icon": "🌸" },

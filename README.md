@@ -1,6 +1,6 @@
-# Lay Out 2.0
+# LayOut 2.0
 
-Guía visual por estación con 101 referencias nuevas en WebP.
+Guía visual operativa con un recorrido simple: **Estación → Referencia → Real**.
 
 ## Orden y filtros
 
@@ -28,10 +28,11 @@ Los códigos originales se conservan. Las versiones de equipo se identifican por
 node --check app.js
 node --check sw.js
 python tools/cleanup_assets.py
+python tools/audit_performance.py
 python tools/audit_project.py
 ```
 
-El workflow `Validar Lay Out 2.0` revisa formato, rutas, duplicados, orden y límites. El workflow manual `Borrar imágenes obsoletas` elimina y publica cualquier imagen de catálogo que ya no esté referenciada.
+El workflow `Validar Lay Out 2.0` revisa formato, rutas, duplicados, orden, límites y presupuesto de rendimiento. El service worker precarga sólo una referencia por estación; las demás se sirven bajo demanda.
 
 ## Reimportar
 
