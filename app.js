@@ -2,6 +2,7 @@
 
 const DATA_URL = "data/layouts.json";
 const MEMORY_KEY = "layout20-state-v4";
+const LEGACY_MEMORY_KEY = "layout20-state-v3";
 const PDF_MARGIN = 6;
 const PDF_CUT_GAP = 2;
 const MAX_EVIDENCE_PX = 2200;
@@ -125,7 +126,10 @@ function saveState() {
 
 function loadState() {
   try {
-    return JSON.parse(localStorage.getItem(MEMORY_KEY) || "{}");
+    const current = localStorage.getItem(MEMORY_KEY);
+    if (current) return JSON.parse(current);
+    const legacy = localStorage.getItem(LEGACY_MEMORY_KEY);
+    return legacy ? JSON.parse(legacy) : {};
   } catch {
     return {};
   }
@@ -322,8 +326,6 @@ function selectStationChoice(value, scroll = true) {
   activeSubgroup = subgroup;
   const current = station();
   activeVariantId = stationVariants()[0].id;
-  $("searchInput").value = "";
-  closeSearchResults();
   renderAll();
   if (scroll) document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -339,7 +341,7 @@ function variantContext(item) {
 
 function renderStation() {
   const current = station();
-  $("stationShort").textContent = "Estación _ Equipo";
+  $("stationShort").textContent = "Paso 4 · Referencia teórica";
   $("stationLabel").textContent = stationDisplayLabel();
   $("stationDescription").textContent = current.description;
   $("stationTranslation").textContent = current.translation;
@@ -370,7 +372,7 @@ function renderVariantSelect() {
     select.appendChild(option);
   });
   select.value = activeVariantId;
-  $("variantPosition").textContent = `${list.findIndex(item => item.id === activeVariantId) + 1} de ${list.length} · Desliza la imagen o usa las flechas.`;
+  $("variantPosition").textContent = `${list.findIndex(item => item.id === activeVariantId) + 1} de ${list.length} · Elige una opción o usa las flechas del carrusel.`;
 }
 
 function renderActive() {
@@ -593,58 +595,6 @@ function clearEvidence() {
   $("cameraInput").value = "";
   updateCaptureGuidance();
   updateCompletion();
-}
-
-function showSearchResults() {
-  const query = $("searchInput").value.trim().toLowerCase();
-  const results = $("searchResults");
-  results.innerHTML = "";
-  if (!query) {
-    closeSearchResults();
-    return;
-  }
-
-  const matches = allVariants().filter(({ station: itemStation, variant }) => {
-    const haystack = `${variant.code} ${variant.label || ""} ${variant.equipment || ""} ${variant.subgroup} ${itemStation.label} ${itemStation.short}`.toLowerCase();
-    return haystack.includes(query);
-  }).slice(0, 10);
-
-  if (!matches.length) {
-    const empty = document.createElement("div");
-    empty.className = "search-empty";
-    empty.textContent = "Sin coincidencias. Verifica el código o prueba con otra estación.";
-    results.appendChild(empty);
-  } else {
-    matches.forEach(({ station: itemStation, variant }) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "search-result";
-      button.setAttribute("role", "option");
-      button.innerHTML = "<strong></strong><span></span>";
-      button.querySelector("strong").textContent = variant.code;
-      button.querySelector("span").textContent = `${itemStation.label} · ${itemStation.subgroupLabels?.[variant.subgroup] || variant.subgroup}`;
-      button.addEventListener("click", () => selectSearchResult(itemStation, variant));
-      results.appendChild(button);
-    });
-  }
-  results.classList.remove("hidden");
-  $("searchInput").setAttribute("aria-expanded", "true");
-}
-
-function closeSearchResults() {
-  $("searchResults").classList.add("hidden");
-  $("searchInput").setAttribute("aria-expanded", "false");
-}
-
-function selectSearchResult(itemStation, variant) {
-  activeStationId = itemStation.id;
-  activeSubgroup = itemStation.variants.some(item => item.subgroup === variant.subgroup) ? variant.subgroup : defaultSubgroup(itemStation);
-  activeVariantId = variant.id;
-  $("searchInput").value = variant.code;
-  closeSearchResults();
-  renderAll();
-  document.querySelector(".workspace").scrollIntoView({ behavior: "smooth", block: "start" });
-  announce(`${variant.code} seleccionado en ${itemStation.label}.`);
 }
 
 function dataUrlFromBlob(blob) {
@@ -930,25 +880,6 @@ function bind() {
   bindSwipe();
   bindMediaDialog();
 
-  $("searchInput").addEventListener("input", showSearchResults);
-  $("searchInput").addEventListener("focus", showSearchResults);
-  $("searchInput").addEventListener("keydown", event => {
-    if (event.key === "Escape") {
-      $("searchInput").value = "";
-      closeSearchResults();
-    }
-    if (event.key === "Enter") {
-      const first = $("searchResults").querySelector(".search-result");
-      if (first) {
-        event.preventDefault();
-        first.click();
-      }
-    }
-  });
-  document.addEventListener("click", event => {
-    if (!event.target.closest(".search-field")) closeSearchResults();
-  });
-
   $("storeName").addEventListener("input", saveState);
   $("notes").addEventListener("input", saveState);
   $("cameraButton").addEventListener("click", () => openPhotoPicker("cameraInput"));
@@ -1009,15 +940,14 @@ function bind() {
   $("exportButton").addEventListener("click", exportPdf);
   $("resetButton").addEventListener("click", () => {
     localStorage.removeItem(MEMORY_KEY);
+    localStorage.removeItem(LEGACY_MEMORY_KEY);
     $("storeName").value = "";
-    $("searchInput").value = "";
     $("notes").value = "";
     activeCampaignId = catalog.campaigns[0].id;
     activeStationId = catalog.stations[0].id;
     activeSubgroup = defaultSubgroup(catalog.stations[0]);
     activeVariantId = catalog.stations[0].variants[0].id;
     clearEvidence();
-    closeSearchResults();
     renderAll();
     announce("Revisión reiniciada.");
   });

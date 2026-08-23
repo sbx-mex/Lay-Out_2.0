@@ -40,8 +40,8 @@
     <section class="hero">
       <div class="hero__copy">
         <span class="eyebrow">Starbucks Layouts · Herramienta operativa · Uso interno</span>
-        <h1>Encuentra tu estación.</h1>
-        <p>Filtra el equipo, compara el acomodo y documenta.</p>
+        <h1>Revisa tu Lay Out paso a paso.</h1>
+        <p>Elige la estación, consulta la referencia y compara el acomodo real.</p>
         <div class="hero__meta">
           <span id="catalogSummary" class="metric">Cargando catálogo…</span>
           <span class="metric">101 referencias nuevas</span>
@@ -50,29 +50,25 @@
       </div>
       <div class="hero__card" aria-label="Flujo recomendado">
         <span class="eyebrow">Ruta rápida</span>
-          <strong>1. Configura campaña y tienda</strong>
-          <strong>2. Elige estación y equipo</strong>
-          <strong>3. Desliza, compara y exporta</strong>
+          <strong>1. Coloca la tienda</strong>
+          <strong>2. Elige la campaña</strong>
+          <strong>3. Elige estación y equipo</strong>
+          <strong>4. Revisa el carrusel y compara</strong>
       </div>
     </section>
 
     <section class="context panel" aria-labelledby="contextTitle">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">Paso 1 · Contexto operativo</span>
-          <h2 id="contextTitle">Configura la revisión</h2>
+          <span class="eyebrow">Pasos 1–3 · Configura la revisión</span>
+          <h2 id="contextTitle">Tienda, campaña y estación</h2>
         </div>
         <button id="resetButton" class="button button--text" type="button">Reiniciar</button>
       </div>
       <div class="context__grid">
-        <label class="field"><span>Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
-        <label class="field"><span>Campaña</span><select id="campaignSelect" name="campaign" aria-label="Campaña anual"></select></label>
-        <label class="field"><span>Estación _ Equipo</span><select id="stationSelect" name="station" aria-label="Estación y equipo"></select></label>
-        <div class="field search-field context__search">
-          <label for="searchInput"><span>Buscar estación, equipo o código</span></label>
-          <input id="searchInput" autocomplete="off" placeholder="Ej. Mastrena II, Merrychef o ESP 03-02" aria-controls="searchResults" aria-expanded="false">
-          <div id="searchResults" class="search-results hidden" role="listbox" aria-label="Resultados de búsqueda"></div>
-        </div>
+        <label class="field step-field"><span><b>1</b> Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
+        <label class="field step-field"><span><b>2</b> Campaña</span><select id="campaignSelect" name="campaign" aria-label="Campaña anual"></select></label>
+        <label class="field step-field"><span><b>3</b> Estación y equipo</span><select id="stationSelect" name="station" aria-label="Estación y equipo"></select></label>
       </div>
       <div id="selectionSummary" class="selection-summary" role="status" aria-live="polite">Preparando selección…</div>
     </section>
@@ -80,7 +76,7 @@
     <section class="workspace panel" id="workspace" aria-live="polite">
       <div class="workspace__head">
         <div>
-          <span id="stationShort" class="eyebrow"></span>
+          <span id="stationShort" class="eyebrow">Paso 4 · Referencia teórica</span>
           <h2 id="stationLabel">Estación</h2>
           <p id="stationDescription"></p>
         </div>
@@ -90,13 +86,13 @@
       <div class="viewer-grid">
         <div class="reference-column">
           <label class="field reference-picker" for="variantSelect">
-            <span>Referencia dentro de esta estación</span>
+            <span>Referencia</span>
             <select id="variantSelect" name="variant" aria-describedby="variantPosition"></select>
-            <small id="variantPosition">Selecciona un código o desliza la imagen.</small>
+            <small id="variantPosition">Elige una opción o usa las flechas del carrusel.</small>
           </label>
           <div class="viewer-toolbar">
             <button id="prevButton" class="icon-button" type="button" aria-label="Referencia anterior">←</button>
-            <div class="viewer-title"><small>Referencia seleccionada</small><strong id="activeCode">—</strong></div>
+            <div class="viewer-title"><small>Referencia</small><strong id="activeCode">—</strong></div>
             <button id="nextButton" class="icon-button" type="button" aria-label="Referencia siguiente">→</button>
           </div>
           <figure id="referenceStage" class="reference-stage">
@@ -107,8 +103,8 @@
             <figcaption id="sourceCaption">Selecciona una referencia.</figcaption>
           </figure>
           <div class="viewer-helper-row" aria-hidden="true">
-            <span class="helper-pill">Toca para ampliar</span>
-            <span class="helper-pill">Desliza o usa las flechas para cambiar</span>
+            <span class="helper-pill">Ver opciones en la lista</span>
+            <span class="helper-pill">Ampliar la referencia</span>
           </div>
         </div>
 
@@ -129,7 +125,6 @@
         <div>
           <span class="eyebrow">Evidencia de tienda</span>
           <h2 id="compareTitle">Compara referencia vs. acomodo real</h2>
-          <p>La fotografía se procesa localmente en tu dispositivo; no se envía a ningún servidor.</p>
         </div>
         <div class="export-box">
           <span id="exportStatus" class="export-status" role="status">Agrega evidencia para completar la revisión.</span>

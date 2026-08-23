@@ -42,7 +42,7 @@ app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v7";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v8";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
@@ -77,6 +77,9 @@ for marker in (
 for obsolete in ('id="stationNav"', 'id="variantRail"', 'class="variant-card"'):
     if obsolete in html_source:
         fail(f"interfaz redundante todavía visible: {obsolete}")
+for obsolete in ('id="searchInput"', 'id="searchResults"', 'Buscar estación, equipo o código', 'La fotografía se procesa localmente'):
+    if obsolete in html_source:
+        fail(f"mensaje o control retirado todavía visible: {obsolete}")
 for marker in (".capture-guidance", ".orientation-dialog", ".export-progress", ".completion-dialog"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
