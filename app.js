@@ -5,7 +5,8 @@ const MEMORY_KEY = "layout20-state-v4";
 const LEGACY_MEMORY_KEY = "layout20-state-v3";
 const PDF_MARGIN = 6;
 const PDF_CUT_GAP = 2;
-const MAX_EVIDENCE_PX = 2200;
+const DEFAULT_MAX_EVIDENCE_PX = 2200;
+const DEFAULT_EVIDENCE_TARGET_WIDTH = 1900;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
 const IMAGE_BG_THRESHOLD = 242;
 const MIN_EXPORT_FEEDBACK_MS = 900;
@@ -72,11 +73,6 @@ function activeVariant() {
   return current?.variants.find(item => item.id === activeVariantId) || stationVariants()[0] || current?.variants[0];
 }
 
-function allVariants() {
-  if (!catalog) return [];
-  return catalog.stations.flatMap(current => current.variants.map(variant => ({ station: current, variant })));
-}
-
 function stationChoiceValue(stationId = activeStationId, subgroup = activeSubgroup) {
   return `${stationId}::${subgroup}`;
 }
@@ -86,10 +82,6 @@ function stationDisplayLabel(current = station(), subgroup = activeSubgroup) {
   const groups = stationGroups(current);
   if (groups.length < 2) return current.label;
   return `${current.label} _ ${current.subgroupLabels?.[subgroup] || subgroup}`;
-}
-
-function stationChoiceCount() {
-  return (catalog?.stations || []).reduce((total, current) => total + Math.max(1, stationGroups(current).length), 0);
 }
 
 function clamp(value, min, max) {
@@ -232,17 +224,41 @@ async function optimizeImageForDisplay(source, options = {}) {
 
 async function applyActiveVisual(item, ticket) {
   try {
-    const optimized = await optimizeImageForDisplay(item.image, { targetWidth: 2100, padding: 0.075 });
+    const image = await loadImageElement(item.image);
+    if (image.decode) await image.decode().catch(() => null);
     if (ticket !== renderTicket) return;
-    activeReferenceDisplayUrl = optimized.url;
-    $("compareReference").src = optimized.url;
-    $("referenceDialogImage").src = optimized.url;
+    activeReferenceDisplayUrl = item.image;
+    $("compareReference").src = item.image;
+    $("referenceDialogImage").src = item.image;
   } catch {
     if (ticket !== renderTicket) return;
     activeReferenceDisplayUrl = item.image;
     $("compareReference").src = item.image;
     $("referenceDialogImage").src = item.image;
   }
+}
+
+function renderExperience() {
+  const experience = catalog.experience;
+  if (!experience || !Array.isArray(experience.workflow)) return;
+  $("heroTitle").textContent = experience.title;
+  $("heroSubtitle").textContent = experience.subtitle;
+  const nav = $("workflowNav");
+  nav.innerHTML = "";
+  experience.workflow.forEach(item => {
+    const link = document.createElement("a");
+    const number = document.createElement("b");
+    const copy = document.createElement("span");
+    const label = document.createElement("strong");
+    const hint = document.createElement("small");
+    link.href = `#${item.target}`;
+    number.textContent = item.step;
+    label.textContent = item.label;
+    hint.textContent = item.hint;
+    copy.append(label, hint);
+    link.append(number, copy);
+    nav.appendChild(link);
+  });
 }
 
 async function loadCatalog() {
@@ -262,7 +278,7 @@ async function loadCatalog() {
   activeSubgroup = stationGroups(current).includes(saved.subgroup) ? saved.subgroup : defaultSubgroup(current);
   const savedVariant = current.variants.find(item => item.id === saved.variant || item.code === saved.code);
   activeVariantId = savedVariant?.subgroup === activeSubgroup ? savedVariant.id : stationVariants()[0].id;
-  $("catalogSummary").textContent = `${catalog.stations.length} estaciones · ${stationChoiceCount()} rutas de equipo · ${allVariants().length} configuraciones`;
+  renderExperience();
   renderAll();
 }
 
@@ -517,7 +533,9 @@ async function processEvidence(file) {
       image.onerror = () => reject(new Error("No fue posible leer la imagen seleccionada."));
       image.src = objectUrl;
     });
-    const scale = Math.min(1, MAX_EVIDENCE_PX / Math.max(image.naturalWidth, image.naturalHeight));
+    const maxEvidencePixels = catalog.performance?.evidenceMaxPixels || DEFAULT_MAX_EVIDENCE_PX;
+    const targetWidth = catalog.performance?.evidenceTargetWidth || DEFAULT_EVIDENCE_TARGET_WIDTH;
+    const scale = Math.min(1, maxEvidencePixels / Math.max(image.naturalWidth, image.naturalHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
     canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -528,7 +546,7 @@ async function processEvidence(file) {
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     const resized = canvas.toDataURL("image/jpeg", 0.9);
-    const optimized = await optimizeImageForDisplay(resized, { targetWidth: 1900, padding: 0.03 });
+    const optimized = await optimizeImageForDisplay(resized, { targetWidth, padding: 0.03 });
     evidenceDataUrl = optimized.url;
     evidenceMeta = {
       width: optimized.width,

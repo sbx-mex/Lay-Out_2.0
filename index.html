@@ -26,8 +26,8 @@
   <header class="topbar">
     <div class="topbar__inner">
       <a class="brand" href="#inicio" aria-label="Ir al inicio">
-        <span class="brand__mark" aria-hidden="true">✦</span>
-        <span><strong>Lay Out 2.0</strong><small>Guía visual por estación</small></span>
+        <img class="brand__icon" src="icons/icon-192.png" alt="" width="44" height="44">
+        <span><strong>LayOut 2.0</strong><small>Estación · Referencia · Real</small></span>
       </a>
       <div class="topbar__actions">
         <span id="networkStatus" class="status" role="status" aria-live="polite">En línea</span>
@@ -37,26 +37,20 @@
   </header>
 
   <main class="app" id="inicio">
-    <section class="hero">
+    <section class="hero" aria-labelledby="heroTitle">
       <div class="hero__copy">
-        <span class="eyebrow">Starbucks Layouts · Herramienta operativa · Uso interno</span>
-        <h1>Revisa tu Lay Out paso a paso.</h1>
-        <p>Elige la estación, consulta la referencia y compara el acomodo real.</p>
-        <div class="hero__meta">
-          <span id="catalogSummary" class="metric">Cargando catálogo…</span>
-          <span class="metric">101 referencias nuevas</span>
-          <span class="metric">PDF A4</span>
-        </div>
+        <span class="eyebrow">Guía visual por estación</span>
+        <h1 id="heroTitle">LayOut 2.0</h1>
+        <p id="heroSubtitle">Selecciona, compara y valida con claridad.</p>
       </div>
-      <div class="hero__card" aria-label="Flujo recomendado">
-        <span class="eyebrow">Ruta rápida</span>
-          <strong>1. Coloca la tienda</strong>
-          <strong>2. Elige la campaña</strong>
-          <strong>3. Elige estación, revisa y compara</strong>
-      </div>
+      <nav id="workflowNav" class="workflow-nav" aria-label="Flujo de LayOut 2.0">
+        <a href="#contextPanel"><b>1</b><span><strong>Estación</strong><small>Selecciona</small></span></a>
+        <a href="#referenceCard"><b>2</b><span><strong>Referencia</strong><small>Revisa</small></span></a>
+        <a href="#realCard"><b>3</b><span><strong>Real</strong><small>Compara</small></span></a>
+      </nav>
     </section>
 
-    <section class="context panel" aria-labelledby="contextTitle">
+    <section class="context panel" id="contextPanel" aria-labelledby="contextTitle">
       <div class="section-heading">
         <div>
           <span class="eyebrow">Pasos 1–3 · Configura la revisión</span>
@@ -85,7 +79,7 @@
       </div>
 
       <div class="compare-grid">
-        <article class="compare-card compare-card--reference">
+        <article class="compare-card compare-card--reference" id="referenceCard">
           <div class="compare-card__head compare-card__head--carousel">
             <div><strong id="stationLabel">Referencia</strong><span id="compareCode">—</span></div>
             <div class="carousel-controls" aria-label="Cambiar referencia">
@@ -101,7 +95,7 @@
           </div>
           <div id="technicalButtons" class="technical-buttons technical-buttons--inline no-print"></div>
         </article>
-        <article class="compare-card compare-card--evidence">
+        <article class="compare-card compare-card--evidence" id="realCard">
           <div class="compare-card__head"><strong>Evidencia real</strong><button id="removeEvidence" class="button button--text hidden" type="button">Quitar</button></div>
           <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Agregar fotografía del acomodo real">
             <span aria-hidden="true">＋</span>
@@ -127,15 +121,15 @@
 
     <footer class="footer footer--rich">
       <div>
-        <strong>Starbucks Layouts</strong>
-        <span>Herramienta operativa · Uso interno</span>
+        <strong>LayOut 2.0</strong>
+        <span>Estación · Referencia · Real</span>
       </div>
       <div>
         <strong>Estamos mejorando para ti</strong>
-        <span>Diseño: Jorge Alcantar Aguiar &amp; Enrique César Flores</span>
+        <span>Tu experiencia ayuda a mejorar esta guía.</span>
       </div>
       <div>
-        <a href="https://wa.me/message/ENKDSAHYHIGAN1" target="_blank" rel="noopener">Comentarios y/o Sugerencias ↗</a>
+        <a href="https://github.com/sbx-mex/Lay-Out_2.0/issues" target="_blank" rel="noopener">Comentarios y sugerencias ↗</a>
       </div>
     </footer>
   </main>

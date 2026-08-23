@@ -42,7 +42,7 @@ app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v9";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v10";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
@@ -58,6 +58,7 @@ for marker in (
     "renderCampaignSelect",
     "renderStationSelect",
     "renderVariantPosition",
+    "renderExperience",
     "stationDisplayLabel",
 ):
     if marker not in app_source:
@@ -66,6 +67,7 @@ for marker in (
     "campaignSelect",
     "stationSelect",
     "selectionSummary",
+    "workflowNav",
     "captureGuidance",
     "photoOrientationDialog",
     "exportProgress",
@@ -79,6 +81,15 @@ for obsolete in ('id="stationNav"', 'id="variantRail"', 'class="variant-card"'):
 for obsolete in ('id="searchInput"', 'id="searchResults"', 'Buscar estación, equipo o código', 'La fotografía se procesa localmente'):
     if obsolete in html_source:
         fail(f"mensaje o control retirado todavía visible: {obsolete}")
+for obsolete in (
+    "7 estaciones · 10 rutas de equipo · 85 configuraciones",
+    "101 referencias nuevas",
+    "Starbucks Layouts · Herramienta operativa · Uso interno",
+    "Revisa tu Lay Out paso a paso.",
+    "Ruta rápida",
+):
+    if obsolete in html_source:
+        fail(f"texto retirado todavía visible: {obsolete}")
 for obsolete in ('id="variantSelect"', 'id="referenceStage"', 'id="referenceImage"', 'En palabras simples'):
     if obsolete in html_source:
         fail(f"vista teórica duplicada todavía visible: {obsolete}")
@@ -106,11 +117,29 @@ if 'return `${current.label} _ ${current.subgroupLabels?.[subgroup] || subgroup}
 
 
 catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+experience = catalog.get("experience", {})
+workflow = experience.get("workflow", [])
+performance = catalog.get("performance", {})
 campaigns = catalog.get("campaigns", [])
 stations = catalog.get("stations", [])
 variants = [variant for station in stations for variant in station.get("variants", [])]
 technical = [item for station in stations for item in station.get("technical", [])]
 records = variants + technical
+
+expected_workflow = [
+    {"step": 1, "label": "Estación", "hint": "Selecciona", "target": "contextPanel"},
+    {"step": 2, "label": "Referencia", "hint": "Revisa", "target": "referenceCard"},
+    {"step": 3, "label": "Real", "hint": "Compara", "target": "realCard"},
+]
+if catalog.get("schemaVersion") != "3.1.0" or workflow != expected_workflow:
+    fail("el JSON no contiene el flujo intuitivo Estación → Referencia → Real")
+if performance.get("precachePerStation") != 1 or performance.get("referenceDisplayMode") != "native":
+    fail("la configuración de rendimiento debe usar carga nativa y una precarga por estación")
+for item in workflow:
+    if item["target"] not in parser.ids:
+        fail(f"el flujo JSON apunta a un destino inexistente: {item['target']}")
+if "priorityCatalogAssets" not in service_worker_source or ".slice(0, limit)" not in service_worker_source:
+    fail("el service worker todavía no limita la precarga de referencias")
 
 expected_campaigns = ["WINTER", "SPRING", "SUMMER", "SUMMER II", "FALL", "XMAS"]
 if [item.get("id") for item in campaigns] != expected_campaigns:
@@ -205,6 +234,9 @@ report = {
         "singleReferenceWorkspace": True,
         "thumbnailDuplicationRemoved": True,
         "singleLinePdfHeader": True,
+        "jsonDrivenWorkflow": True,
+        "nativeReferenceRendering": True,
+        "priorityPrecachePerStation": performance["precachePerStation"],
     },
     "lots": {
         lot.name: {

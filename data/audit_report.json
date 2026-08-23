@@ -15,9 +15,13 @@
     "optimizedUiAssets": 2,
     "fastCacheRefresh": true,
     "stationEquipmentDropdown": true,
-    "referenceDropdown": true,
+    "referenceDropdown": false,
+    "singleReferenceWorkspace": true,
     "thumbnailDuplicationRemoved": true,
-    "singleLinePdfHeader": true
+    "singleLinePdfHeader": true,
+    "jsonDrivenWorkflow": true,
+    "nativeReferenceRendering": true,
+    "priorityPrecachePerStation": 1
   },
   "lots": {
     "lote-01": {
