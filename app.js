@@ -34,6 +34,7 @@ let toastTimer = null;
 let renderTicket = 0;
 let exportInProgress = false;
 let pendingPhotoInputId = null;
+let pendingPhotoFile = null;
 let suppressReferenceClickUntil = 0;
 const displayCache = new Map();
 const technicalCache = new Map();
@@ -242,25 +243,9 @@ async function applyActiveVisual(item, ticket) {
 
 function renderExperience() {
   const experience = catalog.experience;
-  if (!experience || !Array.isArray(experience.workflow)) return;
+  if (!experience) return;
   $("heroTitle").textContent = experience.title;
   $("heroSubtitle").textContent = experience.subtitle;
-  const nav = $("workflowNav");
-  nav.innerHTML = "";
-  experience.workflow.forEach(item => {
-    const link = document.createElement("a");
-    const number = document.createElement("b");
-    const copy = document.createElement("span");
-    const label = document.createElement("strong");
-    const hint = document.createElement("small");
-    link.href = `#${item.target}`;
-    number.textContent = item.step;
-    label.textContent = item.label;
-    hint.textContent = item.hint;
-    copy.append(label, hint);
-    link.append(number, copy);
-    nav.appendChild(link);
-  });
 }
 
 async function loadCatalog() {
@@ -793,17 +778,77 @@ async function exportPdf() {
   if (completed) $("exportCompleteDialog").showModal();
 }
 
-function openPhotoPicker(inputId) {
+function stationChecklistItems() {
+  const items = station()?.checklist || [];
+  const campaignItem = catalog.experience?.campaignChecklist;
+  return campaignItem ? [...items, campaignItem] : items;
+}
+
+function updateChecklistProgress() {
+  const boxes = [...$("stationChecklist").querySelectorAll('input[type="checkbox"]')];
+  const completed = boxes.filter(box => box.checked).length;
+  $("stationChecklistProgress").textContent = `${completed} de ${boxes.length}`;
+  $("stationChecklistAction").disabled = completed !== boxes.length;
+}
+
+function renderStationChecklist() {
+  const current = station();
+  const currentCampaign = campaign();
+  const list = $("stationChecklist");
+  list.replaceChildren();
+  $("stationChecklistTitle").textContent = `Valida ${stationDisplayLabel(current)}`;
+  $("stationChecklistDescription").textContent = "Marca únicamente lo que observaste. Esta revisión debe tomar menos de un minuto.";
+  $("stationChecklistCampaign").textContent = `${currentCampaign.icon} Campaña ${currentCampaign.label} · confirma materiales e insumos vigentes.`;
+
+  stationChecklistItems().forEach((text, index) => {
+    const label = document.createElement("label");
+    label.className = "checklist-item";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = String(index);
+    checkbox.addEventListener("change", updateChecklistProgress);
+    const mark = document.createElement("span");
+    mark.className = "checklist-item__mark";
+    mark.setAttribute("aria-hidden", "true");
+    const copy = document.createElement("span");
+    copy.textContent = text;
+    label.append(checkbox, mark, copy);
+    list.appendChild(label);
+  });
+  updateChecklistProgress();
+}
+
+function openPhotoPicker(inputId, file = null) {
   pendingPhotoInputId = inputId;
-  $("photoGuidanceAction").textContent = inputId === "cameraInput" ? "Abrir cámara" : "Elegir imagen";
+  pendingPhotoFile = file;
+  renderStationChecklist();
+  $("stationChecklistDialog").showModal();
+}
+
+function continueStationChecklist() {
+  $("stationChecklistDialog").close();
+  $("photoGuidanceAction").textContent = pendingPhotoFile
+    ? "Usar imagen"
+    : pendingPhotoInputId === "cameraInput" ? "Abrir cámara" : "Elegir imagen";
   $("photoOrientationDialog").showModal();
 }
 
 function continuePhotoPicker() {
   const inputId = pendingPhotoInputId;
+  const file = pendingPhotoFile;
   pendingPhotoInputId = null;
+  pendingPhotoFile = null;
   $("photoOrientationDialog").close();
-  if (inputId) $(inputId).click();
+  if (file) {
+    processEvidence(file);
+  } else if (inputId) {
+    $(inputId).click();
+  }
+}
+
+function cancelPendingPhoto() {
+  pendingPhotoInputId = null;
+  pendingPhotoFile = null;
 }
 
 function bindDialogClose(dialogId, buttonId) {
@@ -969,16 +1014,23 @@ function bind() {
     event.preventDefault();
     dropZone.classList.remove("dragging");
   }));
-  dropZone.addEventListener("drop", event => processEvidence(event.dataTransfer.files[0]));
+  dropZone.addEventListener("drop", event => {
+    const file = event.dataTransfer.files[0];
+    if (file) openPhotoPicker(null, file);
+  });
 
+  $("stationChecklistAction").addEventListener("click", continueStationChecklist);
+  $("stationChecklistCancel").addEventListener("click", () => {
+    cancelPendingPhoto();
+    $("stationChecklistDialog").close();
+  });
+  $("stationChecklistDialog").addEventListener("cancel", cancelPendingPhoto);
   $("photoGuidanceAction").addEventListener("click", continuePhotoPicker);
   $("photoGuidanceCancel").addEventListener("click", () => {
-    pendingPhotoInputId = null;
+    cancelPendingPhoto();
     $("photoOrientationDialog").close();
   });
-  $("photoOrientationDialog").addEventListener("cancel", () => {
-    pendingPhotoInputId = null;
-  });
+  $("photoOrientationDialog").addEventListener("cancel", cancelPendingPhoto);
   $("closeExportComplete").addEventListener("click", () => $("exportCompleteDialog").close());
 
   $("exportButton").addEventListener("click", exportPdf);

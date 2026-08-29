@@ -43,11 +43,6 @@
         <h1 id="heroTitle">LayOut 2.0</h1>
         <p id="heroSubtitle">Selecciona, compara y valida con claridad.</p>
       </div>
-      <nav id="workflowNav" class="workflow-nav" aria-label="Flujo de LayOut 2.0">
-        <a href="#contextPanel"><b>1</b><span><strong>Estación</strong><small>Selecciona</small></span></a>
-        <a href="#referenceCard"><b>2</b><span><strong>Referencia</strong><small>Revisa</small></span></a>
-        <a href="#realCard"><b>3</b><span><strong>Real</strong><small>Compara</small></span></a>
-      </nav>
     </section>
 
     <section class="context panel" id="contextPanel" aria-labelledby="contextTitle">
@@ -124,6 +119,23 @@
       <p><strong>LayOut 2.0 · Estamos mejorando para ti</strong><span>Diseñado por Jorge Alcantar Aguiar &amp; Enrique César Flores</span><a href="https://github.com/sbx-mex/Lay-Out_2.0/issues" target="_blank" rel="noopener">Comentarios y sugerencias ↗</a></p>
     </footer>
   </main>
+
+  <dialog id="stationChecklistDialog" class="flow-dialog checklist-dialog" aria-labelledby="stationChecklistTitle" aria-describedby="stationChecklistDescription">
+    <div class="flow-dialog__body">
+      <div class="checklist-dialog__head">
+        <span class="flow-badge">Antes de agregar evidencia</span>
+        <span id="stationChecklistProgress" class="checklist-progress" role="status" aria-live="polite">0 de 0</span>
+      </div>
+      <h2 id="stationChecklistTitle">Valida la estación</h2>
+      <p id="stationChecklistDescription">Marca únicamente lo que observaste en la operación.</p>
+      <div id="stationChecklist" class="station-checklist" role="group" aria-label="Validación rápida de estación"></div>
+      <p id="stationChecklistCampaign" class="campaign-reminder"></p>
+      <div class="flow-dialog__actions">
+        <button id="stationChecklistCancel" class="button button--ghost-dark" type="button">Cancelar</button>
+        <button id="stationChecklistAction" class="button" type="button" disabled>Continuar</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="photoOrientationDialog" class="flow-dialog orientation-dialog" aria-labelledby="photoGuidanceTitle" aria-describedby="photoGuidanceDescription">
     <div class="flow-dialog__body">

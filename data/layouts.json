@@ -1,17 +1,13 @@
 {
-  "schemaVersion": "3.1.0",
+  "schemaVersion": "3.2.0",
   "project": "LayOut 2.0",
   "language": "es-MX",
-  "updated": "2026-08-23",
+  "updated": "2026-08-29",
   "sourceNote": "Orden basado en Station Layout Guides - Orden. Imágenes exclusivamente de Lay Out 2.0 Nuevas Imagenes.",
   "experience": {
     "title": "LayOut 2.0",
     "subtitle": "Selecciona, compara y valida con claridad.",
-    "workflow": [
-      { "step": 1, "label": "Estación", "hint": "Selecciona", "target": "contextPanel" },
-      { "step": 2, "label": "Referencia", "hint": "Revisa", "target": "referenceCard" },
-      { "step": 3, "label": "Real", "hint": "Compara", "target": "realCard" }
-    ]
+    "campaignChecklist": "Insumos y materiales actualizados a la campaña seleccionada."
   },
   "performance": {
     "precachePerStation": 1,
@@ -48,6 +44,11 @@
         "Ubica el equipo principal.",
         "Compara tarjas y superficies.",
         "Confirma el código."
+      ],
+      "checklist": [
+        "Estación acomodada y superficie de trabajo despejada.",
+        "Tapas y tés cerca de BUNN.",
+        "Insumos de mayor uso cerca de gavetas y al alcance del partner."
       ],
       "subgroupLabels": {
         "Brewing": "Brewing"
@@ -174,6 +175,12 @@
         "Elige la familia.",
         "Compara módulos y geometría.",
         "Confirma ingredientes y equipo."
+      ],
+      "checklist": [
+        "Crema batida y leches en el refrigerador de la estación.",
+        "Frapp Roast, mamilas, toppings e insumos completos.",
+        "El partner trabaja en secuencia y línea, sin voltear hacia otra estación.",
+        "CBS y CBE están diferenciadas para evitar cruces, cuando el espacio lo permite."
       ],
       "subgroupLabels": {
         "CBE": "CBE / Blend / Tea",
@@ -378,6 +385,11 @@
         "Valida orientación.",
         "Confirma contenedores."
       ],
+      "checklist": [
+        "Acomodo completo, limpio y fácil de usar.",
+        "Todos los tipos de azúcar están disponibles.",
+        "Agitadores y/o saleros están disponibles."
+      ],
       "subgroupLabels": {
         "Condimentos": "Carros"
       },
@@ -449,6 +461,11 @@
         "Compara superficies.",
         "Confirma el código."
       ],
+      "checklist": [
+        "Acomodo acorde a la estación.",
+        "Insumos de mayor uso o solicitud del cliente están al alcance.",
+        "Charolas portavasos, mangas y servilletas están disponibles."
+      ],
       "subgroupLabels": {
         "Drive Thru": "Drive Thru"
       },
@@ -508,6 +525,11 @@
         "Filtra Mastrena I o II.",
         "Compara el acomodo completo.",
         "Confirma el código."
+      ],
+      "checklist": [
+        "Crema batida en el refrigerador de la estación.",
+        "Mamilas y toppings están completos.",
+        "Insumos de mayor uso están al alcance y sin cruces."
       ],
       "subgroupLabels": {
         "Mastrena I": "Mastrena I",
@@ -910,6 +932,11 @@
         "Ubica la entrega.",
         "Confirma el código."
       ],
+      "checklist": [
+        "Insumos completos para pedidos móviles y Delivery.",
+        "Bolsas con asa, charolas de 2 y 4, popotes y servilletas disponibles.",
+        "Pick pack de insumos listos para la operación."
+      ],
       "subgroupLabels": {
         "MOP": "MOP"
       },
@@ -1013,6 +1040,11 @@
         "Filtra el horno.",
         "Compara ancho y cantidad.",
         "Confirma el código."
+      ],
+      "checklist": [
+        "Tabla de servicio colocada en posición vertical.",
+        "Acomodo completo y superficie de trabajo despejada.",
+        "Insumos de mayor uso están al alcance del partner."
       ],
       "subgroupLabels": {
         "Merrychef E2S": "Merrychef E2S",
