@@ -42,13 +42,15 @@ if not (ROOT / "tools" / "clean_reference_titles.py").is_file():
     fail("falta el limpiador validable de títulos de referencia")
 if not (ROOT / "tools" / "calibrate_dm_infographic.py").is_file():
     fail("falta el calibrador de la infografía DM")
+if not (ROOT / "tools" / "audit_dm_experience.py").is_file():
+    fail("falta el auditor específico de la experiencia DM")
 app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 dm_source = (ROOT / "dm-validation.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 dm_styles_source = (ROOT / "dm-validation.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v14";' not in service_worker_source:
+if 'const CACHE = "layout-2-remastered-v15";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
@@ -84,6 +86,11 @@ for marker in (
     "calibratedRowHeight",
     "drawAdjustedImage",
     "formatRegion",
+    "preloadDmReferences",
+    "scheduleDmPreload",
+    "shiftDmVariant",
+    "bindDmCarousel",
+    "improvementHeight",
     "JUNTÉMONOS MÁS",
     "data/dm-infographic.json",
 ):
@@ -103,6 +110,15 @@ for marker in ("dmValidationEntries", "renderDmValidation", "dmImageButton", "dm
         fail(f"Validación DM debe permanecer fuera del núcleo operativo: {marker}")
 if "figcaption" in dm_source:
     fail("Referencia y Real deben aparecer una sola vez como encabezado global")
+for obsolete in ('className = "dmx-variant"', 'select.setAttribute("aria-label", `Referencia'):
+    if obsolete in dm_source:
+        fail(f"Validación DM todavía usa una lista desplegable de referencias: {obsolete}")
+for marker in ('id="dmxCamera"', 'capture="environment"', 'Tomar foto', 'Adjuntar', 'Mejora continua'):
+    if marker not in dm_source:
+        fail(f"falta acción rápida de Validación DM: {marker}")
+for marker in (".dmx-carousel", ".dmx-carousel-progress", ".dmx-photo-actions", ".dmx-improvement"):
+    if marker not in dm_styles_source:
+        fail(f"falta estilo de carrete consolidado DM: {marker}")
 for marker in (
     "campaignSelect",
     "stationSelect",
@@ -184,8 +200,10 @@ if catalog.get("schemaVersion") != "3.2.0" or workflow:
     fail("el JSON todavía conserva el flujo superior retirado")
 if dm_infographic.get("version") != 1 or dm_infographic.get("canvasWidth") != 1800:
     fail("la configuración premium de Validación DM no es válida")
-if dm_infographic.get("minPhotoHeight", 0) < 450 or dm_infographic.get("maxRowHeight", 0) > 660:
+if dm_infographic.get("minPhotoHeight", 0) < 500 or not 650 <= dm_infographic.get("maxRowHeight", 0) <= 720:
     fail("la calibración DM no conserva fotografías amplias y proporcionales")
+if not 72 <= dm_infographic.get("improvementHeight", 0) <= 120:
+    fail("la altura dinámica de mejora continua no es válida")
 if experience.get("campaignChecklist") != "Insumos y materiales actualizados a la campaña seleccionada.":
     fail("falta la validación transversal de campaña")
 if performance.get("precachePerStation") != 1 or performance.get("referenceDisplayMode") != "native":

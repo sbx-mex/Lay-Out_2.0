@@ -26,12 +26,15 @@ Los códigos originales se conservan. Las versiones de equipo se identifican por
 
 La página principal conserva la validación individual y agrega un consolidado visual por tienda. Café, Barra fría, Condimentos, Espresso y Hornos son obligatorios. Pedidos móviles inicia activo como estación opcional y Drive Thru se agrega cuando aplica; por eso el recorrido habitual contiene seis estaciones y puede crecer hasta siete.
 
+Cada rubro muestra su propio carrete de referencias, sin listas desplegables. Las referencias actual, anterior y siguiente se preparan primero y el resto del catálogo se precarga progresivamente al abrir el módulo, para que el cambio por deslizamiento, flechas, toque o teclado sea inmediato. La evidencia se agrega con dos acciones visibles: **Tomar foto** y **Adjuntar**.
+
 Cada evidencia completada se guarda durante la sesión con su referencia seleccionada. El botón **Crear imagen consolidada** genera una sola infografía JPEG de altura dinámica con:
 
 - Tienda, DM, campaña y fecha.
 - Un bloque por estación con `Referencia | Real`.
 - Código y equipo elegidos, por ejemplo `Café | BUN 02-02 · Brewing`.
 - Distribución vertical para aprovechar el ancho sin deformar las fotografías.
+- Una franja opcional de **Mejora continua** por estación; la altura final crece sólo cuando se utiliza.
 
 ## Imágenes
 
@@ -49,6 +52,7 @@ node --check sw.js
 python tools/cleanup_assets.py
 python tools/audit_performance.py
 python tools/audit_project.py
+python tools/audit_dm_experience.py
 ```
 
 El workflow `Validar Lay Out 2.0` revisa formato, rutas, duplicados, orden, límites y presupuesto de rendimiento. El service worker precarga sólo una referencia por estación; las demás se sirven bajo demanda.

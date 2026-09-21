@@ -8,10 +8,11 @@
   "columnGap": 18,
   "rowGap": 18,
   "stationHeaderHeight": 62,
-  "baseRowHeight": 590,
-  "rowAdjustmentPerStation": 28,
-  "minRowHeight": 540,
-  "maxRowHeight": 620,
-  "minPhotoHeight": 450,
+  "baseRowHeight": 720,
+  "rowAdjustmentPerStation": 18,
+  "minRowHeight": 700,
+  "maxRowHeight": 720,
+  "minPhotoHeight": 520,
+  "improvementHeight": 80,
   "imageQuality": 0.94
 }

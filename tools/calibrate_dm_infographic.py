@@ -17,13 +17,14 @@ def clamp(value: int, minimum: int, maximum: int) -> int:
     return min(maximum, max(minimum, value))
 
 
-def calculate(config: dict[str, int | float], stations: int) -> dict[str, int | float]:
+def calculate(config: dict[str, int | float], stations: int, improvement_rows: int = 0) -> dict[str, int | float]:
     row_height = clamp(
         round(config["baseRowHeight"] - (stations - 6) * config["rowAdjustmentPerStation"]),
         int(config["minRowHeight"]),
         int(config["maxRowHeight"]),
     )
-    photo_height = row_height - int(config["stationHeaderHeight"]) - 20
+    improvement_height = int(config["improvementHeight"]) if improvement_rows else 0
+    photo_height = row_height - int(config["stationHeaderHeight"]) - 20 - improvement_height
     content_width = int(config["canvasWidth"]) - int(config["outerPadding"]) * 2
     photo_width = round((content_width - int(config["columnGap"])) / 2)
     output_height = (
@@ -31,11 +32,13 @@ def calculate(config: dict[str, int | float], stations: int) -> dict[str, int | 
         + int(config["columnHeaderHeight"])
         + int(config["outerPadding"])
         + stations * row_height
+        + improvement_rows * int(config["improvementHeight"])
         + max(0, stations - 1) * int(config["rowGap"])
         + int(config["footerHeight"])
     )
     return {
         "stations": stations,
+        "improvementRows": improvement_rows,
         "canvasWidth": int(config["canvasWidth"]),
         "canvasHeight": output_height,
         "rowHeight": row_height,
@@ -51,7 +54,7 @@ def validate(config: dict[str, int | float], results: list[dict[str, int | float
         "version", "canvasWidth", "headerHeight", "columnHeaderHeight", "footerHeight",
         "outerPadding", "columnGap", "rowGap", "stationHeaderHeight", "baseRowHeight",
         "rowAdjustmentPerStation", "minRowHeight", "maxRowHeight", "minPhotoHeight",
-        "imageQuality",
+        "improvementHeight", "imageQuality",
     }
     missing = sorted(required - config.keys())
     if missing:
@@ -60,15 +63,17 @@ def validate(config: dict[str, int | float], results: list[dict[str, int | float
         fail("la infografía debe conservar versión 1 y ancho premium de 1800 px")
     if not 0.9 <= float(config["imageQuality"]) <= 0.96:
         fail("imageQuality debe permanecer entre 0.90 y 0.96")
-    if not 520 <= int(config["minRowHeight"]) <= int(config["maxRowHeight"]) <= 660:
+    if not 650 <= int(config["minRowHeight"]) <= int(config["maxRowHeight"]) <= 720:
         fail("los límites de altura por estación no son seguros")
+    if not 72 <= int(config["improvementHeight"]) <= 120:
+        fail("la franja de mejora continua sale del rango seguro")
     if any(result["photoHeight"] < config["minPhotoHeight"] for result in results):
         fail("alguna fotografía queda por debajo de la altura mínima legible")
     if [result["canvasHeight"] for result in results] != sorted(result["canvasHeight"] for result in results):
         fail("la altura final debe crecer al agregar estaciones")
     if [result["rowHeight"] for result in results] != sorted((result["rowHeight"] for result in results), reverse=True):
         fail("la altura de cada estación debe ajustarse proporcionalmente")
-    if any(not 1.8 <= result["canvasAspect"] <= 2.6 for result in results):
+    if any(not 1.8 <= result["canvasAspect"] <= 3.5 for result in results):
         fail("la proporción final sale del rango vertical útil")
     if any(result["photoWidth"] < 800 for result in results):
         fail("las fotografías no aprovechan el ancho premium")
@@ -79,7 +84,7 @@ def main() -> None:
     parser.add_argument("--check", action="store_true", help="Falla si la geometría no cumple los límites premium.")
     args = parser.parse_args()
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    results = [calculate(config, stations) for stations in (5, 6, 7)]
+    results = [calculate(config, stations, improvement_rows) for stations, improvement_rows in ((5, 0), (6, 3), (7, 7))]
     validate(config, results)
     print(json.dumps({"status": "ok", "mode": "check" if args.check else "report", "presets": results}, ensure_ascii=False))
 
