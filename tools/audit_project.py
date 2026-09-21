@@ -40,6 +40,8 @@ if not (ROOT / "tools" / "audit_pdf_export.py").is_file():
     fail("falta el auditor de exportación PDF")
 if not (ROOT / "tools" / "clean_reference_titles.py").is_file():
     fail("falta el limpiador validable de títulos de referencia")
+if not (ROOT / "tools" / "calibrate_dm_infographic.py").is_file():
+    fail("falta el calibrador de la infografía DM")
 app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 dm_source = (ROOT / "dm-validation.js").read_text(encoding="utf-8")
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -79,18 +81,28 @@ for marker in (
     "processDmEvidence",
     "buildDmInfographic",
     "exportDmInfographic",
+    "calibratedRowHeight",
+    "drawAdjustedImage",
+    "formatRegion",
+    "JUNTÉMONOS MÁS",
+    "data/dm-infographic.json",
 ):
     if marker not in dm_source:
         fail(f"falta función independiente de Validación DM: {marker}")
 for marker in ('id="dmValidationOpen"', 'id="dmValidationOpenMobile"', 'dm-validation.css', 'dm-validation.js'):
     if marker not in html_source:
         fail(f"falta acceso independiente a Validación DM: {marker}")
-for marker in (".dmx-shell", ".dmx-station", ".dmx-compare", ".dmx-footer"):
+for marker in (".dmx-shell", ".dmx-station", ".dmx-compare", ".dmx-columns", ".dmx-footer"):
     if marker not in dm_styles_source:
         fail(f"falta estilo independiente de Validación DM: {marker}")
-for marker in ('"dm-validation.css"', '"dm-validation.js"'):
+for marker in ('"dm-validation.css"', '"dm-validation.js"', '"data/dm-infographic.json"'):
     if marker not in service_worker_source:
         fail(f"Validación DM no está disponible sin conexión: {marker}")
+for marker in ("dmValidationEntries", "renderDmValidation", "dmImageButton", "dmName", "dmQuickButton"):
+    if marker in app_source:
+        fail(f"Validación DM debe permanecer fuera del núcleo operativo: {marker}")
+if "figcaption" in dm_source:
+    fail("Referencia y Real deben aparecer una sola vez como encabezado global")
 for marker in (
     "campaignSelect",
     "stationSelect",
@@ -158,6 +170,7 @@ if 'return `${current.label} _ ${current.subgroupLabels?.[subgroup] || subgroup}
 
 
 catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+dm_infographic = json.loads((ROOT / "data" / "dm-infographic.json").read_text(encoding="utf-8"))
 experience = catalog.get("experience", {})
 workflow = experience.get("workflow", [])
 performance = catalog.get("performance", {})
@@ -169,6 +182,10 @@ records = variants + technical
 
 if catalog.get("schemaVersion") != "3.2.0" or workflow:
     fail("el JSON todavía conserva el flujo superior retirado")
+if dm_infographic.get("version") != 1 or dm_infographic.get("canvasWidth") != 1800:
+    fail("la configuración premium de Validación DM no es válida")
+if dm_infographic.get("minPhotoHeight", 0) < 450 or dm_infographic.get("maxRowHeight", 0) > 660:
+    fail("la calibración DM no conserva fotografías amplias y proporcionales")
 if experience.get("campaignChecklist") != "Insumos y materiales actualizados a la campaña seleccionada.":
     fail("falta la validación transversal de campaña")
 if performance.get("precachePerStation") != 1 or performance.get("referenceDisplayMode") != "native":

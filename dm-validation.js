@@ -2,6 +2,7 @@
 
 (() => {
   const DATA_URL = "data/layouts.json";
+  const INFOGRAPHIC_URL = "data/dm-infographic.json";
   const STATE_KEY = "layout20-dm-independent-v1";
   const MAIN_STATE_KEY = "layout20-state-v4";
   const OPTIONAL_IDS = ["drive-thru", "mop"];
@@ -10,6 +11,7 @@
   const MAX_IMAGE_SIDE = 2000;
   const evidence = new Map();
   let catalog = null;
+  let infographicConfig = null;
   let dialog = null;
   let pendingStationId = null;
   let toastTimer = null;
@@ -21,7 +23,7 @@
   }
 
   function loadDmState() {
-    const fallback = { store: "", dm: "", campaign: "", optional: DEFAULT_OPTIONAL_IDS, variants: {} };
+    const fallback = { store: "", dm: "", campaign: "", region: "#OrgulloCN", optional: DEFAULT_OPTIONAL_IDS, variants: {} };
     try {
       const saved = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
       if (!saved || typeof saved !== "object") return fallback;
@@ -29,6 +31,7 @@
         store: String(saved.store || ""),
         dm: String(saved.dm || ""),
         campaign: String(saved.campaign || ""),
+        region: String(saved.region || "#OrgulloCN"),
         optional: Array.isArray(saved.optional) ? saved.optional.filter(id => OPTIONAL_IDS.includes(id)) : DEFAULT_OPTIONAL_IDS,
         variants: saved.variants && typeof saved.variants === "object" ? saved.variants : {}
       };
@@ -69,9 +72,10 @@
             <span id="dmxDate" class="dmx-date"></span>
           </section>
           <section class="dmx-meta dmx-panel" aria-label="Datos de la validación">
-            <label class="dmx-field"><span>Tienda</span><input id="dmxStore" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
-            <label class="dmx-field"><span>DM</span><input id="dmxManager" maxlength="80" autocomplete="name" placeholder="Nombre del DM"></label>
+            <label class="dmx-field"><span>Tienda</span><input id="dmxStore" maxlength="80" autocomplete="organization" placeholder="Ej. Cosmopol"></label>
+            <label class="dmx-field"><span>DM</span><input id="dmxManager" maxlength="80" autocomplete="name" placeholder="Ej. Enrique César"></label>
             <label class="dmx-field"><span>Campaña</span><select id="dmxCampaign"></select></label>
+            <label class="dmx-field"><span>Región / hashtag</span><input id="dmxRegion" maxlength="40" placeholder="#OrgulloCN"></label>
           </section>
           <section class="dmx-tools dmx-panel">
             <div>
@@ -80,6 +84,7 @@
             </div>
             <div id="dmxOptions" class="dmx-options" role="group" aria-label="Estaciones opcionales"></div>
           </section>
+          <div class="dmx-columns" aria-hidden="true"><span>Referencia</span><span>Real</span></div>
           <section id="dmxGrid" class="dmx-grid" aria-live="polite"></section>
         </div>
         <footer class="dmx-footer">
@@ -106,6 +111,10 @@
     });
     byId("dmxCampaign").addEventListener("change", event => {
       state.campaign = event.target.value;
+      saveDmState();
+    });
+    byId("dmxRegion").addEventListener("input", event => {
+      state.region = event.target.value.trimStart();
       saveDmState();
     });
     dialog.addEventListener("close", () => byId("dmValidationOpen")?.focus());
@@ -150,6 +159,7 @@
     }));
     byId("dmxStore").value = state.store;
     byId("dmxManager").value = state.dm;
+    byId("dmxRegion").value = state.region || "#OrgulloCN";
     campaign.value = state.campaign;
     byId("dmxDate").textContent = `Fecha · ${new Intl.DateTimeFormat("es-MX", { dateStyle: "long" }).format(new Date())}`;
   }
@@ -202,9 +212,6 @@
   function createDmFigure(kind, station, source) {
     const figure = document.createElement("figure");
     figure.className = `dmx-figure${kind === "Real" ? " dmx-figure--real" : ""}`;
-    const caption = document.createElement("figcaption");
-    caption.textContent = kind.toUpperCase();
-    figure.appendChild(caption);
     if (source) {
       const image = document.createElement("img");
       image.src = source;
@@ -399,13 +406,34 @@
     return `${fitted.trimEnd()}…`;
   }
 
-  function drawContainedImage(context, image, x, y, width, height) {
+  function drawAdjustedImage(context, image, x, y, width, height, preferFill = false) {
     context.fillStyle = "#ffffff";
     context.fillRect(x, y, width, height);
-    const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+    const sourceRatio = image.naturalWidth / image.naturalHeight;
+    const targetRatio = width / height;
+    const safeFill = preferFill && Math.abs(sourceRatio - targetRatio) / targetRatio <= 0.22;
+    const scale = safeFill
+      ? Math.max(width / image.naturalWidth, height / image.naturalHeight)
+      : Math.min(width / image.naturalWidth, height / image.naturalHeight);
     const drawWidth = image.naturalWidth * scale;
     const drawHeight = image.naturalHeight * scale;
+    context.save();
+    context.beginPath();
+    context.rect(x, y, width, height);
+    context.clip();
     context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+    context.restore();
+  }
+
+  function formatRegion(value) {
+    const cleaned = String(value || "#OrgulloCN").trim().replace(/^#+/, "");
+    return `#${cleaned || "OrgulloCN"}`;
+  }
+
+  function calibratedRowHeight(stationCount) {
+    const config = infographicConfig;
+    const calculated = Math.round(config.baseRowHeight - (stationCount - 6) * config.rowAdjustmentPerStation);
+    return Math.min(config.maxRowHeight, Math.max(config.minRowHeight, calculated));
   }
 
   function drawMetadata(context, label, value, x, y, width) {
@@ -433,13 +461,15 @@
         evidenceImage: await loadCanvasImage(real.dataUrl)
       };
     }));
-    const width = 1800;
-    const padding = 44;
-    const headerHeight = 246;
-    const rowHeight = 560;
-    const rowGap = 22;
-    const footerHeight = 70;
-    const height = headerHeight + padding + records.length * rowHeight + Math.max(0, records.length - 1) * rowGap + footerHeight;
+    const config = infographicConfig;
+    const width = config.canvasWidth;
+    const padding = config.outerPadding;
+    const headerHeight = config.headerHeight;
+    const columnHeaderHeight = config.columnHeaderHeight;
+    const rowHeight = calibratedRowHeight(records.length);
+    const rowGap = config.rowGap;
+    const footerHeight = config.footerHeight;
+    const height = headerHeight + columnHeaderHeight + padding + records.length * rowHeight + Math.max(0, records.length - 1) * rowGap + footerHeight;
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -451,11 +481,8 @@
     context.fillStyle = "#003b2a";
     context.fillRect(0, 0, width, headerHeight);
     context.fillStyle = "#ffffff";
-    context.font = "900 48px Inter, Segoe UI, sans-serif";
-    context.fillText("VALIDACIÓN DM", padding, 64);
-    context.fillStyle = "#bfe3d3";
-    context.font = "600 21px Inter, Segoe UI, sans-serif";
-    context.fillText(`${records.length} estaciones · Referencia vs. acomodo real`, padding, 98);
+    context.font = "900 46px Inter, Segoe UI, sans-serif";
+    context.fillText("VALIDACIÓN DM", padding, 61);
     const campaign = catalog.campaigns.find(item => item.id === state.campaign);
     const metadata = [
       ["Tienda", state.store.trim()],
@@ -465,11 +492,23 @@
     ];
     const metaGap = 14;
     const metaWidth = (width - padding * 2 - metaGap * 3) / 4;
-    metadata.forEach(([label, value], index) => drawMetadata(context, label, value, padding + index * (metaWidth + metaGap), 126, metaWidth));
+    metadata.forEach(([label, value], index) => drawMetadata(context, label, value, padding + index * (metaWidth + metaGap), 94, metaWidth));
     const contentWidth = width - padding * 2;
-    const columnGap = 18;
+    const columnGap = config.columnGap;
     const columnWidth = (contentWidth - columnGap) / 2;
-    let y = headerHeight + padding;
+    const columnY = headerHeight + 7;
+    [["REFERENCIA", "#e3f3eb", "#006241"], ["REAL", "#fff0cf", "#8a5b0b"]].forEach(([label, background, color], column) => {
+      const x = padding + column * (columnWidth + columnGap);
+      context.fillStyle = background;
+      roundRect(context, x, columnY, columnWidth, columnHeaderHeight - 12, 13);
+      context.fill();
+      context.fillStyle = color;
+      context.font = "900 20px Inter, Segoe UI, sans-serif";
+      context.textAlign = "center";
+      context.fillText(label, x + columnWidth / 2, columnY + 31);
+    });
+    context.textAlign = "left";
+    let y = headerHeight + columnHeaderHeight + padding;
     records.forEach((record, index) => {
       const { station, variant, referenceImage, evidenceImage } = record;
       context.fillStyle = "#ffffff";
@@ -479,38 +518,43 @@
       context.fill();
       context.stroke();
       context.fillStyle = "#006241";
-      roundRect(context, padding, y, contentWidth, 72, 22);
+      roundRect(context, padding, y, contentWidth, config.stationHeaderHeight, 22);
       context.fill();
-      context.fillRect(padding, y + 42, contentWidth, 30);
+      context.fillRect(padding, y + 36, contentWidth, config.stationHeaderHeight - 36);
       context.fillStyle = "#ffffff";
-      context.font = "900 27px Inter, Segoe UI, sans-serif";
+      context.font = "900 25px Inter, Segoe UI, sans-serif";
       const title = `${String(index + 1).padStart(2, "0")}  ${station.label} | ${variant.code} · ${variantContext(station, variant)}`;
-      context.fillText(fitText(context, title, contentWidth - 44), padding + 22, y + 45);
-      [["REFERENCIA", referenceImage], ["REAL", evidenceImage]].forEach(([label, image], column) => {
+      context.fillText(fitText(context, title, contentWidth - 44), padding + 22, y + 40);
+      [[referenceImage, false], [evidenceImage, true]].forEach(([image, preferFill], column) => {
         const x = padding + column * (columnWidth + columnGap);
-        const figureY = y + 86;
-        const figureHeight = rowHeight - 102;
+        const figureY = y + config.stationHeaderHeight + 10;
+        const figureHeight = rowHeight - config.stationHeaderHeight - 20;
         context.fillStyle = "#f8faf9";
         context.strokeStyle = "#d5e2dc";
         roundRect(context, x, figureY, columnWidth, figureHeight, 14);
         context.fill();
         context.stroke();
-        context.fillStyle = column === 0 ? "#006241" : "#a67726";
-        context.font = "900 18px Inter, Segoe UI, sans-serif";
-        context.fillText(label, x + 16, figureY + 29);
-        drawContainedImage(context, image, x + 10, figureY + 42, columnWidth - 20, figureHeight - 52);
+        drawAdjustedImage(context, image, x + 8, figureY + 8, columnWidth - 16, figureHeight - 16, preferFill);
       });
       y += rowHeight + rowGap;
     });
-    context.fillStyle = "#35564a";
-    context.font = "700 18px Inter, Segoe UI, sans-serif";
-    context.textAlign = "center";
-    context.fillText("LayOut 2.0 · Validación visual consolidada", width / 2, height - 27);
+    const footerY = height - footerHeight;
+    context.fillStyle = "#003b2a";
+    context.fillRect(0, footerY, width, footerHeight);
+    context.fillStyle = "#ffffff";
+    context.font = "900 22px Inter, Segoe UI, sans-serif";
+    context.textAlign = "right";
+    context.fillText(formatRegion(state.region), width / 2 - 30, footerY + 50);
+    context.fillStyle = "rgba(255,255,255,.45)";
+    context.fillRect(width / 2 - 1, footerY + 20, 2, 44);
+    context.fillStyle = "#ffffff";
+    context.textAlign = "left";
+    context.fillText("JUNTÉMONOS MÁS", width / 2 + 30, footerY + 50);
     context.textAlign = "left";
     const blob = await new Promise((resolve, reject) => canvas.toBlob(
       value => value ? resolve(value) : reject(new Error("No fue posible crear la imagen consolidada.")),
       "image/jpeg",
-      0.94
+      config.imageQuality
     ));
     return { blob, campaign: campaign?.label || "Campaña" };
   }
@@ -555,12 +599,15 @@
   async function openDmValidation() {
     if (!dialog) createDialog();
     if (!dialog.open) dialog.showModal();
-    if (!catalog) {
+    if (!catalog || !infographicConfig) {
       byId("dmxBusy").hidden = false;
       try {
-        const response = await fetch(DATA_URL, { cache: "no-store" });
-        if (!response.ok) throw new Error("No fue posible cargar las estaciones.");
-        catalog = await response.json();
+        const [catalogResponse, configResponse] = await Promise.all([
+          fetch(DATA_URL, { cache: "no-store" }),
+          fetch(INFOGRAPHIC_URL, { cache: "no-store" })
+        ]);
+        if (!catalogResponse.ok || !configResponse.ok) throw new Error("No fue posible cargar la configuración premium.");
+        [catalog, infographicConfig] = await Promise.all([catalogResponse.json(), configResponse.json()]);
       } catch (error) {
         byId("dmxBusy").hidden = true;
         showDmToast(error.message || "No fue posible abrir Validación DM.");

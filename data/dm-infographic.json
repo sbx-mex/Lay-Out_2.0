@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "canvasWidth": 1800,
+  "headerHeight": 230,
+  "columnHeaderHeight": 58,
+  "footerHeight": 84,
+  "outerPadding": 40,
+  "columnGap": 18,
+  "rowGap": 18,
+  "stationHeaderHeight": 62,
+  "baseRowHeight": 590,
+  "rowAdjustmentPerStation": 28,
+  "minRowHeight": 540,
+  "maxRowHeight": 620,
+  "minPhotoHeight": 450,
+  "imageQuality": 0.94
+}

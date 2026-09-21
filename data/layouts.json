@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "3.3.0",
+  "schemaVersion": "3.2.0",
   "project": "LayOut 2.0",
   "language": "es-MX",
   "updated": "2026-08-29",
@@ -23,13 +23,6 @@
     },
     "evidenceMaxPixels": 2200,
     "evidenceTargetWidth": 1900
-  },
-  "dmValidation": {
-    "title": "Validación DM",
-    "optionalStations": ["drive-thru", "mop"],
-    "defaultOptionalStations": ["mop"],
-    "imageWidth": 1800,
-    "stationHeight": 560
   },
   "campaigns": [
     { "id": "WINTER", "label": "Winter", "icon": "❄️" },

@@ -31,18 +31,7 @@
     "cleanReferenceTitles": true,
     "dynamicReferenceFit": true,
     "cleanedReferences": 85,
-    "embeddedTitlesRemoved": 69,
-    "dmInfographic": {
-      "requiredStations": 5,
-      "defaultStations": 6,
-      "maximumStations": 7,
-      "optionalStations": [
-        "drive-thru",
-        "mop"
-      ],
-      "dynamicHeight": true,
-      "format": "JPEG"
-    }
+    "embeddedTitlesRemoved": 69
   },
   "lots": {
     "lote-01": {

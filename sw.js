@@ -9,6 +9,7 @@ const SHELL = [
   "app.js",
   "dm-validation.js",
   "manifest.json",
+  "data/dm-infographic.json",
   "data/layouts.json",
   "icons/icon-192.png",
   "icons/icon-512.png",

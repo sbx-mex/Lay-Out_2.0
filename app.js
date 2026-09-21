@@ -114,8 +114,6 @@ function saveState() {
     subgroup: activeSubgroup,
     variant: activeVariantId,
     store: $("storeName").value.trim(),
-    dm: $("dmName").value.trim(),
-    dmOptionalStations: [...dmOptionalStations],
     notes: $("notes").value
   };
   localStorage.setItem(MEMORY_KEY, JSON.stringify(state));
@@ -261,11 +259,7 @@ async function loadCatalog() {
   activeCampaignId = catalog.campaigns.some(item => item.id === saved.campaign) ? saved.campaign : catalog.campaigns[0].id;
   activeStationId = catalog.stations.some(item => item.id === saved.station) ? saved.station : catalog.stations[0].id;
   $("storeName").value = saved.store || "";
-  $("dmName").value = saved.dm || "";
   $("notes").value = saved.notes || "";
-  const dmDefaults = catalog.dmValidation?.defaultOptionalStations || ["mop"];
-  const savedOptional = Array.isArray(saved.dmOptionalStations) ? saved.dmOptionalStations : dmDefaults;
-  dmOptionalStations = new Set(savedOptional.filter(id => catalog.dmValidation?.optionalStations?.includes(id)));
 
   const current = station();
   activeSubgroup = stationGroups(current).includes(saved.subgroup) ? saved.subgroup : defaultSubgroup(current);
@@ -281,7 +275,6 @@ function renderAll() {
   renderStation();
   renderComparison();
   renderSelectionSummary();
-  renderDmValidation();
   updateCompletion();
   saveState();
 }
@@ -318,18 +311,13 @@ function renderStationSelect() {
 }
 
 function selectStationChoice(value, scroll = true) {
-  syncCurrentValidationEntry();
   const [stationId, subgroup] = String(value).split("::");
   const nextStation = catalog.stations.find(item => item.id === stationId);
   if (!nextStation || !stationGroups(nextStation).includes(subgroup)) return;
   activeStationId = nextStation.id;
   activeSubgroup = subgroup;
   const current = station();
-  const stored = dmValidationEntries.get(activeStationId);
-  const storedVariant = current.variants.find(item => item.id === stored?.variantId && item.subgroup === activeSubgroup);
-  activeVariantId = storedVariant?.id || stationVariants()[0].id;
-  restoreEvidenceForStation(activeStationId);
-  syncCurrentValidationEntry();
+  activeVariantId = stationVariants()[0].id;
   renderAll();
   if (scroll) $("compareWorkspace").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -415,8 +403,6 @@ function shiftVariant(delta) {
   renderComparison();
   animateReferenceChange(delta);
   renderSelectionSummary();
-  syncCurrentValidationEntry();
-  renderDmValidation();
   saveState();
 }
 
@@ -590,8 +576,6 @@ async function processEvidence(file) {
     $("evidenceImage").classList.remove("hidden");
     $("dropZone").classList.add("hidden");
     $("removeEvidence").classList.remove("hidden");
-    syncCurrentValidationEntry();
-    renderDmValidation();
     updateCaptureGuidance();
     updateCompletion();
     announce(evidenceMeta.orientation === "landscape"
@@ -604,8 +588,7 @@ async function processEvidence(file) {
   }
 }
 
-function clearEvidence(options = {}) {
-  if (!options.keepValidation) dmValidationEntries.delete(activeStationId);
+function clearEvidence() {
   evidenceDataUrl = null;
   evidenceMeta = null;
   $("evidenceImage").src = "";
@@ -616,7 +599,6 @@ function clearEvidence(options = {}) {
   $("cameraInput").value = "";
   updateCaptureGuidance();
   updateCompletion();
-  renderDmValidation();
 }
 
 function dataUrlFromBlob(blob) {
@@ -759,13 +741,11 @@ function setExportBusy(state) {
   document.body.classList.toggle("exporting", state);
   $("exportProgress").classList.toggle("hidden", !state);
   $("exportProgress").setAttribute("aria-hidden", String(!state));
-  ["exportButton", "mobileExport", "dmImageButton"].forEach(id => {
+  ["exportButton", "mobileExport"].forEach(id => {
     const button = $(id);
-    if (!button) return;
     button.disabled = state;
     button.setAttribute("aria-busy", String(state));
   });
-  if (!state && catalog) renderDmValidation();
 }
 
 function waitForInterfacePaint() {
@@ -795,11 +775,7 @@ async function exportPdf() {
     setExportBusy(false);
     button.textContent = originalText;
   }
-  if (completed) {
-    $("exportCompleteTitle").textContent = "PDF listo";
-    $("exportCompleteText").textContent = "Tu descarga está lista. Gracias por validar tu estación.";
-    $("exportCompleteDialog").showModal();
-  }
+  if (completed) $("exportCompleteDialog").showModal();
 }
 
 function stationChecklistItems() {
@@ -978,7 +954,6 @@ function bind() {
   $("campaignSelect").addEventListener("change", event => {
     activeCampaignId = event.target.value;
     renderSelectionSummary();
-    renderDmValidation();
     saveState();
   });
   $("stationSelect").addEventListener("change", event => selectStationChoice(event.target.value));
@@ -988,14 +963,7 @@ function bind() {
   bindSwipe();
   bindMediaDialog();
 
-  $("storeName").addEventListener("input", () => {
-    saveState();
-    renderDmValidation();
-  });
-  $("dmName").addEventListener("input", () => {
-    saveState();
-    renderDmValidation();
-  });
+  $("storeName").addEventListener("input", saveState);
   $("notes").addEventListener("input", saveState);
   $("cameraButton").addEventListener("click", () => openPhotoPicker("cameraInput"));
   $("attachButton").addEventListener("click", () => openPhotoPicker("evidenceInput"));
@@ -1066,20 +1034,15 @@ function bind() {
   $("closeExportComplete").addEventListener("click", () => $("exportCompleteDialog").close());
 
   $("exportButton").addEventListener("click", exportPdf);
-  $("dmImageButton").addEventListener("click", exportDmInfographic);
-  $("dmQuickButton").addEventListener("click", () => $("dmValidation").scrollIntoView({ behavior: "smooth", block: "start" }));
   $("resetButton").addEventListener("click", () => {
     localStorage.removeItem(MEMORY_KEY);
     localStorage.removeItem(LEGACY_MEMORY_KEY);
     $("storeName").value = "";
-    $("dmName").value = "";
     $("notes").value = "";
     activeCampaignId = catalog.campaigns[0].id;
     activeStationId = catalog.stations[0].id;
     activeSubgroup = defaultSubgroup(catalog.stations[0]);
     activeVariantId = catalog.stations[0].variants[0].id;
-    dmValidationEntries.clear();
-    dmOptionalStations = new Set(dmValidationConfig().defaultOptionalStations || ["mop"]);
     clearEvidence();
     renderAll();
     announce("Revisión reiniciada.");
@@ -1091,7 +1054,6 @@ function bind() {
   $("mobilePrevious").addEventListener("click", () => shiftVariant(-1));
   $("mobilePhoto").addEventListener("click", () => openPhotoPicker("cameraInput"));
   $("mobileExport").addEventListener("click", exportPdf);
-  $("mobileDmValidation").addEventListener("click", () => $("dmValidation").scrollIntoView({ behavior: "smooth", block: "start" }));
 
   window.addEventListener("online", updateNetwork);
   window.addEventListener("offline", updateNetwork);
