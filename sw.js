@@ -1,11 +1,12 @@
 "use strict";
 
-const CACHE = "layout-2-remastered-v13";
+const CACHE = "layout-2-remastered-v14";
 const SHELL = [
   "./",
   "index.html",
   "styles.css",
   "app.js",
+  "dm-validation.js",
   "manifest.json",
   "data/layouts.json",
   "icons/icon-192.png",

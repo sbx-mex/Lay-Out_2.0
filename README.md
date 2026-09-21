@@ -22,6 +22,17 @@ python tools/clean_reference_titles.py --check
 
 Los códigos originales se conservan. Las versiones de equipo se identifican por separado, incluso cuando el código se repite.
 
+## Validación DM
+
+La página principal conserva la validación individual y agrega un consolidado visual por tienda. Café, Barra fría, Condimentos, Espresso y Hornos son obligatorios. Pedidos móviles inicia activo como estación opcional y Drive Thru se agrega cuando aplica; por eso el recorrido habitual contiene seis estaciones y puede crecer hasta siete.
+
+Cada evidencia completada se guarda durante la sesión con su referencia seleccionada. El botón **Crear imagen consolidada** genera una sola infografía JPEG de altura dinámica con:
+
+- Tienda, DM, campaña y fecha.
+- Un bloque por estación con `Referencia | Real`.
+- Código y equipo elegidos, por ejemplo `Café | BUN 02-02 · Brewing`.
+- Distribución vertical para aprovechar el ancho sin deformar las fotografías.
+
 ## Imágenes
 
 - `assets/layouts/lote-01/`: 99 imágenes.
