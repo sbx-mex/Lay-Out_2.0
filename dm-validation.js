@@ -1,353 +1,586 @@
 "use strict";
 
-const DEFAULT_DM_IMAGE_WIDTH = 1800;
-const DEFAULT_DM_STATION_HEIGHT = 560;
-let dmOptionalStations = new Set();
-let dmExportInProgress = false;
-const dmValidationEntries = new Map();
+(() => {
+  const DATA_URL = "data/layouts.json";
+  const STATE_KEY = "layout20-dm-independent-v1";
+  const MAIN_STATE_KEY = "layout20-state-v4";
+  const OPTIONAL_IDS = ["drive-thru", "mop"];
+  const DEFAULT_OPTIONAL_IDS = ["mop"];
+  const MAX_FILE_BYTES = 18 * 1024 * 1024;
+  const MAX_IMAGE_SIDE = 2000;
+  const evidence = new Map();
+  let catalog = null;
+  let dialog = null;
+  let pendingStationId = null;
+  let toastTimer = null;
+  let exporting = false;
+  let state = loadDmState();
 
-function setEvidenceView(entry) {
-  evidenceDataUrl = entry?.evidence || null;
-  evidenceMeta = entry?.evidenceMeta ? { ...entry.evidenceMeta } : null;
-  $("evidenceImage").src = evidenceDataUrl || "";
-  $("evidenceImage").classList.toggle("hidden", !evidenceDataUrl);
-  $("dropZone").classList.toggle("hidden", Boolean(evidenceDataUrl));
-  $("removeEvidence").classList.toggle("hidden", !evidenceDataUrl);
-  $("evidenceInput").value = "";
-  $("cameraInput").value = "";
-  updateCaptureGuidance();
-  updateCompletion();
-}
-
-function restoreEvidenceForStation(stationId) {
-  setEvidenceView(dmValidationEntries.get(stationId));
-}
-
-function syncCurrentValidationEntry() {
-  if (!catalog || !activeStationId || !evidenceDataUrl) return;
-  const current = station();
-  const variant = activeVariant();
-  if (!current || !variant) return;
-  dmValidationEntries.set(current.id, {
-    stationId: current.id,
-    stationLabel: current.label,
-    subgroup: activeSubgroup,
-    variantId: variant.id,
-    code: variant.code,
-    context: variantContext(variant),
-    reference: variant.image,
-    evidence: evidenceDataUrl,
-    evidenceMeta: evidenceMeta ? { ...evidenceMeta } : null
-  });
-}
-
-function dmValidationConfig() {
-  return catalog?.dmValidation || {
-    optionalStations: ["drive-thru", "mop"],
-    defaultOptionalStations: ["mop"],
-    imageWidth: DEFAULT_DM_IMAGE_WIDTH,
-    stationHeight: DEFAULT_DM_STATION_HEIGHT
-  };
-}
-
-function isDmStationSelected(current) {
-  const optional = dmValidationConfig().optionalStations || [];
-  return !optional.includes(current.id) || dmOptionalStations.has(current.id);
-}
-
-function selectedDmStations() {
-  return (catalog?.stations || []).filter(isDmStationSelected);
-}
-
-function openDmStation(stationId) {
-  const current = catalog.stations.find(item => item.id === stationId);
-  if (!current) return;
-  const saved = dmValidationEntries.get(stationId);
-  const subgroup = saved?.subgroup && stationGroups(current).includes(saved.subgroup)
-    ? saved.subgroup
-    : defaultSubgroup(current);
-  selectStationChoice(stationChoiceValue(stationId, subgroup), false);
-  $("compareWorkspace").scrollIntoView({ behavior: "smooth", block: "start" });
-  announce(`${current.label}: selecciona la referencia y agrega la evidencia real.`);
-}
-
-function createDmStationCard(current, index) {
-  const entry = dmValidationEntries.get(current.id);
-  const card = document.createElement("article");
-  card.className = `dm-station-card${entry ? " is-ready" : ""}`;
-  card.dataset.station = current.id;
-  const heading = document.createElement("div");
-  heading.className = "dm-station-card__head";
-  const number = document.createElement("span");
-  number.className = "dm-station-card__number";
-  number.textContent = String(index + 1).padStart(2, "0");
-  const copy = document.createElement("div");
-  const title = document.createElement("strong");
-  title.textContent = current.label;
-  const detail = document.createElement("small");
-  detail.textContent = entry ? `${entry.code} · ${entry.context}` : "Referencia y evidencia pendientes";
-  copy.append(title, detail);
-  const badge = document.createElement("span");
-  badge.className = "dm-station-card__badge";
-  badge.textContent = entry ? "✓ Lista" : "Pendiente";
-  heading.append(number, copy, badge);
-  card.appendChild(heading);
-  if (entry) {
-    const preview = document.createElement("div");
-    preview.className = "dm-station-card__preview";
-    [["Referencia", entry.reference], ["Real", entry.evidence]].forEach(([label, source]) => {
-      const figure = document.createElement("figure");
-      const caption = document.createElement("figcaption");
-      const image = document.createElement("img");
-      caption.textContent = label;
-      image.src = source;
-      image.alt = `${label} de ${current.label}`;
-      figure.append(caption, image);
-      preview.appendChild(figure);
-    });
-    card.appendChild(preview);
+  function byId(id) {
+    return document.getElementById(id);
   }
-  const action = document.createElement("button");
-  action.type = "button";
-  action.className = entry ? "button button--ghost-dark" : "button";
-  action.textContent = entry ? "Actualizar validación" : "Validar estación";
-  action.addEventListener("click", () => openDmStation(current.id));
-  card.appendChild(action);
-  return card;
-}
 
-function renderDmOptionalStations() {
-  const box = $("dmOptionalStations");
-  if (!box || !catalog) return;
-  box.replaceChildren();
-  const optionalIds = dmValidationConfig().optionalStations || [];
-  optionalIds.forEach(id => {
-    const current = catalog.stations.find(item => item.id === id);
-    if (!current) return;
-    const label = document.createElement("label");
-    label.className = "dm-option";
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.checked = dmOptionalStations.has(id);
-    const mark = document.createElement("span");
-    mark.className = "dm-option__mark";
-    mark.setAttribute("aria-hidden", "true");
-    const copy = document.createElement("span");
+  function loadDmState() {
+    const fallback = { store: "", dm: "", campaign: "", optional: DEFAULT_OPTIONAL_IDS, variants: {} };
+    try {
+      const saved = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
+      if (!saved || typeof saved !== "object") return fallback;
+      return {
+        store: String(saved.store || ""),
+        dm: String(saved.dm || ""),
+        campaign: String(saved.campaign || ""),
+        optional: Array.isArray(saved.optional) ? saved.optional.filter(id => OPTIONAL_IDS.includes(id)) : DEFAULT_OPTIONAL_IDS,
+        variants: saved.variants && typeof saved.variants === "object" ? saved.variants : {}
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
+  function saveDmState() {
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  }
+
+  function cleanFilename(value) {
+    return String(value || "sin-definir")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "_")
+      .replace(/^_+|_+$/g, "") || "sin-definir";
+  }
+
+  function createDialog() {
+    dialog = document.createElement("dialog");
+    dialog.id = "dmxDialog";
+    dialog.className = "dmx-shell";
+    dialog.setAttribute("aria-labelledby", "dmxTitle");
+    dialog.innerHTML = `
+      <div class="dmx-app">
+        <header class="dmx-header">
+          <div class="dmx-header__title">
+            <span class="dmx-header__mark" aria-hidden="true">DM</span>
+            <span><strong id="dmxTitle">Validación DM</strong><small>Módulo independiente · Referencia vs. Real</small></span>
+          </div>
+          <button id="dmxClose" class="dmx-close" type="button" aria-label="Cerrar Validación DM">×</button>
+        </header>
+        <div class="dmx-content">
+          <section class="dmx-intro">
+            <div><span class="dmx-eyebrow">Infografía consolidada</span><h2>Valida todas las estaciones</h2><p>Este módulo es adicional. No modifica tu validación individual ni la exportación actual.</p></div>
+            <span id="dmxDate" class="dmx-date"></span>
+          </section>
+          <section class="dmx-meta dmx-panel" aria-label="Datos de la validación">
+            <label class="dmx-field"><span>Tienda</span><input id="dmxStore" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
+            <label class="dmx-field"><span>DM</span><input id="dmxManager" maxlength="80" autocomplete="name" placeholder="Nombre del DM"></label>
+            <label class="dmx-field"><span>Campaña</span><select id="dmxCampaign"></select></label>
+          </section>
+          <section class="dmx-tools dmx-panel">
+            <div>
+              <div class="dmx-progress-copy"><strong id="dmxProgress">0 de 6 estaciones</strong><span>La imagen ajustará su altura automáticamente.</span></div>
+              <div class="dmx-track" aria-hidden="true"><i id="dmxProgressBar"></i></div>
+            </div>
+            <div id="dmxOptions" class="dmx-options" role="group" aria-label="Estaciones opcionales"></div>
+          </section>
+          <section id="dmxGrid" class="dmx-grid" aria-live="polite"></section>
+        </div>
+        <footer class="dmx-footer">
+          <div class="dmx-footer__copy"><strong id="dmxStatus">Agrega Tienda, DM y las evidencias.</strong><small>Pedidos móviles inicia activo; Drive Thru se agrega cuando aplica.</small></div>
+          <button id="dmxExport" class="dmx-export" type="button" disabled>Crear imagen consolidada</button>
+        </footer>
+        <div id="dmxBusy" class="dmx-busy" hidden><div class="dmx-busy__card"><div class="dmx-spinner" aria-hidden="true"></div><strong>Creando infografía DM</strong><small>Acomodando referencias y evidencias en una sola imagen.</small></div></div>
+        <div id="dmxToast" class="dmx-toast" role="status" aria-live="polite" hidden></div>
+        <input id="dmxFile" type="file" accept="image/*" hidden>
+      </div>`;
+    document.body.appendChild(dialog);
+    byId("dmxClose").addEventListener("click", closeDmValidation);
+    byId("dmxExport").addEventListener("click", exportDmInfographic);
+    byId("dmxFile").addEventListener("change", event => processDmEvidence(event.target.files?.[0]));
+    byId("dmxStore").addEventListener("input", event => {
+      state.store = event.target.value.trimStart();
+      saveDmState();
+      updateDmProgress();
+    });
+    byId("dmxManager").addEventListener("input", event => {
+      state.dm = event.target.value.trimStart();
+      saveDmState();
+      updateDmProgress();
+    });
+    byId("dmxCampaign").addEventListener("change", event => {
+      state.campaign = event.target.value;
+      saveDmState();
+    });
+    dialog.addEventListener("close", () => byId("dmValidationOpen")?.focus());
+    dialog.addEventListener("cancel", event => {
+      if (exporting) event.preventDefault();
+    });
+  }
+
+  function showDmToast(message) {
+    const toast = byId("dmxToast");
+    toast.textContent = message;
+    toast.hidden = false;
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => { toast.hidden = true; }, 3600);
+  }
+
+  function readMainState() {
+    try {
+      return JSON.parse(localStorage.getItem(MAIN_STATE_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function syncMainDefaults() {
+    const mainState = readMainState();
+    const visibleStore = byId("storeName")?.value.trim();
+    const visibleCampaign = byId("campaignSelect")?.value;
+    if (visibleStore || mainState.store) state.store = visibleStore || mainState.store;
+    if (visibleCampaign || mainState.campaign) state.campaign = visibleCampaign || mainState.campaign;
+    if (!catalog.campaigns.some(item => item.id === state.campaign)) state.campaign = catalog.campaigns[0]?.id || "";
+    saveDmState();
+  }
+
+  function renderDmMetadata() {
+    const campaign = byId("dmxCampaign");
+    campaign.replaceChildren(...catalog.campaigns.map(item => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = `${item.label} ${item.icon || ""}`.trim();
+      return option;
+    }));
+    byId("dmxStore").value = state.store;
+    byId("dmxManager").value = state.dm;
+    campaign.value = state.campaign;
+    byId("dmxDate").textContent = `Fecha · ${new Intl.DateTimeFormat("es-MX", { dateStyle: "long" }).format(new Date())}`;
+  }
+
+  function selectedDmStations() {
+    return catalog.stations.filter(station => !OPTIONAL_IDS.includes(station.id) || state.optional.includes(station.id));
+  }
+
+  function variantFor(station) {
+    const selectedId = state.variants[station.id];
+    return station.variants.find(item => item.id === selectedId) || station.variants[0];
+  }
+
+  function variantContext(station, variant) {
+    return variant.equipment || station.subgroupLabels?.[variant.subgroup] || variant.subgroup || "Estación";
+  }
+
+  function renderDmOptions() {
+    const host = byId("dmxOptions");
+    host.replaceChildren();
+    OPTIONAL_IDS.forEach(id => {
+      const station = catalog.stations.find(item => item.id === id);
+      if (!station) return;
+      const label = document.createElement("label");
+      label.className = "dmx-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = state.optional.includes(id);
+      const mark = document.createElement("span");
+      mark.className = "dmx-option__mark";
+      mark.setAttribute("aria-hidden", "true");
+      const copy = document.createElement("span");
+      const title = document.createElement("strong");
+      const detail = document.createElement("small");
+      title.textContent = station.label;
+      detail.textContent = "Opcional · activar si aplica";
+      copy.append(title, detail);
+      input.addEventListener("change", () => {
+        state.optional = input.checked
+          ? [...new Set([...state.optional, id])]
+          : state.optional.filter(item => item !== id);
+        saveDmState();
+        renderDmStations();
+      });
+      label.append(input, mark, copy);
+      host.appendChild(label);
+    });
+  }
+
+  function createDmFigure(kind, station, source) {
+    const figure = document.createElement("figure");
+    figure.className = `dmx-figure${kind === "Real" ? " dmx-figure--real" : ""}`;
+    const caption = document.createElement("figcaption");
+    caption.textContent = kind.toUpperCase();
+    figure.appendChild(caption);
+    if (source) {
+      const image = document.createElement("img");
+      image.src = source;
+      image.alt = `${kind} de ${station.label}`;
+      figure.appendChild(image);
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "dmx-empty";
+      const icon = document.createElement("b");
+      const copy = document.createElement("span");
+      icon.textContent = "+";
+      copy.textContent = "Evidencia pendiente";
+      empty.append(icon, copy);
+      figure.appendChild(empty);
+    }
+    return figure;
+  }
+
+  function createDmStationCard(station, index) {
+    const currentVariant = variantFor(station);
+    const record = evidence.get(station.id);
+    const card = document.createElement("article");
+    card.className = `dmx-station${record ? " is-ready" : ""}`;
+    const head = document.createElement("div");
+    head.className = "dmx-station__head";
+    const number = document.createElement("span");
+    number.className = "dmx-number";
+    number.textContent = String(index + 1).padStart(2, "0");
+    const copy = document.createElement("div");
     const title = document.createElement("strong");
     const detail = document.createElement("small");
-    title.textContent = current.label;
-    detail.textContent = "Opcional · activar sólo si aplica";
+    title.textContent = station.label;
+    detail.textContent = `${currentVariant.code} · ${variantContext(station, currentVariant)}`;
     copy.append(title, detail);
-    input.addEventListener("change", () => {
-      if (input.checked) dmOptionalStations.add(id);
-      else dmOptionalStations.delete(id);
-      saveState();
-      renderDmValidation();
+    const badge = document.createElement("span");
+    badge.className = "dmx-badge";
+    badge.textContent = record ? "✓ Validada" : "Pendiente";
+    head.append(number, copy, badge);
+
+    const select = document.createElement("select");
+    select.className = "dmx-variant";
+    select.setAttribute("aria-label", `Referencia para ${station.label}`);
+    station.variants.forEach(variant => {
+      const option = document.createElement("option");
+      option.value = variant.id;
+      option.textContent = `${variant.code} · ${variantContext(station, variant)}`;
+      option.selected = variant.id === currentVariant.id;
+      select.appendChild(option);
     });
-    label.append(input, mark, copy);
-    box.appendChild(label);
-  });
-}
-
-function renderDmValidation() {
-  if (!catalog || !$("dmStationGrid")) return;
-  renderDmOptionalStations();
-  const selected = selectedDmStations();
-  const completed = selected.filter(current => dmValidationEntries.has(current.id)).length;
-  const metadataReady = Boolean($("storeName").value.trim() && $("dmName").value.trim());
-  $("dmProgress").textContent = `${completed} de ${selected.length} estaciones`;
-  $("dmProgressBar").style.width = `${selected.length ? completed / selected.length * 100 : 0}%`;
-  const status = $("dmValidationStatus");
-  if (!metadataReady) status.textContent = "Completa Tienda y DM para habilitar la imagen.";
-  else if (completed < selected.length) status.textContent = `Faltan ${selected.length - completed} estaciones por validar.`;
-  else status.textContent = "Validación completa · imagen consolidada lista.";
-  status.classList.toggle("ready", metadataReady && completed === selected.length);
-  $("dmImageButton").disabled = !metadataReady || completed !== selected.length || dmExportInProgress;
-  $("dmStationGrid").replaceChildren(...selected.map(createDmStationCard));
-}
-
-function canvasRoundRect(ctx, x, y, width, height, radius) {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + width, y, x + width, y + height, r);
-  ctx.arcTo(x + width, y + height, x, y + height, r);
-  ctx.arcTo(x, y + height, x, y, r);
-  ctx.arcTo(x, y, x + width, y, r);
-  ctx.closePath();
-}
-
-function fitCanvasText(ctx, value, maxWidth) {
-  const original = String(value || "—");
-  if (ctx.measureText(original).width <= maxWidth) return original;
-  let fitted = original;
-  while (fitted.length > 1 && ctx.measureText(`${fitted}…`).width > maxWidth) fitted = fitted.slice(0, -1);
-  return `${fitted.trimEnd()}…`;
-}
-
-function drawCanvasImageContain(ctx, image, x, y, width, height) {
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(x, y, width, height);
-  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
-  const drawWidth = image.naturalWidth * scale;
-  const drawHeight = image.naturalHeight * scale;
-  ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
-}
-
-function drawDmMetadataCell(ctx, label, value, x, y, width, height) {
-  ctx.fillStyle = "rgba(255,255,255,.12)";
-  canvasRoundRect(ctx, x, y, width, height, 16);
-  ctx.fill();
-  ctx.fillStyle = "#bfe3d3";
-  ctx.font = "700 17px Inter, Segoe UI, sans-serif";
-  ctx.fillText(label.toUpperCase(), x + 18, y + 25);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "800 24px Inter, Segoe UI, sans-serif";
-  ctx.fillText(fitCanvasText(ctx, value, width - 36), x + 18, y + 58);
-}
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 2500);
-}
-
-async function buildDmInfographic() {
-  const selected = selectedDmStations();
-  const records = selected.map(current => ({ current, entry: dmValidationEntries.get(current.id) }));
-  if (records.some(record => !record.entry)) throw new Error("Completa todas las estaciones seleccionadas antes de crear la imagen.");
-  const config = dmValidationConfig();
-  const width = Number(config.imageWidth) || DEFAULT_DM_IMAGE_WIDTH;
-  const rowHeight = Number(config.stationHeight) || DEFAULT_DM_STATION_HEIGHT;
-  const outer = 44;
-  const gap = 24;
-  const headerHeight = 250;
-  const footerHeight = 72;
-  const height = headerHeight + outer + records.length * rowHeight + Math.max(0, records.length - 1) * gap + footerHeight;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d", { alpha: false });
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.fillStyle = "#f2f6f4";
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = "#003b2a";
-  ctx.fillRect(0, 0, width, headerHeight);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "900 48px Inter, Segoe UI, sans-serif";
-  ctx.fillText("VALIDACIÓN DM", outer, 66);
-  ctx.fillStyle = "#bfe3d3";
-  ctx.font = "600 22px Inter, Segoe UI, sans-serif";
-  ctx.fillText(`${records.length} estaciones · Referencia vs. acomodo real`, outer, 99);
-  const metadata = [
-    ["Tienda", $("storeName").value.trim()],
-    ["DM", $("dmName").value.trim()],
-    ["Campaña", campaign()?.label || "—"],
-    ["Fecha", new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date())]
-  ];
-  const metaGap = 14;
-  const metaWidth = (width - outer * 2 - metaGap * 3) / 4;
-  metadata.forEach(([label, value], index) => drawDmMetadataCell(ctx, label, value || "Sin definir", outer + index * (metaWidth + metaGap), 126, metaWidth, 88));
-  const prepared = await Promise.all(records.map(async record => ({
-    ...record,
-    referenceImage: await loadImageElement(record.entry.reference),
-    evidenceImage: await loadImageElement(record.entry.evidence)
-  })));
-  const contentWidth = width - outer * 2;
-  const panelGap = 18;
-  const halfWidth = (contentWidth - panelGap) / 2;
-  let y = headerHeight + outer;
-  prepared.forEach((record, index) => {
-    const { current, entry, referenceImage, evidenceImage } = record;
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "#bdd2c9";
-    ctx.lineWidth = 2;
-    canvasRoundRect(ctx, outer, y, contentWidth, rowHeight, 22);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#006241";
-    canvasRoundRect(ctx, outer, y, contentWidth, 72, 22);
-    ctx.fill();
-    ctx.fillRect(outer, y + 42, contentWidth, 30);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "900 27px Inter, Segoe UI, sans-serif";
-    ctx.fillText(`${String(index + 1).padStart(2, "0")}  ${current.label} | ${entry.code} · ${entry.context}`, outer + 22, y + 45);
-    [["REFERENCIA", referenceImage], ["REAL", evidenceImage]].forEach(([label, image], column) => {
-      const x = outer + column * (halfWidth + panelGap);
-      const figureY = y + 86;
-      const figureHeight = rowHeight - 102;
-      ctx.fillStyle = "#f8faf9";
-      ctx.strokeStyle = "#d5e2dc";
-      canvasRoundRect(ctx, x, figureY, halfWidth, figureHeight, 14);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = column === 0 ? "#006241" : "#c69c54";
-      ctx.font = "900 18px Inter, Segoe UI, sans-serif";
-      ctx.fillText(label, x + 16, figureY + 29);
-      drawCanvasImageContain(ctx, image, x + 10, figureY + 42, halfWidth - 20, figureHeight - 52);
+    select.addEventListener("change", () => {
+      state.variants[station.id] = select.value;
+      saveDmState();
+      renderDmStations();
     });
-    y += rowHeight + gap;
-  });
-  ctx.fillStyle = "#35564a";
-  ctx.font = "700 18px Inter, Segoe UI, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("LayOut 2.0 · Validación visual consolidada", width / 2, height - 28);
-  ctx.textAlign = "left";
-  const blob = await new Promise((resolve, reject) => canvas.toBlob(
-    value => value ? resolve(value) : reject(new Error("No fue posible preparar la imagen consolidada.")),
-    "image/jpeg",
-    0.94
-  ));
-  const now = new Date();
-  const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  return { blob, filename: `Validacion_DM_${cleanFilename($("storeName").value.trim())}_${cleanFilename(campaign()?.label)}_${dateKey}.jpg` };
-}
 
-async function exportDmInfographic() {
-  if (exportInProgress || dmExportInProgress) return;
-  const store = $("storeName").value.trim();
-  const dm = $("dmName").value.trim();
-  if (!store || !dm) {
-    announce("Completa Tienda y DM antes de crear la imagen.");
-    return;
+    const compare = document.createElement("div");
+    compare.className = "dmx-compare";
+    compare.append(
+      createDmFigure("Referencia", station, currentVariant.image),
+      createDmFigure("Real", station, record?.dataUrl)
+    );
+
+    const actions = document.createElement("div");
+    actions.className = "dmx-actions";
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "dmx-button";
+    add.textContent = record ? "Cambiar evidencia real" : "Agregar evidencia real";
+    add.addEventListener("click", () => {
+      pendingStationId = station.id;
+      byId("dmxFile").click();
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "dmx-button dmx-button--secondary";
+    remove.textContent = "Quitar";
+    remove.hidden = !record;
+    remove.addEventListener("click", () => {
+      evidence.delete(station.id);
+      renderDmStations();
+    });
+    actions.append(add, remove);
+    card.append(head, select, compare, actions);
+    return card;
   }
-  const selected = selectedDmStations();
-  const completed = selected.filter(current => dmValidationEntries.has(current.id)).length;
-  if (completed !== selected.length) {
-    announce(`Completa las ${selected.length - completed} estaciones pendientes.`);
-    return;
+
+  function renderDmStations() {
+    if (!catalog) return;
+    renderDmOptions();
+    const stations = selectedDmStations();
+    byId("dmxGrid").replaceChildren(...stations.map(createDmStationCard));
+    updateDmProgress();
   }
-  dmExportInProgress = true;
-  setExportBusy(true);
-  renderDmValidation();
-  $("exportProgressTitle").textContent = "Creando infografía DM";
-  $("exportProgressText").textContent = "Estamos acomodando cada referencia y evidencia en una sola imagen.";
-  const feedbackStarted = performance.now();
-  let completedExport = false;
-  try {
-    await waitForInterfacePaint();
-    const { blob, filename } = await buildDmInfographic();
-    const remainingFeedback = MIN_EXPORT_FEEDBACK_MS - (performance.now() - feedbackStarted);
-    if (remainingFeedback > 0) await new Promise(resolve => window.setTimeout(resolve, remainingFeedback));
-    downloadBlob(blob, filename);
-    completedExport = true;
-    $("exportCompleteTitle").textContent = "Infografía lista";
-    $("exportCompleteText").textContent = `La validación DM consolidó ${selected.length} estaciones en una sola imagen.`;
-    announce("Infografía DM descargada correctamente.");
-  } catch (error) {
-    announce(`${error.message} No se generó una imagen incompleta.`);
-  } finally {
-    dmExportInProgress = false;
-    setExportBusy(false);
-    $("exportProgressTitle").textContent = "Preparando tu PDF";
-    $("exportProgressText").textContent = "Estamos trabajando. Tu descarga aparecerá enseguida.";
-    renderDmValidation();
+
+  function updateDmProgress() {
+    if (!catalog) return;
+    const stations = selectedDmStations();
+    const complete = stations.filter(station => evidence.has(station.id)).length;
+    const metadataReady = Boolean(state.store.trim() && state.dm.trim() && state.campaign);
+    byId("dmxProgress").textContent = `${complete} de ${stations.length} estaciones`;
+    byId("dmxProgressBar").style.width = `${stations.length ? complete / stations.length * 100 : 0}%`;
+    const pending = stations.length - complete;
+    byId("dmxStatus").textContent = !metadataReady
+      ? "Completa Tienda y DM para continuar."
+      : pending
+        ? `Faltan ${pending} ${pending === 1 ? "estación" : "estaciones"} por validar.`
+        : "Validación completa · infografía lista para crear.";
+    byId("dmxExport").disabled = exporting || !metadataReady || pending > 0;
   }
-  if (completedExport) $("exportCompleteDialog").showModal();
-}
+
+  function fileToImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("No fue posible leer la fotografía."));
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("La fotografía no tiene un formato compatible."));
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function optimizeDmEvidence(file) {
+    const image = await fileToImage(file);
+    const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext("2d", { alpha: false });
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.9);
+  }
+
+  async function processDmEvidence(file) {
+    const stationId = pendingStationId;
+    pendingStationId = null;
+    byId("dmxFile").value = "";
+    if (!stationId || !file) return;
+    if (!file.type.startsWith("image/")) {
+      showDmToast("Selecciona un archivo de imagen válido.");
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      showDmToast("La fotografía supera 18 MB. Selecciona una imagen más ligera.");
+      return;
+    }
+    try {
+      byId("dmxBusy").hidden = false;
+      const dataUrl = await optimizeDmEvidence(file);
+      evidence.set(stationId, { dataUrl, name: file.name });
+      renderDmStations();
+      showDmToast("Evidencia agregada a la Validación DM.");
+    } catch (error) {
+      showDmToast(error.message || "No fue posible preparar la evidencia.");
+    } finally {
+      byId("dmxBusy").hidden = true;
+    }
+  }
+
+  function loadCanvasImage(source) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("No fue posible cargar una imagen de la validación."));
+      image.src = source;
+    });
+  }
+
+  function roundRect(context, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.arcTo(x + width, y, x + width, y + height, r);
+    context.arcTo(x + width, y + height, x, y + height, r);
+    context.arcTo(x, y + height, x, y, r);
+    context.arcTo(x, y, x + width, y, r);
+    context.closePath();
+  }
+
+  function fitText(context, value, maxWidth) {
+    const original = String(value || "—");
+    if (context.measureText(original).width <= maxWidth) return original;
+    let fitted = original;
+    while (fitted.length > 1 && context.measureText(`${fitted}…`).width > maxWidth) fitted = fitted.slice(0, -1);
+    return `${fitted.trimEnd()}…`;
+  }
+
+  function drawContainedImage(context, image, x, y, width, height) {
+    context.fillStyle = "#ffffff";
+    context.fillRect(x, y, width, height);
+    const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+    const drawWidth = image.naturalWidth * scale;
+    const drawHeight = image.naturalHeight * scale;
+    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+  }
+
+  function drawMetadata(context, label, value, x, y, width) {
+    context.fillStyle = "rgba(255,255,255,.12)";
+    roundRect(context, x, y, width, 84, 15);
+    context.fill();
+    context.fillStyle = "#bfe3d3";
+    context.font = "700 16px Inter, Segoe UI, sans-serif";
+    context.fillText(label.toUpperCase(), x + 16, y + 24);
+    context.fillStyle = "#ffffff";
+    context.font = "800 23px Inter, Segoe UI, sans-serif";
+    context.fillText(fitText(context, value, width - 32), x + 16, y + 58);
+  }
+
+  async function buildDmInfographic() {
+    const stations = selectedDmStations();
+    const records = await Promise.all(stations.map(async station => {
+      const variant = variantFor(station);
+      const real = evidence.get(station.id);
+      if (!real) throw new Error(`Falta la evidencia de ${station.label}.`);
+      return {
+        station,
+        variant,
+        referenceImage: await loadCanvasImage(variant.image),
+        evidenceImage: await loadCanvasImage(real.dataUrl)
+      };
+    }));
+    const width = 1800;
+    const padding = 44;
+    const headerHeight = 246;
+    const rowHeight = 560;
+    const rowGap = 22;
+    const footerHeight = 70;
+    const height = headerHeight + padding + records.length * rowHeight + Math.max(0, records.length - 1) * rowGap + footerHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { alpha: false });
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.fillStyle = "#f2f6f4";
+    context.fillRect(0, 0, width, height);
+    context.fillStyle = "#003b2a";
+    context.fillRect(0, 0, width, headerHeight);
+    context.fillStyle = "#ffffff";
+    context.font = "900 48px Inter, Segoe UI, sans-serif";
+    context.fillText("VALIDACIÓN DM", padding, 64);
+    context.fillStyle = "#bfe3d3";
+    context.font = "600 21px Inter, Segoe UI, sans-serif";
+    context.fillText(`${records.length} estaciones · Referencia vs. acomodo real`, padding, 98);
+    const campaign = catalog.campaigns.find(item => item.id === state.campaign);
+    const metadata = [
+      ["Tienda", state.store.trim()],
+      ["DM", state.dm.trim()],
+      ["Campaña", campaign?.label || "—"],
+      ["Fecha", new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date())]
+    ];
+    const metaGap = 14;
+    const metaWidth = (width - padding * 2 - metaGap * 3) / 4;
+    metadata.forEach(([label, value], index) => drawMetadata(context, label, value, padding + index * (metaWidth + metaGap), 126, metaWidth));
+    const contentWidth = width - padding * 2;
+    const columnGap = 18;
+    const columnWidth = (contentWidth - columnGap) / 2;
+    let y = headerHeight + padding;
+    records.forEach((record, index) => {
+      const { station, variant, referenceImage, evidenceImage } = record;
+      context.fillStyle = "#ffffff";
+      context.strokeStyle = "#bdd2c9";
+      context.lineWidth = 2;
+      roundRect(context, padding, y, contentWidth, rowHeight, 22);
+      context.fill();
+      context.stroke();
+      context.fillStyle = "#006241";
+      roundRect(context, padding, y, contentWidth, 72, 22);
+      context.fill();
+      context.fillRect(padding, y + 42, contentWidth, 30);
+      context.fillStyle = "#ffffff";
+      context.font = "900 27px Inter, Segoe UI, sans-serif";
+      const title = `${String(index + 1).padStart(2, "0")}  ${station.label} | ${variant.code} · ${variantContext(station, variant)}`;
+      context.fillText(fitText(context, title, contentWidth - 44), padding + 22, y + 45);
+      [["REFERENCIA", referenceImage], ["REAL", evidenceImage]].forEach(([label, image], column) => {
+        const x = padding + column * (columnWidth + columnGap);
+        const figureY = y + 86;
+        const figureHeight = rowHeight - 102;
+        context.fillStyle = "#f8faf9";
+        context.strokeStyle = "#d5e2dc";
+        roundRect(context, x, figureY, columnWidth, figureHeight, 14);
+        context.fill();
+        context.stroke();
+        context.fillStyle = column === 0 ? "#006241" : "#a67726";
+        context.font = "900 18px Inter, Segoe UI, sans-serif";
+        context.fillText(label, x + 16, figureY + 29);
+        drawContainedImage(context, image, x + 10, figureY + 42, columnWidth - 20, figureHeight - 52);
+      });
+      y += rowHeight + rowGap;
+    });
+    context.fillStyle = "#35564a";
+    context.font = "700 18px Inter, Segoe UI, sans-serif";
+    context.textAlign = "center";
+    context.fillText("LayOut 2.0 · Validación visual consolidada", width / 2, height - 27);
+    context.textAlign = "left";
+    const blob = await new Promise((resolve, reject) => canvas.toBlob(
+      value => value ? resolve(value) : reject(new Error("No fue posible crear la imagen consolidada.")),
+      "image/jpeg",
+      0.94
+    ));
+    return { blob, campaign: campaign?.label || "Campaña" };
+  }
+
+  function downloadDmBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2500);
+  }
+
+  async function exportDmInfographic() {
+    if (exporting) return;
+    updateDmProgress();
+    if (byId("dmxExport").disabled) {
+      showDmToast("Completa los datos y todas las estaciones seleccionadas.");
+      return;
+    }
+    exporting = true;
+    byId("dmxBusy").hidden = false;
+    updateDmProgress();
+    try {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const { blob, campaign } = await buildDmInfographic();
+      const today = new Date();
+      const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      downloadDmBlob(blob, `Validacion_DM_${cleanFilename(state.store)}_${cleanFilename(campaign)}_${date}.jpg`);
+      showDmToast("Infografía DM descargada correctamente.");
+    } catch (error) {
+      showDmToast(error.message || "No fue posible generar la infografía.");
+    } finally {
+      exporting = false;
+      byId("dmxBusy").hidden = true;
+      updateDmProgress();
+    }
+  }
+
+  async function openDmValidation() {
+    if (!dialog) createDialog();
+    if (!dialog.open) dialog.showModal();
+    if (!catalog) {
+      byId("dmxBusy").hidden = false;
+      try {
+        const response = await fetch(DATA_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error("No fue posible cargar las estaciones.");
+        catalog = await response.json();
+      } catch (error) {
+        byId("dmxBusy").hidden = true;
+        showDmToast(error.message || "No fue posible abrir Validación DM.");
+        return;
+      }
+      byId("dmxBusy").hidden = true;
+    }
+    syncMainDefaults();
+    renderDmMetadata();
+    renderDmStations();
+  }
+
+  function closeDmValidation() {
+    if (dialog?.open && !exporting) dialog.close();
+  }
+
+  function initDmValidation() {
+    byId("dmValidationOpen")?.addEventListener("click", openDmValidation);
+    byId("dmValidationOpenMobile")?.addEventListener("click", openDmValidation);
+  }
+
+  document.addEventListener("DOMContentLoaded", initDmValidation);
+})();

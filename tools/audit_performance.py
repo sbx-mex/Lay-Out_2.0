@@ -10,7 +10,8 @@ SOURCE_BUDGETS = {
     "index.html": 16 * 1024,
     "styles.css": 24 * 1024,
     "app.js": 48 * 1024,
-    "dm-validation.js": 24 * 1024,
+    "dm-validation.css": 24 * 1024,
+    "dm-validation.js": 40 * 1024,
     "data/layouts.json": 64 * 1024,
 }
 

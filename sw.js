@@ -5,6 +5,7 @@ const SHELL = [
   "./",
   "index.html",
   "styles.css",
+  "dm-validation.css",
   "app.js",
   "dm-validation.js",
   "manifest.json",

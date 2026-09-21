@@ -42,9 +42,9 @@ if not (ROOT / "tools" / "clean_reference_titles.py").is_file():
     fail("falta el limpiador validable de títulos de referencia")
 app_source = (ROOT / "app.js").read_text(encoding="utf-8")
 dm_source = (ROOT / "dm-validation.js").read_text(encoding="utf-8")
-script_source = app_source + "\n" + dm_source
 html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
+dm_styles_source = (ROOT / "dm-validation.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
 if 'const CACHE = "layout-2-remastered-v14";' not in service_worker_source:
     fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
@@ -70,16 +70,27 @@ for marker in (
     "animateReferenceChange",
     "bindSwipe",
     "stationDisplayLabel",
-    "renderDmValidation",
-    "syncCurrentValidationEntry",
+):
+    if marker not in app_source:
+        fail(f"falta función premium de exportación: {marker}")
+for marker in (
+    "openDmValidation",
+    "renderDmStations",
+    "processDmEvidence",
     "buildDmInfographic",
     "exportDmInfographic",
-    "drawCanvasImageContain",
 ):
-    if marker not in script_source:
-        fail(f"falta función premium de exportación: {marker}")
-if '<script defer src="dm-validation.js"></script>' not in html_source:
-    fail("la página no carga el módulo de Validación DM")
+    if marker not in dm_source:
+        fail(f"falta función independiente de Validación DM: {marker}")
+for marker in ('id="dmValidationOpen"', 'id="dmValidationOpenMobile"', 'dm-validation.css', 'dm-validation.js'):
+    if marker not in html_source:
+        fail(f"falta acceso independiente a Validación DM: {marker}")
+for marker in (".dmx-shell", ".dmx-station", ".dmx-compare", ".dmx-footer"):
+    if marker not in dm_styles_source:
+        fail(f"falta estilo independiente de Validación DM: {marker}")
+for marker in ('"dm-validation.css"', '"dm-validation.js"'):
+    if marker not in service_worker_source:
+        fail(f"Validación DM no está disponible sin conexión: {marker}")
 for marker in (
     "campaignSelect",
     "stationSelect",
@@ -93,12 +104,6 @@ for marker in (
     "photoOrientationDialog",
     "exportProgress",
     "exportCompleteDialog",
-    "dmName",
-    "dmValidation",
-    "dmOptionalStations",
-    "dmStationGrid",
-    "dmImageButton",
-    "dmProgressBar",
 ):
     if marker not in html_source:
         fail(f"falta interfaz ejecutiva: {marker}")
@@ -123,7 +128,7 @@ for obsolete in (
 for obsolete in ('id="variantSelect"', 'id="referenceStage"', 'id="referenceImage"', 'En palabras simples'):
     if obsolete in html_source:
         fail(f"vista teórica duplicada todavía visible: {obsolete}")
-for marker in (".capture-guidance", ".checklist-dialog", ".station-checklist", ".checklist-item", ".orientation-dialog", ".export-progress", ".completion-dialog", ".carousel-progress", ".is-dragging", ".dm-validation", ".dm-station-card", ".dm-option", ".dm-progress"):
+for marker in (".capture-guidance", ".checklist-dialog", ".station-checklist", ".checklist-item", ".orientation-dialog", ".export-progress", ".completion-dialog", ".carousel-progress", ".is-dragging"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
 for marker in ('event.key === "ArrowLeft"', 'navigator.vibrate', 'Math.abs(deltaX) > Math.abs(deltaY) * 1.25', 'suppressReferenceClickUntil'):
@@ -141,7 +146,7 @@ if duplicate_ids:
 missing_label_targets = sorted(set(parser.label_targets) - set(parser.ids))
 if missing_label_targets:
     fail(f"labels sin control asociado: {missing_label_targets}")
-js_required_ids = set(re.findall(r'\$\("([A-Za-z][A-Za-z0-9_-]*)"\)', script_source))
+js_required_ids = set(re.findall(r'\$\("([A-Za-z][A-Za-z0-9_-]*)"\)', app_source))
 missing_js_ids = sorted(js_required_ids - set(parser.ids))
 if missing_js_ids:
     fail(f"app.js usa controles inexistentes: {missing_js_ids}")
@@ -156,14 +161,13 @@ catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
 experience = catalog.get("experience", {})
 workflow = experience.get("workflow", [])
 performance = catalog.get("performance", {})
-dm_validation = catalog.get("dmValidation", {})
 campaigns = catalog.get("campaigns", [])
 stations = catalog.get("stations", [])
 variants = [variant for station in stations for variant in station.get("variants", [])]
 technical = [item for station in stations for item in station.get("technical", [])]
 records = variants + technical
 
-if catalog.get("schemaVersion") != "3.3.0" or workflow:
+if catalog.get("schemaVersion") != "3.2.0" or workflow:
     fail("el JSON todavía conserva el flujo superior retirado")
 if experience.get("campaignChecklist") != "Insumos y materiales actualizados a la campaña seleccionada.":
     fail("falta la validación transversal de campaña")
@@ -171,12 +175,6 @@ if performance.get("precachePerStation") != 1 or performance.get("referenceDispl
     fail("la configuración de rendimiento debe usar carga nativa y una precarga por estación")
 if performance.get("adjacentPrefetch") != 1 or performance.get("swipeThreshold") != 48:
     fail("el JSON no contiene la configuración estable del carrete")
-if dm_validation.get("optionalStations") != ["drive-thru", "mop"]:
-    fail("Validación DM debe conservar Drive Thru y Pedidos móviles como opcionales")
-if dm_validation.get("defaultOptionalStations") != ["mop"]:
-    fail("Pedidos móviles debe iniciar activo para la validación habitual de seis estaciones")
-if dm_validation.get("imageWidth") != 1800 or dm_validation.get("stationHeight") != 560:
-    fail("la infografía DM no conserva el formato vertical de alta legibilidad")
 expected_cleanup = {
     "version": 1,
     "references": 85,
@@ -313,14 +311,6 @@ report = {
         "dynamicReferenceFit": True,
         "cleanedReferences": performance["referenceCleanup"]["references"],
         "embeddedTitlesRemoved": performance["referenceCleanup"]["titlesRemoved"],
-        "dmInfographic": {
-            "requiredStations": 5,
-            "defaultStations": 6,
-            "maximumStations": 7,
-            "optionalStations": dm_validation["optionalStations"],
-            "dynamicHeight": True,
-            "format": "JPEG",
-        },
     },
     "lots": {
         lot.name: {

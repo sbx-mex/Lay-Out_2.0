@@ -16,6 +16,7 @@
   <link rel="preload" href="assets/ui/Damos_Seguimiento.webp" as="image" type="image/webp">
   <link rel="preload" href="assets/ui/Un_placer_haber_Ayudado.webp" as="image" type="image/webp">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dm-validation.css">
   <script defer src="vendor/jspdf.umd.min.js"></script>
   <script defer src="app.js"></script>
   <script defer src="dm-validation.js"></script>
@@ -31,7 +32,7 @@
         <span><strong>LayOut 2.0</strong><small>Estación · Referencia · Real</small></span>
       </a>
       <div class="topbar__actions">
-        <a class="button button--ghost button--compact topbar__dm-link" href="#dmValidation">Validación DM</a>
+        <button id="dmValidationOpen" class="button button--ghost button--compact dmx-launch" type="button">Validación DM</button>
         <span id="networkStatus" class="status" role="status" aria-live="polite">En línea</span>
         <button id="installButton" class="button button--ghost button--compact hidden" type="button">Instalar</button>
       </div>
@@ -44,51 +45,23 @@
         <span class="eyebrow">Guía visual por estación</span>
         <h1 id="heroTitle">LayOut 2.0</h1>
         <p id="heroSubtitle">Selecciona, compara y valida con claridad.</p>
-        <div class="hero__actions">
-          <button id="dmQuickButton" class="button" type="button">Crear Validación DM</button>
-          <span>Consolida de 5 a 7 estaciones en una sola imagen.</span>
-        </div>
       </div>
     </section>
 
     <section class="context panel" id="contextPanel" aria-labelledby="contextTitle">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">Pasos 1–4 · Configura la revisión</span>
-          <h2 id="contextTitle">Tienda, DM, campaña y estación</h2>
+          <span class="eyebrow">Pasos 1–3 · Configura la revisión</span>
+          <h2 id="contextTitle">Tienda, campaña y estación</h2>
         </div>
         <button id="resetButton" class="button button--text" type="button">Reiniciar</button>
       </div>
       <div class="context__grid">
         <label class="field step-field"><span><b>1</b> Tienda</span><input id="storeName" maxlength="80" autocomplete="organization" placeholder="Ej. Reforma 222"></label>
-        <label class="field step-field"><span><b>2</b> DM</span><input id="dmName" maxlength="80" autocomplete="name" placeholder="Ej. Enrique Flores"></label>
-        <label class="field step-field"><span><b>3</b> Campaña</span><select id="campaignSelect" name="campaign" aria-label="Campaña anual"></select></label>
-        <label class="field step-field"><span><b>4</b> Estación y equipo</span><select id="stationSelect" name="station" aria-label="Estación y equipo"></select></label>
+        <label class="field step-field"><span><b>2</b> Campaña</span><select id="campaignSelect" name="campaign" aria-label="Campaña anual"></select></label>
+        <label class="field step-field"><span><b>3</b> Estación y equipo</span><select id="stationSelect" name="station" aria-label="Estación y equipo"></select></label>
       </div>
       <div id="selectionSummary" class="selection-summary" role="status" aria-live="polite">Preparando selección…</div>
-    </section>
-
-    <section class="dm-validation panel" id="dmValidation" aria-labelledby="dmValidationTitle">
-      <div class="section-heading dm-validation__heading">
-        <div>
-          <span class="eyebrow">Collage estructurado · Referencia vs. real</span>
-          <h2 id="dmValidationTitle">Validación DM</h2>
-          <p>Valida cada estación y genera una sola infografía visual con Tienda, DM, Campaña y Fecha.</p>
-        </div>
-        <div class="dm-validation__export">
-          <span id="dmValidationStatus" class="export-status" role="status">Completa Tienda y DM para habilitar la imagen.</span>
-          <button id="dmImageButton" class="button" type="button" disabled>Crear imagen consolidada</button>
-        </div>
-      </div>
-      <div class="dm-progress" aria-label="Avance de estaciones">
-        <div><strong id="dmProgress">0 de 6 estaciones</strong><span>La altura final se ajusta automáticamente.</span></div>
-        <span class="dm-progress__track" aria-hidden="true"><i id="dmProgressBar"></i></span>
-      </div>
-      <div class="dm-options-block">
-        <div><strong>Estaciones opcionales</strong><small>Pedidos móviles inicia activo; Drive Thru se agrega sólo cuando aplica.</small></div>
-        <div id="dmOptionalStations" class="dm-options" role="group" aria-label="Estaciones opcionales"></div>
-      </div>
-      <div id="dmStationGrid" class="dm-station-grid" aria-live="polite"></div>
     </section>
 
     <section class="compare panel" id="compareWorkspace" aria-labelledby="compareTitle">
@@ -212,7 +185,7 @@
     <button id="mobilePrevious" type="button">← Anterior</button>
     <button id="mobilePhoto" type="button">Foto</button>
     <button id="mobileExport" type="button">Exportar</button>
-    <button id="mobileDmValidation" type="button">Validación DM</button>
+    <button id="dmValidationOpenMobile" type="button">Validación DM</button>
   </div>
 
   <dialog id="technicalDialog" class="technical-dialog">
