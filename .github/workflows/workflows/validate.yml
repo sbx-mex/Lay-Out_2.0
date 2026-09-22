@@ -7,25 +7,52 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Descargar código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: "22"
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - name: Preparar Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Preparar Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - run: pip install Pillow pypdf numpy scipy
-      - run: node --check app.js
-      - run: node --check dm-validation.js
-      - run: node --check sw.js
-      - run: python tools/optimize_ui_assets.py --check
-      - run: python tools/clean_reference_titles.py --check
-      - run: python tools/audit_performance.py
-      - run: python tools/calibrate_dm_infographic.py --check
-      - run: python tools/cleanup_assets.py
-      - run: python tools/audit_project.py
-      - run: python tools/audit_pdf_export.py --output-dir /tmp/layout-pdf-audit
+      - name: Instalar dependencias Python verificables
+        run: >-
+          python -m pip install --no-cache-dir
+          Pillow==12.3.0 pypdf==6.10.0 numpy==2.3.5 scipy==1.17.0
+      - name: Sintaxis JavaScript
+        run: |
+          node --check app.js
+          node --check dm-validation.js
+          node --check sw.js
+      - name: Activos UI optimizados
+        run: python tools/optimize_ui_assets.py --check
+      - name: Referencias visuales limpias
+        run: python tools/clean_reference_titles.py --check
+      - name: Rendimiento dentro de presupuesto
+        run: python tools/audit_performance.py
+      - name: Activos sin residuos
+        run: python tools/cleanup_assets.py
+      - name: Estabilidad y seguridad del proyecto
+        run: python tools/audit_project.py
+      - name: Experiencia de Validación DM
+        run: python tools/audit_dm_experience.py
+      - name: Calidad de imagen DM
+        run: python tools/calibrate_dm_infographic.py --check
+      - name: Exportación PDF válida
+        run: python tools/audit_pdf_export.py --output-dir /tmp/layout-pdf-audit
