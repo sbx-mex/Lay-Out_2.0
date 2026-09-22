@@ -9,6 +9,9 @@ const PDF_CUT_GAP = 2;
 const DEFAULT_MAX_EVIDENCE_PX = 2200;
 const DEFAULT_EVIDENCE_TARGET_WIDTH = 1900;
 const MAX_EVIDENCE_BYTES = 18 * 1024 * 1024;
+const MAX_DECODE_PIXELS = 64 * 1024 * 1024;
+const FETCH_TIMEOUT_MS = 12000;
+const ALLOWED_EVIDENCE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const IMAGE_BG_THRESHOLD = 242;
 const MIN_EXPORT_FEEDBACK_MS = 900;
 const PDF_COLORS = {
@@ -113,6 +116,53 @@ function cleanFilename(value) {
     .replace(/^_+|_+$/g, "") || "sin-definir";
 }
 
+function safeStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function safeStorageRemove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // La aplicación sigue operativa cuando el navegador bloquea el almacenamiento.
+  }
+}
+
+async function fetchJson(url, errorMessage) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error(errorMessage);
+    return await response.json();
+  } catch (error) {
+    if (error?.name === "AbortError") throw new Error(`${errorMessage} Tiempo de espera agotado.`);
+    if (error instanceof SyntaxError) throw new Error(`${errorMessage} La respuesta no es válida.`);
+    if (error instanceof Error && error.message === errorMessage) throw error;
+    throw new Error(`${errorMessage} Revisa la conexión.`);
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function renderFatalError(error) {
+  const host = document.querySelector(".app");
+  if (!host) return;
+  const panel = document.createElement("section");
+  const title = document.createElement("h1");
+  const detail = document.createElement("p");
+  panel.className = "panel";
+  title.textContent = "No se pudo abrir Lay Out 2.0";
+  detail.textContent = error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+  panel.append(title, detail);
+  host.replaceChildren(panel);
+}
+
 function announce(message) {
   const toast = $("toast");
   toast.textContent = message;
@@ -130,7 +180,7 @@ function saveState() {
     store: $("storeName").value.trim(),
     notes: $("notes").value
   };
-  localStorage.setItem(MEMORY_KEY, JSON.stringify(state));
+  safeStorageSet(MEMORY_KEY, JSON.stringify(state));
 }
 
 function loadState() {
@@ -266,9 +316,7 @@ function renderExperience() {
 }
 
 async function loadCatalog() {
-  const response = await fetch(DATA_URL, { cache: "no-store" });
-  if (!response.ok) throw new Error("No se pudo cargar el catálogo de estaciones.");
-  catalog = await response.json();
+  catalog = await fetchJson(DATA_URL, "No se pudo cargar el catálogo de estaciones.");
   if (!Array.isArray(catalog.campaigns) || !catalog.campaigns.length) throw new Error("El catálogo no contiene campañas válidas.");
   if (!Array.isArray(catalog.stations) || !catalog.stations.length) throw new Error("El catálogo no contiene estaciones válidas.");
   const visibleStations = availableStations();
@@ -550,8 +598,8 @@ function updateCaptureGuidance() {
 
 function validateEvidenceFile(file) {
   if (!file) return false;
-  if (!file.type.startsWith("image/")) {
-    announce("Selecciona un archivo de imagen válido.");
+  if (!ALLOWED_EVIDENCE_TYPES.has(file.type.toLowerCase())) {
+    announce("Usa una fotografía JPG, PNG o WebP válida.");
     return false;
   }
   if (file.size > MAX_EVIDENCE_BYTES) {
@@ -571,6 +619,9 @@ async function processEvidence(file) {
       image.onerror = () => reject(new Error("No fue posible leer la imagen seleccionada."));
       image.src = objectUrl;
     });
+    if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth * image.naturalHeight > MAX_DECODE_PIXELS) {
+      throw new Error("La fotografía tiene dimensiones demasiado grandes para procesarse con seguridad.");
+    }
     const maxEvidencePixels = catalog.performance?.evidenceMaxPixels || DEFAULT_MAX_EVIDENCE_PX;
     const targetWidth = catalog.performance?.evidenceTargetWidth || DEFAULT_EVIDENCE_TARGET_WIDTH;
     const scale = Math.min(1, maxEvidencePixels / Math.max(image.naturalWidth, image.naturalHeight));
@@ -1054,8 +1105,8 @@ function bind() {
 
   $("exportButton").addEventListener("click", exportPdf);
   $("resetButton").addEventListener("click", () => {
-    localStorage.removeItem(MEMORY_KEY);
-    LEGACY_MEMORY_KEYS.forEach(key => localStorage.removeItem(key));
+    safeStorageRemove(MEMORY_KEY);
+    LEGACY_MEMORY_KEYS.forEach(safeStorageRemove);
     $("storeName").value = "";
     $("notes").value = "";
     activeCampaignId = catalog.campaigns[0].id;
@@ -1106,7 +1157,7 @@ async function start() {
   try {
     await loadCatalog();
   } catch (error) {
-    document.querySelector(".app").innerHTML = `<section class="panel"><h1>No se pudo abrir Lay Out 2.0</h1><p>${error.message}</p></section>`;
+    renderFatalError(error);
   }
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })

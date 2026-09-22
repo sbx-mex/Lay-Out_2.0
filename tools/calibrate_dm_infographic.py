@@ -59,11 +59,13 @@ def validate(config: dict[str, int | float], results: list[dict[str, int | float
     missing = sorted(required - config.keys())
     if missing:
         fail(f"faltan parámetros del calibrador: {missing}")
-    if config["version"] != 1 or config["canvasWidth"] != 1800:
-        fail("la infografía debe conservar versión 1 y ancho premium de 1800 px")
-    if not 0.9 <= float(config["imageQuality"]) <= 0.96:
-        fail("imageQuality debe permanecer entre 0.90 y 0.96")
-    if not 650 <= int(config["minRowHeight"]) <= int(config["maxRowHeight"]) <= 720:
+    if config["version"] != 2 or int(config["canvasWidth"]) < 2400:
+        fail("la infografía debe usar versión 2 y al menos 2400 px de ancho")
+    if int(config["columnHeaderHeight"]) != 0:
+        fail("la fila redundante Referencia / Real debe permanecer eliminada")
+    if not 0.97 <= float(config["imageQuality"]) <= 0.99:
+        fail("imageQuality debe permanecer entre 0.97 y 0.99")
+    if not 760 <= int(config["minRowHeight"]) <= int(config["maxRowHeight"]) <= 860:
         fail("los límites de altura por estación no son seguros")
     if not 72 <= int(config["improvementHeight"]) <= 120:
         fail("la franja de mejora continua sale del rango seguro")
@@ -73,10 +75,10 @@ def validate(config: dict[str, int | float], results: list[dict[str, int | float
         fail("la altura final debe crecer al agregar estaciones")
     if [result["rowHeight"] for result in results] != sorted((result["rowHeight"] for result in results), reverse=True):
         fail("la altura de cada estación debe ajustarse proporcionalmente")
-    if any(not 1.8 <= result["canvasAspect"] <= 3.5 for result in results):
+    if any(not 1.8 <= result["canvasAspect"] <= 2.8 for result in results):
         fail("la proporción final sale del rango vertical útil")
-    if any(result["photoWidth"] < 800 for result in results):
-        fail("las fotografías no aprovechan el ancho premium")
+    if any(result["photoWidth"] < 1100 for result in results):
+        fail("las fotografías no aprovechan el ancho de alta resolución")
 
 
 def main() -> None:
@@ -84,7 +86,7 @@ def main() -> None:
     parser.add_argument("--check", action="store_true", help="Falla si la geometría no cumple los límites premium.")
     args = parser.parse_args()
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    results = [calculate(config, stations, improvement_rows) for stations, improvement_rows in ((5, 0), (6, 3), (7, 7))]
+    results = [calculate(config, stations, improvement_rows) for stations, improvement_rows in ((5, 0), (6, 3), (6, 6))]
     validate(config, results)
     print(json.dumps({"status": "ok", "mode": "check" if args.check else "report", "presets": results}, ensure_ascii=False))
 

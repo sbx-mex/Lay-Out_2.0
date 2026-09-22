@@ -50,11 +50,77 @@ html_source = (ROOT / "index.html").read_text(encoding="utf-8")
 styles_source = (ROOT / "styles.css").read_text(encoding="utf-8")
 dm_styles_source = (ROOT / "dm-validation.css").read_text(encoding="utf-8")
 service_worker_source = (ROOT / "sw.js").read_text(encoding="utf-8")
-if 'const CACHE = "layout-2-remastered-v15";' not in service_worker_source:
-    fail("actualiza la versión de caché para distribuir la nueva exportación PDF")
+workflow_source = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+if 'const CACHE = `${CACHE_PREFIX}v17`;' not in service_worker_source:
+    fail("actualiza la versión de caché para distribuir la nueva versión")
 for marker in ("networkFirst", "staleWhileRevalidate"):
     if marker not in service_worker_source:
         fail(f"falta estrategia de actualización rápida: {marker}")
+
+# Seguridad y estabilidad: políticas del navegador, entradas acotadas y CI reproducible.
+csp_match = re.search(
+    r'<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]+)"',
+    html_source,
+    flags=re.IGNORECASE,
+)
+if not csp_match:
+    fail("falta Content-Security-Policy en index.html")
+for directive in (
+    "default-src 'self'",
+    "script-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'none'",
+):
+    if directive not in csp_match.group(1):
+        fail(f"Content-Security-Policy incompleta: {directive}")
+if '<meta name="referrer" content="no-referrer">' not in html_source:
+    fail("falta una política de referencia privada")
+
+for link in re.findall(r'<a\b[^>]*\btarget="_blank"[^>]*>', html_source, flags=re.IGNORECASE):
+    rel_match = re.search(r'\brel="([^"]+)"', link, flags=re.IGNORECASE)
+    rel_values = set(rel_match.group(1).lower().split()) if rel_match else set()
+    if not {"noopener", "noreferrer"}.issubset(rel_values):
+        fail(f"enlace externo sin aislamiento completo: {link}")
+for source in re.findall(r'<script\b[^>]*\bsrc="([^"]+)"', html_source, flags=re.IGNORECASE):
+    if source.startswith(("http://", "https://", "//")):
+        fail(f"script remoto no permitido: {source}")
+
+for label, source in (("app.js", app_source), ("dm-validation.js", dm_source), ("sw.js", service_worker_source)):
+    for forbidden in ("eval(", "new Function(", "document.write(", 'setTimeout("', 'setInterval("'):
+        if forbidden in source:
+            fail(f"{label} contiene ejecución dinámica no permitida: {forbidden}")
+if 'document.querySelector(".app").innerHTML' in app_source:
+    fail("el error principal no debe insertar mensajes mediante innerHTML")
+for label, source in (("app.js", app_source), ("dm-validation.js", dm_source)):
+    for marker in ("safeStorageSet", "FETCH_TIMEOUT_MS", "AbortController", "MAX_DECODE_PIXELS", "ALLOWED_EVIDENCE_TYPES"):
+        if marker not in source:
+            fail(f"{label} carece de protección de estabilidad: {marker}")
+for marker in (
+    "CACHE_PREFIX",
+    "key.startsWith(CACHE_PREFIX)",
+    'response.type === "basic"',
+    'request.headers.has("range")',
+    "fetchWithTimeout",
+    "putSafely",
+):
+    if marker not in service_worker_source:
+        fail(f"service worker sin aislamiento seguro: {marker}")
+if html_source.count('accept="image/jpeg,image/png,image/webp"') != 2:
+    fail("las entradas generales deben limitarse a formatos de imagen compatibles")
+if dm_source.count('accept="image/jpeg,image/png,image/webp"') != 2:
+    fail("las entradas DM deben limitarse a formatos de imagen compatibles")
+
+action_refs = dict(re.findall(r"uses:\s+actions/([^@\s]+)@([0-9a-f]{40})", workflow_source))
+if set(action_refs) != {"checkout", "setup-node", "setup-python"}:
+    fail(f"las acciones oficiales deben fijarse por hash: {sorted(action_refs)}")
+if "permissions:\n  contents: read" not in workflow_source or "persist-credentials: false" not in workflow_source:
+    fail("el workflow no aplica privilegios mínimos")
+for dependency in ("Pillow==12.3.0", "pypdf==6.10.0", "numpy==2.3.5", "scipy==1.17.0"):
+    if dependency not in workflow_source:
+        fail(f"dependencia Python sin versión fija: {dependency}")
+
 for marker in (
     "evidenceMeta",
     "useLandscapePage",
@@ -74,6 +140,8 @@ for marker in (
     "animateReferenceChange",
     "bindSwipe",
     "stationDisplayLabel",
+    "ALWAYS_HIDDEN_STATION_IDS",
+    "availableStations",
 ):
     if marker not in app_source:
         fail(f"falta función premium de exportación: {marker}")
@@ -91,15 +159,23 @@ for marker in (
     "shiftDmVariant",
     "bindDmCarousel",
     "improvementHeight",
-    "JUNTÉMONOS MÁS",
+    "visibleDmStations",
+    "dmChecklistItems",
+    "productionChannelsChecklist",
+    "dmxChecklistOverlay",
+    "dmxOrientationError",
+    "image.naturalHeight > image.naturalWidth",
+    "fitCanvasFont",
+    "Lay Out | Distrital |",
+    "Exportar imagen HQ",
     "data/dm-infographic.json",
 ):
     if marker not in dm_source:
         fail(f"falta función independiente de Validación DM: {marker}")
-for marker in ('id="dmValidationOpen"', 'id="dmValidationOpenMobile"', 'dm-validation.css', 'dm-validation.js'):
+for marker in ('id="dmValidationOpen"', 'id="dmValidationOpenMobile"', 'id="aboutButton"', 'id="aboutDialog"', 'dm-validation.css', 'dm-validation.js'):
     if marker not in html_source:
         fail(f"falta acceso independiente a Validación DM: {marker}")
-for marker in (".dmx-shell", ".dmx-station", ".dmx-compare", ".dmx-columns", ".dmx-footer"):
+for marker in (".dmx-shell", ".dmx-station", ".dmx-compare", ".dmx-columns", ".dmx-footer", ".dmx-flow", ".dmx-check", ".dmx-horizontal-rule"):
     if marker not in dm_styles_source:
         fail(f"falta estilo independiente de Validación DM: {marker}")
 for marker in ('"dm-validation.css"', '"dm-validation.js"', '"data/dm-infographic.json"'):
@@ -132,6 +208,9 @@ for marker in (
     "photoOrientationDialog",
     "exportProgress",
     "exportCompleteDialog",
+    "aboutButton",
+    "aboutDialog",
+    "aboutContinue",
 ):
     if marker not in html_source:
         fail(f"falta interfaz ejecutiva: {marker}")
@@ -156,7 +235,7 @@ for obsolete in (
 for obsolete in ('id="variantSelect"', 'id="referenceStage"', 'id="referenceImage"', 'En palabras simples'):
     if obsolete in html_source:
         fail(f"vista teórica duplicada todavía visible: {obsolete}")
-for marker in (".capture-guidance", ".checklist-dialog", ".station-checklist", ".checklist-item", ".orientation-dialog", ".export-progress", ".completion-dialog", ".carousel-progress", ".is-dragging"):
+for marker in (".capture-guidance", ".checklist-dialog", ".station-checklist", ".checklist-item", ".orientation-dialog", ".export-progress", ".completion-dialog", ".carousel-progress", ".is-dragging", ".about-dialog", ".about-overview"):
     if marker not in styles_source:
         fail(f"falta estilo ejecutivo: {marker}")
 for marker in ('event.key === "ArrowLeft"', 'navigator.vibrate', 'Math.abs(deltaX) > Math.abs(deltaY) * 1.25', 'suppressReferenceClickUntil'):
@@ -198,14 +277,22 @@ records = variants + technical
 
 if catalog.get("schemaVersion") != "3.2.0" or workflow:
     fail("el JSON todavía conserva el flujo superior retirado")
-if dm_infographic.get("version") != 1 or dm_infographic.get("canvasWidth") != 1800:
+if dm_infographic.get("version") != 2 or dm_infographic.get("canvasWidth", 0) < 2400:
     fail("la configuración premium de Validación DM no es válida")
-if dm_infographic.get("minPhotoHeight", 0) < 500 or not 650 <= dm_infographic.get("maxRowHeight", 0) <= 720:
+if dm_infographic.get("columnHeaderHeight") != 0:
+    fail("la exportación DM debe omitir la fila Referencia / Real")
+if dm_infographic.get("imageQuality", 0) < 0.97:
+    fail("la exportación DM no conserva calidad alta")
+if dm_infographic.get("minPhotoHeight", 0) < 640 or not 780 <= dm_infographic.get("maxRowHeight", 0) <= 860:
     fail("la calibración DM no conserva fotografías amplias y proporcionales")
 if not 72 <= dm_infographic.get("improvementHeight", 0) <= 120:
     fail("la altura dinámica de mejora continua no es válida")
 if experience.get("campaignChecklist") != "Insumos y materiales actualizados a la campaña seleccionada.":
     fail("falta la validación transversal de campaña")
+if experience.get("productionChannelsChecklist") != "Movimientos y trabajo alineados a los canales de producción, sin cruces innecesarios.":
+    fail("falta la validación de movimientos y canales de producción")
+if experience.get("hiddenStationIds") != ["mop"]:
+    fail("Pedidos móviles debe permanecer oculto en toda la versión")
 if performance.get("precachePerStation") != 1 or performance.get("referenceDisplayMode") != "native":
     fail("la configuración de rendimiento debe usar carga nativa y una precarga por estación")
 if performance.get("adjacentPrefetch") != 1 or performance.get("swipeThreshold") != 48:
@@ -221,12 +308,21 @@ if performance.get("referenceCleanup") != expected_cleanup:
     fail("el JSON no documenta la limpieza y ajuste dinámico de referencias")
 if "priorityCatalogAssets" not in service_worker_source or ".slice(0, limit)" not in service_worker_source:
     fail("el service worker todavía no limita la precarga de referencias")
+for marker in ('new Set(["mop"', "if (hidden.has(station.id)) continue"):
+    if marker not in service_worker_source:
+        fail(f"el service worker no excluye estaciones ocultas: {marker}")
 
 expected_campaigns = ["WINTER", "SPRING", "SUMMER", "SUMMER II", "FALL", "XMAS"]
 if [item.get("id") for item in campaigns] != expected_campaigns:
     fail("las campañas anuales no coinciden con Layout 1")
 if len(stations) != 7:
     fail(f"se esperaban 7 estaciones y se encontraron {len(stations)}")
+visible_stations = [station for station in stations if station.get("id") not in set(experience["hiddenStationIds"])]
+core_stations = [station for station in visible_stations if station.get("id") != "drive-thru"]
+if len(core_stations) != 5 or len(visible_stations) != 6:
+    fail(f"la experiencia debe mostrar 5 estaciones Core y 6 con DT: {len(core_stations)}/{len(visible_stations)}")
+if "Pedidos móviles" in html_source or "Pedidos móviles" in dm_source:
+    fail("Pedidos móviles reapareció en la interfaz")
 expected_checklist_sizes = {
     "brewing": 3,
     "coldbar": 4,
@@ -315,10 +411,22 @@ for name in UI_ASSETS:
 report = {
     "status": "ok",
     "stations": len(stations),
+    "visibleStations": len(visible_stations),
+    "coreStations": len(core_stations),
+    "hiddenStations": experience["hiddenStationIds"],
     "campaigns": len(campaigns),
     "variants": len(variants),
     "technical": len(technical),
     "images": len(records),
+    "security": {
+        "contentSecurityPolicy": True,
+        "restrictedImageTypes": True,
+        "boundedImageDecode": True,
+        "safeStorageFallback": True,
+        "isolatedServiceWorkerCache": True,
+        "pinnedActions": len(action_refs),
+        "pinnedPythonDependencies": 4,
+    },
     "premiumPdf": {
         "adaptiveOrientation": True,
         "horizontalCaptureGuidance": True,
@@ -346,6 +454,13 @@ report = {
         "dynamicReferenceFit": True,
         "cleanedReferences": performance["referenceCleanup"]["references"],
         "embeddedTitlesRemoved": performance["referenceCleanup"]["titlesRemoved"],
+        "aboutDialog": True,
+        "dmQuestionnairePerStation": True,
+        "dmHorizontalEvidenceOnly": True,
+        "dmProductionChannelsValidation": True,
+        "dmCanvasWidth": dm_infographic["canvasWidth"],
+        "dmImageQuality": dm_infographic["imageQuality"],
+        "dmRedundantColumnHeaders": False,
     },
     "lots": {
         lot.name: {

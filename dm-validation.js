@@ -11,7 +11,10 @@
   const ALWAYS_HIDDEN_STATION_IDS = new Set(["mop"]);
   const MAX_FILE_BYTES = 18 * 1024 * 1024;
   const MAX_IMAGE_SIDE = 2800;
+  const MAX_DECODE_PIXELS = 64 * 1024 * 1024;
+  const FETCH_TIMEOUT_MS = 12000;
   const EVIDENCE_JPEG_QUALITY = 0.96;
+  const ALLOWED_EVIDENCE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
   const evidence = new Map();
   const preloadedReferences = new Set();
   const queuedReferences = new Set();
@@ -30,20 +33,58 @@
     return document.getElementById(id);
   }
 
+  function boundedText(value, maxLength) {
+    return String(value || "").slice(0, maxLength);
+  }
+
+  function boundedRecord(value, maxLength) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).slice(0, 32).map(([key, entry]) => [
+      boundedText(key, 64),
+      boundedText(entry, maxLength)
+    ]));
+  }
+
+  function safeStorageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function fetchJson(url, errorMessage) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error(errorMessage);
+      return await response.json();
+    } catch (error) {
+      if (error?.name === "AbortError") throw new Error(`${errorMessage} Tiempo de espera agotado.`);
+      if (error instanceof SyntaxError) throw new Error(`${errorMessage} La respuesta no es válida.`);
+      if (error instanceof Error && error.message === errorMessage) throw error;
+      throw new Error(`${errorMessage} Revisa la conexión.`);
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
   function loadDmState() {
-    const fallback = { store: "", dm: "", campaign: "", region: "#OrgulloCN", optional: DEFAULT_OPTIONAL_IDS, variants: {}, improvements: {} };
+    const fallback = { store: "", dm: "", campaign: "", region: "#OrgulloCN", optional: [...DEFAULT_OPTIONAL_IDS], variants: {}, improvements: {} };
     try {
       const source = localStorage.getItem(STATE_KEY) || localStorage.getItem(LEGACY_STATE_KEY);
       const saved = JSON.parse(source || "null");
       if (!saved || typeof saved !== "object") return fallback;
       return {
-        store: String(saved.store || ""),
-        dm: String(saved.dm || ""),
-        campaign: String(saved.campaign || ""),
-        region: String(saved.region || "#OrgulloCN"),
+        store: boundedText(saved.store, 80),
+        dm: boundedText(saved.dm, 80),
+        campaign: boundedText(saved.campaign, 40),
+        region: boundedText(saved.region || "#OrgulloCN", 40),
         optional: Array.isArray(saved.optional) ? saved.optional.filter(id => OPTIONAL_IDS.includes(id)) : DEFAULT_OPTIONAL_IDS,
-        variants: saved.variants && typeof saved.variants === "object" ? saved.variants : {},
-        improvements: saved.improvements && typeof saved.improvements === "object" ? saved.improvements : {}
+        variants: boundedRecord(saved.variants, 100),
+        improvements: boundedRecord(saved.improvements, 120)
       };
     } catch {
       return fallback;
@@ -51,7 +92,7 @@
   }
 
   function saveDmState() {
-    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    safeStorageSet(STATE_KEY, JSON.stringify(state));
   }
 
   function cleanFilename(value) {
@@ -122,8 +163,8 @@
         </section>
         <div id="dmxBusy" class="dmx-busy" hidden><div class="dmx-busy__card"><div class="dmx-spinner" aria-hidden="true"></div><strong>Creando imagen en alta calidad</strong><small>Acomodando referencias y evidencias en una sola imagen.</small></div></div>
         <div id="dmxToast" class="dmx-toast" role="status" aria-live="polite" hidden></div>
-        <input id="dmxCamera" type="file" accept="image/*" capture="environment" hidden>
-        <input id="dmxFile" type="file" accept="image/*" hidden>
+        <input id="dmxCamera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden>
+        <input id="dmxFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
       </div>`;
     document.body.appendChild(dialog);
     byId("dmxClose").addEventListener("click", closeDmValidation);
@@ -187,8 +228,8 @@
     const mainState = readMainState();
     const visibleStore = byId("storeName")?.value.trim();
     const visibleCampaign = byId("campaignSelect")?.value;
-    if (visibleStore || mainState.store) state.store = visibleStore || mainState.store;
-    if (visibleCampaign || mainState.campaign) state.campaign = visibleCampaign || mainState.campaign;
+    if (visibleStore || mainState.store) state.store = boundedText(visibleStore || mainState.store, 80);
+    if (visibleCampaign || mainState.campaign) state.campaign = boundedText(visibleCampaign || mainState.campaign, 40);
     if (!catalog.campaigns.some(item => item.id === state.campaign)) state.campaign = catalog.campaigns[0]?.id || "";
     saveDmState();
   }
@@ -636,20 +677,23 @@
 
   function fileToImage(file) {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("No fue posible leer la fotografía."));
-      reader.onload = () => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error("La fotografía no tiene un formato compatible."));
-        image.src = reader.result;
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+      const finish = callback => value => {
+        URL.revokeObjectURL(objectUrl);
+        callback(value);
       };
-      reader.readAsDataURL(file);
+      image.onload = finish(() => resolve(image));
+      image.onerror = finish(() => reject(new Error("La fotografía no tiene un formato compatible.")));
+      image.src = objectUrl;
     });
   }
 
   async function optimizeDmEvidence(file) {
     const image = await fileToImage(file);
+    if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth * image.naturalHeight > MAX_DECODE_PIXELS) {
+      throw new Error("La fotografía tiene dimensiones demasiado grandes para procesarse con seguridad.");
+    }
     if (image.naturalHeight > image.naturalWidth) {
       return { orientation: "portrait", width: image.naturalWidth, height: image.naturalHeight, dataUrl: null };
     }
@@ -688,8 +732,8 @@
     byId("dmxCamera").value = "";
     byId("dmxFile").value = "";
     if (!stationId || !inputId || !file) return;
-    if (!file.type.startsWith("image/")) {
-      showDmToast("Selecciona un archivo de imagen válido.");
+    if (!ALLOWED_EVIDENCE_TYPES.has(file.type.toLowerCase())) {
+      showDmToast("Usa una fotografía JPG, PNG o WebP válida.");
       cancelDmEvidenceRequest();
       return;
     }
@@ -981,12 +1025,10 @@
     if (!catalog || !infographicConfig) {
       byId("dmxBusy").hidden = false;
       try {
-        const [catalogResponse, configResponse] = await Promise.all([
-          fetch(DATA_URL, { cache: "no-store" }),
-          fetch(INFOGRAPHIC_URL, { cache: "no-store" })
+        [catalog, infographicConfig] = await Promise.all([
+          fetchJson(DATA_URL, "No fue posible cargar el catálogo."),
+          fetchJson(INFOGRAPHIC_URL, "No fue posible cargar la configuración HQ.")
         ]);
-        if (!catalogResponse.ok || !configResponse.ok) throw new Error("No fue posible cargar la configuración premium.");
-        [catalog, infographicConfig] = await Promise.all([catalogResponse.json(), configResponse.json()]);
       } catch (error) {
         byId("dmxBusy").hidden = true;
         showDmToast(error.message || "No fue posible abrir Validación DM.");

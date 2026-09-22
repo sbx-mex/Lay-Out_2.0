@@ -1,6 +1,8 @@
 "use strict";
 
-const CACHE = "layout-2-remastered-v16";
+const CACHE_PREFIX = "layout-2-remastered-";
+const CACHE = `${CACHE_PREFIX}v17`;
+const NETWORK_TIMEOUT_MS = 10000;
 const SHELL = [
   "./",
   "index.html",
@@ -51,16 +53,46 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)));
+    await Promise.all(keys
+      .filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE)
+      .map(key => caches.delete(key)));
     await self.clients.claim();
   })());
 });
 
+async function fetchWithTimeout(request, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+  try {
+    return await fetch(request, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function canCache(request, response) {
+  return Boolean(
+    response?.ok
+    && response.type === "basic"
+    && new URL(response.url).origin === self.location.origin
+    && !request.headers.has("range")
+  );
+}
+
+async function putSafely(cache, request, response) {
+  if (!canCache(request, response)) return;
+  try {
+    await cache.put(request, response.clone());
+  } catch {
+    // Una cuota llena no debe impedir mostrar una respuesta válida de red.
+  }
+}
+
 async function networkFirst(request) {
   const cache = await caches.open(CACHE);
   try {
-    const response = await fetch(request);
-    if (response.ok) await cache.put(request, response.clone());
+    const response = await fetchWithTimeout(request);
+    await putSafely(cache, request, response);
     return response;
   } catch {
     const cached = await cache.match(request);
@@ -73,8 +105,8 @@ async function networkFirst(request) {
 async function staleWhileRevalidate(request, event) {
   const cache = await caches.open(CACHE);
   const cached = await cache.match(request);
-  const refresh = fetch(request, { cache: "no-cache" }).then(async response => {
-    if (response.ok) await cache.put(request, response.clone());
+  const refresh = fetchWithTimeout(request, { cache: "no-cache" }).then(async response => {
+    await putSafely(cache, request, response);
     return response;
   }).catch(() => null);
   event.waitUntil(refresh);
@@ -82,7 +114,7 @@ async function staleWhileRevalidate(request, event) {
 }
 
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
+  if (event.request.method !== "GET" || event.request.headers.has("range")) return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   const isLargeVisual = event.request.destination === "image" || url.pathname.includes("/assets/layouts/");
