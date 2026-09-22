@@ -3,12 +3,15 @@
 (() => {
   const DATA_URL = "data/layouts.json";
   const INFOGRAPHIC_URL = "data/dm-infographic.json";
-  const STATE_KEY = "layout20-dm-independent-v1";
-  const MAIN_STATE_KEY = "layout20-state-v4";
-  const OPTIONAL_IDS = ["drive-thru", "mop"];
-  const DEFAULT_OPTIONAL_IDS = ["mop"];
+  const STATE_KEY = "layout20-dm-independent-v2";
+  const LEGACY_STATE_KEY = "layout20-dm-independent-v1";
+  const MAIN_STATE_KEYS = ["layout20-state-v5", "layout20-state-v4"];
+  const OPTIONAL_IDS = ["drive-thru"];
+  const DEFAULT_OPTIONAL_IDS = [];
+  const ALWAYS_HIDDEN_STATION_IDS = new Set(["mop"]);
   const MAX_FILE_BYTES = 18 * 1024 * 1024;
-  const MAX_IMAGE_SIDE = 2000;
+  const MAX_IMAGE_SIDE = 2800;
+  const EVIDENCE_JPEG_QUALITY = 0.96;
   const evidence = new Map();
   const preloadedReferences = new Set();
   const queuedReferences = new Set();
@@ -16,6 +19,7 @@
   let infographicConfig = null;
   let dialog = null;
   let pendingStationId = null;
+  let pendingInputId = null;
   let preloadQueue = [];
   let preloadScheduled = false;
   let toastTimer = null;
@@ -29,7 +33,8 @@
   function loadDmState() {
     const fallback = { store: "", dm: "", campaign: "", region: "#OrgulloCN", optional: DEFAULT_OPTIONAL_IDS, variants: {}, improvements: {} };
     try {
-      const saved = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
+      const source = localStorage.getItem(STATE_KEY) || localStorage.getItem(LEGACY_STATE_KEY);
+      const saved = JSON.parse(source || "null");
       if (!saved || typeof saved !== "object") return fallback;
       return {
         store: String(saved.store || ""),
@@ -78,13 +83,13 @@
           </section>
           <section class="dmx-meta dmx-panel" aria-label="Datos de la validación">
             <label class="dmx-field"><span>Tienda</span><input id="dmxStore" maxlength="80" autocomplete="organization" placeholder="Ej. Cosmopol"></label>
-            <label class="dmx-field"><span>DM</span><input id="dmxManager" maxlength="80" autocomplete="name" placeholder="Ej. Enrique César"></label>
+            <label class="dmx-field"><span>Nombre del Distrital</span><input id="dmxManager" maxlength="80" autocomplete="name" placeholder="Ej. Enrique César"></label>
             <label class="dmx-field"><span>Campaña</span><select id="dmxCampaign"></select></label>
             <label class="dmx-field"><span>Región / hashtag</span><input id="dmxRegion" maxlength="40" placeholder="#OrgulloCN"></label>
           </section>
           <section class="dmx-tools dmx-panel">
             <div>
-              <div class="dmx-progress-copy"><strong id="dmxProgress">0 de 6 estaciones</strong><span>Carretes precargados · altura de imagen automática</span></div>
+              <div class="dmx-progress-copy"><strong id="dmxProgress">0 de 5 estaciones</strong><span>5 Core · 6 con DT · fotografía horizontal</span></div>
               <div class="dmx-track" aria-hidden="true"><i id="dmxProgressBar"></i></div>
             </div>
             <div id="dmxOptions" class="dmx-options" role="group" aria-label="Estaciones opcionales"></div>
@@ -93,10 +98,29 @@
           <section id="dmxGrid" class="dmx-grid" aria-live="polite"></section>
         </div>
         <footer class="dmx-footer">
-          <div class="dmx-footer__copy"><strong id="dmxStatus">Agrega Tienda, DM y las evidencias.</strong><small>Pedidos móviles inicia activo; Drive Thru se agrega cuando aplica.</small></div>
-          <button id="dmxExport" class="dmx-export" type="button" disabled>Crear imagen consolidada</button>
+          <div class="dmx-footer__copy"><strong id="dmxStatus">Agrega Tienda, Distrital y las evidencias.</strong><small>5 estaciones Core · Drive Thru se agrega sólo cuando aplica.</small></div>
+          <button id="dmxExport" class="dmx-export" type="button" disabled>Exportar imagen HQ</button>
         </footer>
-        <div id="dmxBusy" class="dmx-busy" hidden><div class="dmx-busy__card"><div class="dmx-spinner" aria-hidden="true"></div><strong>Creando infografía DM</strong><small>Acomodando referencias y evidencias en una sola imagen.</small></div></div>
+        <section id="dmxChecklistOverlay" class="dmx-flow" role="dialog" aria-modal="true" aria-labelledby="dmxChecklistTitle" aria-describedby="dmxChecklistDescription" hidden>
+          <div class="dmx-flow__card">
+            <div class="dmx-flow__head"><span class="dmx-flow__badge">Antes de agregar evidencia</span><span id="dmxChecklistProgress" class="dmx-flow__progress">0 de 0</span></div>
+            <h2 id="dmxChecklistTitle">Valida la estación</h2>
+            <p id="dmxChecklistDescription">Marca únicamente lo que observaste en la operación.</p>
+            <div class="dmx-horizontal-rule"><span aria-hidden="true">↔</span><strong>La evidencia debe tomarse únicamente en horizontal.</strong></div>
+            <div id="dmxChecklist" class="dmx-checklist" role="group" aria-label="Cuestionario de estación"></div>
+            <div class="dmx-flow__actions"><button id="dmxChecklistCancel" class="dmx-button dmx-button--secondary" type="button">Cancelar</button><button id="dmxChecklistContinue" class="dmx-button" type="button" disabled>Continuar</button></div>
+          </div>
+        </section>
+        <section id="dmxOrientationError" class="dmx-flow dmx-flow--error" role="alertdialog" aria-modal="true" aria-labelledby="dmxOrientationTitle" aria-describedby="dmxOrientationDescription" hidden>
+          <div class="dmx-flow__card dmx-flow__card--compact">
+            <span class="dmx-orientation-icon" aria-hidden="true">↔</span>
+            <span class="dmx-flow__badge dmx-flow__badge--error">Orientación no válida</span>
+            <h2 id="dmxOrientationTitle">La foto debe ser horizontal</h2>
+            <p id="dmxOrientationDescription">La imagen vertical no se agregó. Gira el celular y vuelve a capturar la estación completa.</p>
+            <div class="dmx-flow__actions"><button id="dmxOrientationCancel" class="dmx-button dmx-button--secondary" type="button">Cancelar</button><button id="dmxOrientationRetry" class="dmx-button" type="button">Volver a tomar</button></div>
+          </div>
+        </section>
+        <div id="dmxBusy" class="dmx-busy" hidden><div class="dmx-busy__card"><div class="dmx-spinner" aria-hidden="true"></div><strong>Creando imagen en alta calidad</strong><small>Acomodando referencias y evidencias en una sola imagen.</small></div></div>
         <div id="dmxToast" class="dmx-toast" role="status" aria-live="polite" hidden></div>
         <input id="dmxCamera" type="file" accept="image/*" capture="environment" hidden>
         <input id="dmxFile" type="file" accept="image/*" hidden>
@@ -106,6 +130,10 @@
     byId("dmxExport").addEventListener("click", exportDmInfographic);
     byId("dmxCamera").addEventListener("change", event => processDmEvidence(event.target.files?.[0]));
     byId("dmxFile").addEventListener("change", event => processDmEvidence(event.target.files?.[0]));
+    byId("dmxChecklistCancel").addEventListener("click", cancelDmEvidenceRequest);
+    byId("dmxChecklistContinue").addEventListener("click", continueDmEvidenceRequest);
+    byId("dmxOrientationCancel").addEventListener("click", cancelDmEvidenceRequest);
+    byId("dmxOrientationRetry").addEventListener("click", retryDmEvidenceRequest);
     byId("dmxStore").addEventListener("input", event => {
       state.store = event.target.value.trimStart();
       saveDmState();
@@ -126,6 +154,11 @@
     });
     dialog.addEventListener("close", () => byId("dmValidationOpen")?.focus());
     dialog.addEventListener("cancel", event => {
+      if (!byId("dmxChecklistOverlay").hidden || !byId("dmxOrientationError").hidden) {
+        event.preventDefault();
+        cancelDmEvidenceRequest();
+        return;
+      }
       if (exporting) event.preventDefault();
     });
   }
@@ -139,11 +172,15 @@
   }
 
   function readMainState() {
-    try {
-      return JSON.parse(localStorage.getItem(MAIN_STATE_KEY) || "{}");
-    } catch {
-      return {};
+    for (const key of MAIN_STATE_KEYS) {
+      try {
+        const saved = localStorage.getItem(key);
+        if (saved) return JSON.parse(saved);
+      } catch {
+        return {};
+      }
     }
+    return {};
   }
 
   function syncMainDefaults() {
@@ -171,8 +208,20 @@
     byId("dmxDate").textContent = `Fecha · ${new Intl.DateTimeFormat("es-MX", { dateStyle: "long" }).format(new Date())}`;
   }
 
+  function hiddenDmStationIds() {
+    return new Set([
+      ...ALWAYS_HIDDEN_STATION_IDS,
+      ...((catalog?.experience?.hiddenStationIds || []).map(String))
+    ]);
+  }
+
+  function visibleDmStations() {
+    const hidden = hiddenDmStationIds();
+    return (catalog?.stations || []).filter(station => !hidden.has(station.id));
+  }
+
   function selectedDmStations() {
-    return catalog.stations.filter(station => !OPTIONAL_IDS.includes(station.id) || state.optional.includes(station.id));
+    return visibleDmStations().filter(station => !OPTIONAL_IDS.includes(station.id) || state.optional.includes(station.id));
   }
 
   function variantFor(station) {
@@ -285,9 +334,83 @@
     return figure;
   }
 
+  function dmChecklistItems(station) {
+    const items = [...(station?.checklist || [])];
+    const production = catalog?.experience?.productionChannelsChecklist;
+    const campaign = catalog?.experience?.campaignChecklist;
+    if (production) items.push(production);
+    if (campaign) items.push(campaign);
+    return [...new Set(items.map(item => String(item).trim()).filter(Boolean))];
+  }
+
+  function updateDmChecklistProgress() {
+    const boxes = [...byId("dmxChecklist").querySelectorAll('input[type="checkbox"]')];
+    const complete = boxes.filter(box => box.checked).length;
+    byId("dmxChecklistProgress").textContent = `${complete} de ${boxes.length}`;
+    byId("dmxChecklistContinue").disabled = complete !== boxes.length;
+  }
+
+  function renderDmChecklist(station) {
+    const host = byId("dmxChecklist");
+    host.replaceChildren();
+    byId("dmxChecklistTitle").textContent = `Valida ${station.label}`;
+    byId("dmxChecklistDescription").textContent = "Confirma el acomodo, los movimientos y el trabajo por canales de producción antes de documentar.";
+    dmChecklistItems(station).forEach((text, index) => {
+      const label = document.createElement("label");
+      label.className = "dmx-check";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = String(index);
+      checkbox.addEventListener("change", updateDmChecklistProgress);
+      const mark = document.createElement("span");
+      mark.className = "dmx-check__mark";
+      mark.setAttribute("aria-hidden", "true");
+      const copy = document.createElement("span");
+      copy.textContent = text;
+      label.append(checkbox, mark, copy);
+      host.appendChild(label);
+    });
+    updateDmChecklistProgress();
+  }
+
   function openDmPicker(stationId, inputId) {
+    const selected = selectedDmStations().find(station => station.id === stationId);
+    if (!selected || !["dmxCamera", "dmxFile"].includes(inputId)) return;
     pendingStationId = stationId;
-    byId(inputId).click();
+    pendingInputId = inputId;
+    renderDmChecklist(selected);
+    byId("dmxChecklistOverlay").hidden = false;
+    byId("dmxChecklist").querySelector("input")?.focus();
+  }
+
+  function hideDmFlow(id) {
+    const flow = byId(id);
+    if (flow) flow.hidden = true;
+  }
+
+  function cancelDmEvidenceRequest() {
+    hideDmFlow("dmxChecklistOverlay");
+    hideDmFlow("dmxOrientationError");
+    pendingStationId = null;
+    pendingInputId = null;
+    byId("dmxCamera").value = "";
+    byId("dmxFile").value = "";
+  }
+
+  function continueDmEvidenceRequest() {
+    if (byId("dmxChecklistContinue").disabled || !pendingStationId || !pendingInputId) return;
+    const input = byId(pendingInputId);
+    hideDmFlow("dmxChecklistOverlay");
+    input.value = "";
+    window.requestAnimationFrame(() => input.click());
+  }
+
+  function retryDmEvidenceRequest() {
+    if (!pendingStationId || !pendingInputId) return cancelDmEvidenceRequest();
+    const input = byId(pendingInputId);
+    hideDmFlow("dmxOrientationError");
+    input.value = "";
+    window.requestAnimationFrame(() => input.click());
   }
 
   function shiftDmVariant(station, delta, card, index, focusAction = "") {
@@ -429,7 +552,7 @@
     real.className = "dmx-real";
     const realTitle = document.createElement("strong");
     realTitle.className = "dmx-real__title";
-    realTitle.textContent = record ? "Evidencia lista" : "Evidencia real";
+    realTitle.textContent = record ? "✓ Evidencia horizontal lista" : "Evidencia · sólo foto horizontal";
     const realFigure = createDmFigure("Real", station, record?.dataUrl);
     if (!record) {
       realFigure.tabIndex = 0;
@@ -504,7 +627,7 @@
     byId("dmxProgressBar").style.width = `${stations.length ? complete / stations.length * 100 : 0}%`;
     const pending = stations.length - complete;
     byId("dmxStatus").textContent = !metadataReady
-      ? "Completa Tienda y DM para continuar."
+      ? "Completa Tienda y Nombre del Distrital para continuar."
       : pending
         ? `Faltan ${pending} ${pending === 1 ? "estación" : "estaciones"} por validar.`
         : "Validación completa · infografía lista para crear.";
@@ -527,6 +650,9 @@
 
   async function optimizeDmEvidence(file) {
     const image = await fileToImage(file);
+    if (image.naturalHeight > image.naturalWidth) {
+      return { orientation: "portrait", width: image.naturalWidth, height: image.naturalHeight, dataUrl: null };
+    }
     const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
@@ -537,31 +663,62 @@
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.9);
+    return {
+      orientation: "landscape",
+      width: canvas.width,
+      height: canvas.height,
+      dataUrl: canvas.toDataURL("image/jpeg", EVIDENCE_JPEG_QUALITY)
+    };
+  }
+
+  function showDmOrientationError(inputId) {
+    const retry = byId("dmxOrientationRetry");
+    const fromCamera = inputId === "dmxCamera";
+    retry.textContent = fromCamera ? "Volver a tomar" : "Elegir otra foto";
+    byId("dmxOrientationDescription").textContent = fromCamera
+      ? "La imagen vertical no se agregó. Gira el celular y vuelve a capturar la estación completa."
+      : "La imagen vertical no se agregó. Selecciona una fotografía horizontal de la estación completa.";
+    byId("dmxOrientationError").hidden = false;
+    retry.focus();
   }
 
   async function processDmEvidence(file) {
     const stationId = pendingStationId;
-    pendingStationId = null;
+    const inputId = pendingInputId;
     byId("dmxCamera").value = "";
     byId("dmxFile").value = "";
-    if (!stationId || !file) return;
+    if (!stationId || !inputId || !file) return;
     if (!file.type.startsWith("image/")) {
       showDmToast("Selecciona un archivo de imagen válido.");
+      cancelDmEvidenceRequest();
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
       showDmToast("La fotografía supera 18 MB. Selecciona una imagen más ligera.");
+      cancelDmEvidenceRequest();
       return;
     }
     try {
       byId("dmxBusy").hidden = false;
-      const dataUrl = await optimizeDmEvidence(file);
-      evidence.set(stationId, { dataUrl, name: file.name });
+      const prepared = await optimizeDmEvidence(file);
+      if (prepared.orientation === "portrait") {
+        showDmOrientationError(inputId);
+        return;
+      }
+      evidence.set(stationId, {
+        dataUrl: prepared.dataUrl,
+        name: file.name,
+        width: prepared.width,
+        height: prepared.height,
+        orientation: prepared.orientation
+      });
+      pendingStationId = null;
+      pendingInputId = null;
       renderDmStations();
-      showDmToast("Evidencia agregada a la Validación DM.");
+      showDmToast("Evidencia horizontal agregada correctamente.");
     } catch (error) {
       showDmToast(error.message || "No fue posible preparar la evidencia.");
+      cancelDmEvidenceRequest();
     } finally {
       byId("dmxBusy").hidden = true;
     }
@@ -626,16 +783,26 @@
     return Math.min(config.maxRowHeight, Math.max(config.minRowHeight, calculated));
   }
 
-  function drawMetadata(context, label, value, x, y, width) {
+  function fitCanvasFont(context, value, maxWidth, preferred, minimum) {
+    let size = preferred;
+    context.font = `900 ${size}px Inter, Segoe UI, sans-serif`;
+    while (size > minimum && context.measureText(value).width > maxWidth) {
+      size -= 1;
+      context.font = `900 ${size}px Inter, Segoe UI, sans-serif`;
+    }
+    return size;
+  }
+
+  function drawHeaderField(context, label, value, x, y, width) {
     context.fillStyle = "rgba(255,255,255,.12)";
-    roundRect(context, x, y, width, 84, 15);
+    roundRect(context, x, y, width, 68, 15);
     context.fill();
     context.fillStyle = "#bfe3d3";
-    context.font = "700 16px Inter, Segoe UI, sans-serif";
-    context.fillText(label.toUpperCase(), x + 16, y + 24);
+    context.font = "800 15px Inter, Segoe UI, sans-serif";
+    context.fillText(label.toUpperCase(), x + 18, y + 21);
     context.fillStyle = "#ffffff";
-    context.font = "800 23px Inter, Segoe UI, sans-serif";
-    context.fillText(fitText(context, value, width - 32), x + 16, y + 58);
+    context.font = "850 24px Inter, Segoe UI, sans-serif";
+    context.fillText(fitText(context, value, width - 36), x + 18, y + 50);
   }
 
   async function buildDmInfographic() {
@@ -656,13 +823,12 @@
     const width = config.canvasWidth;
     const padding = config.outerPadding;
     const headerHeight = config.headerHeight;
-    const columnHeaderHeight = config.columnHeaderHeight;
     const rowHeight = calibratedRowHeight(records.length);
     const improvementHeight = config.improvementHeight || 0;
     const rowHeights = records.map(record => rowHeight + (record.improvement ? improvementHeight : 0));
     const rowGap = config.rowGap;
     const footerHeight = config.footerHeight;
-    const height = headerHeight + columnHeaderHeight + padding + rowHeights.reduce((total, value) => total + value, 0) + Math.max(0, records.length - 1) * rowGap + footerHeight;
+    const height = headerHeight + padding + rowHeights.reduce((total, value) => total + value, 0) + Math.max(0, records.length - 1) * rowGap + footerHeight;
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -673,35 +839,28 @@
     context.fillRect(0, 0, width, height);
     context.fillStyle = "#003b2a";
     context.fillRect(0, 0, width, headerHeight);
-    context.fillStyle = "#ffffff";
-    context.font = "900 46px Inter, Segoe UI, sans-serif";
-    context.fillText("VALIDACIÓN DM", padding, 61);
+    context.fillStyle = "#bfe3d3";
+    context.font = "800 16px Inter, Segoe UI, sans-serif";
+    context.fillText("VALIDACIÓN DISTRITAL · IMAGEN EN ALTA RESOLUCIÓN", padding, 31);
     const campaign = catalog.campaigns.find(item => item.id === state.campaign);
+    const title = `Lay Out | Distrital | ${state.dm.trim()}`;
+    context.fillStyle = "#ffffff";
+    fitCanvasFont(context, title, width - padding * 2, 54, 38);
+    context.fillText(fitText(context, title, width - padding * 2), padding, 88);
     const metadata = [
       ["Tienda", state.store.trim()],
-      ["DM", state.dm.trim()],
       ["Campaña", campaign?.label || "—"],
       ["Fecha", new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date())]
     ];
     const metaGap = 14;
-    const metaWidth = (width - padding * 2 - metaGap * 3) / 4;
-    metadata.forEach(([label, value], index) => drawMetadata(context, label, value, padding + index * (metaWidth + metaGap), 94, metaWidth));
+    const metaWidth = (width - padding * 2 - metaGap * 2) / 3;
+    metadata.forEach(([label, value], index) => drawHeaderField(context, label, value, padding + index * (metaWidth + metaGap), 116, metaWidth));
     const contentWidth = width - padding * 2;
     const columnGap = config.columnGap;
-    const columnWidth = (contentWidth - columnGap) / 2;
-    const columnY = headerHeight + 7;
-    [["REFERENCIA", "#e3f3eb", "#006241"], ["REAL", "#fff0cf", "#8a5b0b"]].forEach(([label, background, color], column) => {
-      const x = padding + column * (columnWidth + columnGap);
-      context.fillStyle = background;
-      roundRect(context, x, columnY, columnWidth, columnHeaderHeight - 12, 13);
-      context.fill();
-      context.fillStyle = color;
-      context.font = "900 20px Inter, Segoe UI, sans-serif";
-      context.textAlign = "center";
-      context.fillText(label, x + columnWidth / 2, columnY + 31);
-    });
+    const figureInset = 12;
+    const columnWidth = (contentWidth - figureInset * 2 - columnGap) / 2;
     context.textAlign = "left";
-    let y = headerHeight + columnHeaderHeight + padding;
+    let y = headerHeight + padding;
     records.forEach((record, index) => {
       const { station, variant, improvement, referenceImage, evidenceImage } = record;
       const currentRowHeight = rowHeights[index];
@@ -716,20 +875,33 @@
       roundRect(context, padding, y, contentWidth, config.stationHeaderHeight, 22);
       context.fill();
       context.fillRect(padding, y + 36, contentWidth, config.stationHeaderHeight - 36);
+      context.fillStyle = "#caa969";
+      roundRect(context, padding + 18, y + 15, 42, 40, 12);
+      context.fill();
+      context.fillStyle = "#003b2a";
+      context.font = "900 19px Inter, Segoe UI, sans-serif";
+      context.textAlign = "center";
+      context.fillText(String(index + 1).padStart(2, "0"), padding + 39, y + 42);
       context.fillStyle = "#ffffff";
-      context.font = "900 25px Inter, Segoe UI, sans-serif";
-      const title = `${String(index + 1).padStart(2, "0")}  ${station.label} | ${variant.code} · ${variantContext(station, variant)}`;
-      context.fillText(fitText(context, title, contentWidth - 44), padding + 22, y + 40);
+      context.font = "900 28px Inter, Segoe UI, sans-serif";
+      context.textAlign = "left";
+      const stationTitle = `${station.label} | ${variant.code} · ${variantContext(station, variant)}`;
+      context.fillText(fitText(context, stationTitle, contentWidth - 180), padding + 76, y + 43);
+      context.font = "850 17px Inter, Segoe UI, sans-serif";
+      context.textAlign = "right";
+      context.fillText(station.id === "drive-thru" ? "DT" : "CORE", padding + contentWidth - 22, y + 42);
+      context.textAlign = "left";
       [[referenceImage, false], [evidenceImage, true]].forEach(([image, preferFill], column) => {
-        const x = padding + column * (columnWidth + columnGap);
-        const figureY = y + config.stationHeaderHeight + 10;
-        const figureHeight = currentRowHeight - config.stationHeaderHeight - currentImprovementHeight - 20;
-        context.fillStyle = "#f8faf9";
-        context.strokeStyle = "#d5e2dc";
+        const x = padding + figureInset + column * (columnWidth + columnGap);
+        const figureY = y + config.stationHeaderHeight + 12;
+        const figureHeight = currentRowHeight - config.stationHeaderHeight - currentImprovementHeight - 24;
+        context.fillStyle = column === 0 ? "#f4faf7" : "#fffaf0";
+        context.strokeStyle = column === 0 ? "#b9d7ca" : "#e7cf9d";
+        context.lineWidth = 2;
         roundRect(context, x, figureY, columnWidth, figureHeight, 14);
         context.fill();
         context.stroke();
-        drawAdjustedImage(context, image, x + 8, figureY + 8, columnWidth - 16, figureHeight - 16, preferFill);
+        drawAdjustedImage(context, image, x + 10, figureY + 10, columnWidth - 20, figureHeight - 20, preferFill);
       });
       if (improvement) {
         const improvementY = y + currentRowHeight - improvementHeight + 10;
@@ -756,14 +928,14 @@
     context.fillRect(width / 2 - 1, footerY + 20, 2, 44);
     context.fillStyle = "#ffffff";
     context.textAlign = "left";
-    context.fillText("JUNTÉMONOS MÁS", width / 2 + 30, footerY + 50);
+    context.fillText(`LAY OUT DISTRITAL · ${records.length} ESTACIONES · HQ`, width / 2 + 30, footerY + 50);
     context.textAlign = "left";
     const blob = await new Promise((resolve, reject) => canvas.toBlob(
       value => value ? resolve(value) : reject(new Error("No fue posible crear la imagen consolidada.")),
       "image/jpeg",
       config.imageQuality
     ));
-    return { blob, campaign: campaign?.label || "Campaña" };
+    return { blob, campaign: campaign?.label || "Campaña", width, height };
   }
 
   function downloadDmBlob(blob, filename) {
@@ -789,11 +961,11 @@
     updateDmProgress();
     try {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      const { blob, campaign } = await buildDmInfographic();
+      const { blob, campaign, width } = await buildDmInfographic();
       const today = new Date();
       const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      downloadDmBlob(blob, `Validacion_DM_${cleanFilename(state.store)}_${cleanFilename(campaign)}_${date}.jpg`);
-      showDmToast("Infografía DM descargada correctamente.");
+      downloadDmBlob(blob, `LayOut_Distrital_${cleanFilename(state.dm)}_${cleanFilename(state.store)}_${cleanFilename(campaign)}_${date}.jpg`);
+      showDmToast(`Imagen distrital HQ descargada a ${width} px de ancho.`);
     } catch (error) {
       showDmToast(error.message || "No fue posible generar la infografía.");
     } finally {

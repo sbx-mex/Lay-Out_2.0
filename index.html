@@ -32,6 +32,7 @@
         <span><strong>LayOut 2.0</strong><small>Estación · Referencia · Real</small></span>
       </a>
       <div class="topbar__actions">
+        <button id="aboutButton" class="button button--ghost button--compact" type="button" aria-haspopup="dialog">Acerca de</button>
         <button id="dmValidationOpen" class="button button--ghost button--compact dmx-launch" type="button">Validación DM</button>
         <span id="networkStatus" class="status" role="status" aria-live="polite">En línea</span>
         <button id="installButton" class="button button--ghost button--compact hidden" type="button">Instalar</button>
@@ -160,6 +161,29 @@
         <button id="photoGuidanceCancel" class="button button--ghost-dark" type="button">Cancelar</button>
         <button id="photoGuidanceAction" class="button" type="button">Continuar</button>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="aboutDialog" class="flow-dialog about-dialog" aria-labelledby="aboutTitle" aria-describedby="aboutDescription">
+    <div class="flow-dialog__body">
+      <div class="about-dialog__head">
+        <span class="flow-badge">Acerca de</span>
+        <button id="closeAbout" class="icon-button" type="button" aria-label="Cerrar Acerca de">×</button>
+      </div>
+      <div>
+        <h2 id="aboutTitle">Lay Out 2.0 · Validación visual</h2>
+        <p id="aboutDescription">Una guía práctica para comparar el acomodo de cada estación y documentar la ejecución con claridad.</p>
+      </div>
+      <div class="about-overview" aria-label="Alcance de la versión">
+        <article><strong>5</strong><span>estaciones Core</span></article>
+        <article><strong>6</strong><span>cuando aplica DT</span></article>
+        <article><strong>HQ</strong><span>imagen distrital</span></article>
+      </div>
+      <div class="about-details">
+        <p><strong>General</strong><span>Consulta una referencia, agrega evidencia y exporta el comparativo.</span></p>
+        <p><strong>Validación DM</strong><span>Cuestionario por estación, fotografía horizontal obligatoria e imagen consolidada en alta resolución.</span></p>
+      </div>
+      <button id="aboutContinue" class="button" type="button">Entendido</button>
     </div>
   </dialog>
 

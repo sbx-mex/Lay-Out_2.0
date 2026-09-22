@@ -1,8 +1,9 @@
 "use strict";
 
 const DATA_URL = "data/layouts.json";
-const MEMORY_KEY = "layout20-state-v4";
-const LEGACY_MEMORY_KEY = "layout20-state-v3";
+const MEMORY_KEY = "layout20-state-v5";
+const LEGACY_MEMORY_KEYS = ["layout20-state-v4", "layout20-state-v3"];
+const ALWAYS_HIDDEN_STATION_IDS = new Set(["mop"]);
 const PDF_MARGIN = 6;
 const PDF_CUT_GAP = 2;
 const DEFAULT_MAX_EVIDENCE_PX = 2200;
@@ -50,7 +51,20 @@ const mediaDialogState = {
 };
 
 function station() {
-  return catalog?.stations.find(item => item.id === activeStationId) || catalog?.stations[0];
+  const stations = availableStations();
+  return stations.find(item => item.id === activeStationId) || stations[0];
+}
+
+function hiddenStationIds() {
+  return new Set([
+    ...ALWAYS_HIDDEN_STATION_IDS,
+    ...((catalog?.experience?.hiddenStationIds || []).map(String))
+  ]);
+}
+
+function availableStations() {
+  const hidden = hiddenStationIds();
+  return (catalog?.stations || []).filter(item => !hidden.has(item.id));
 }
 
 function campaign() {
@@ -123,8 +137,11 @@ function loadState() {
   try {
     const current = localStorage.getItem(MEMORY_KEY);
     if (current) return JSON.parse(current);
-    const legacy = localStorage.getItem(LEGACY_MEMORY_KEY);
-    return legacy ? JSON.parse(legacy) : {};
+    for (const key of LEGACY_MEMORY_KEYS) {
+      const legacy = localStorage.getItem(key);
+      if (legacy) return JSON.parse(legacy);
+    }
+    return {};
   } catch {
     return {};
   }
@@ -254,10 +271,12 @@ async function loadCatalog() {
   catalog = await response.json();
   if (!Array.isArray(catalog.campaigns) || !catalog.campaigns.length) throw new Error("El catálogo no contiene campañas válidas.");
   if (!Array.isArray(catalog.stations) || !catalog.stations.length) throw new Error("El catálogo no contiene estaciones válidas.");
+  const visibleStations = availableStations();
+  if (!visibleStations.length) throw new Error("No hay estaciones disponibles para esta versión.");
 
   const saved = loadState();
   activeCampaignId = catalog.campaigns.some(item => item.id === saved.campaign) ? saved.campaign : catalog.campaigns[0].id;
-  activeStationId = catalog.stations.some(item => item.id === saved.station) ? saved.station : catalog.stations[0].id;
+  activeStationId = visibleStations.some(item => item.id === saved.station) ? saved.station : visibleStations[0].id;
   $("storeName").value = saved.store || "";
   $("notes").value = saved.notes || "";
 
@@ -294,7 +313,7 @@ function renderCampaignSelect() {
 function renderStationSelect() {
   const select = $("stationSelect");
   select.innerHTML = "";
-  catalog.stations.forEach(current => {
+  availableStations().forEach(current => {
     const group = document.createElement("optgroup");
     group.label = `${current.icon} ${current.label}`;
     stationGroups(current).forEach(subgroup => {
@@ -312,7 +331,7 @@ function renderStationSelect() {
 
 function selectStationChoice(value, scroll = true) {
   const [stationId, subgroup] = String(value).split("::");
-  const nextStation = catalog.stations.find(item => item.id === stationId);
+  const nextStation = availableStations().find(item => item.id === stationId);
   if (!nextStation || !stationGroups(nextStation).includes(subgroup)) return;
   activeStationId = nextStation.id;
   activeSubgroup = subgroup;
@@ -1036,13 +1055,14 @@ function bind() {
   $("exportButton").addEventListener("click", exportPdf);
   $("resetButton").addEventListener("click", () => {
     localStorage.removeItem(MEMORY_KEY);
-    localStorage.removeItem(LEGACY_MEMORY_KEY);
+    LEGACY_MEMORY_KEYS.forEach(key => localStorage.removeItem(key));
     $("storeName").value = "";
     $("notes").value = "";
     activeCampaignId = catalog.campaigns[0].id;
-    activeStationId = catalog.stations[0].id;
-    activeSubgroup = defaultSubgroup(catalog.stations[0]);
-    activeVariantId = catalog.stations[0].variants[0].id;
+    const firstStation = availableStations()[0];
+    activeStationId = firstStation.id;
+    activeSubgroup = defaultSubgroup(firstStation);
+    activeVariantId = firstStation.variants[0].id;
     clearEvidence();
     renderAll();
     announce("Revisión reiniciada.");
@@ -1050,6 +1070,9 @@ function bind() {
 
   bindDialogClose("technicalDialog", "closeTechnical");
   bindDialogClose("referenceDialog", "closeReference");
+  bindDialogClose("aboutDialog", "closeAbout");
+  $("aboutButton").addEventListener("click", () => $("aboutDialog").showModal());
+  $("aboutContinue").addEventListener("click", () => $("aboutDialog").close());
 
   $("mobilePrevious").addEventListener("click", () => shiftVariant(-1));
   $("mobilePhoto").addEventListener("click", () => openPhotoPicker("cameraInput"));

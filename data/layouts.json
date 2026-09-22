@@ -7,7 +7,9 @@
   "experience": {
     "title": "LayOut 2.0",
     "subtitle": "Selecciona, compara y valida con claridad.",
-    "campaignChecklist": "Insumos y materiales actualizados a la campaña seleccionada."
+    "campaignChecklist": "Insumos y materiales actualizados a la campaña seleccionada.",
+    "productionChannelsChecklist": "Movimientos y trabajo alineados a los canales de producción, sin cruces innecesarios.",
+    "hiddenStationIds": ["mop"]
   },
   "performance": {
     "precachePerStation": 1,

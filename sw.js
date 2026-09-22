@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE = "layout-2-remastered-v15";
+const CACHE = "layout-2-remastered-v16";
 const SHELL = [
   "./",
   "index.html",
@@ -25,7 +25,9 @@ async function priorityCatalogAssets() {
     const data = await response.json();
     const assets = [];
     const limit = Math.max(0, Number(data.performance?.precachePerStation) || 0);
+    const hidden = new Set(["mop", ...(data.experience?.hiddenStationIds || [])]);
     for (const station of data.stations || []) {
+      if (hidden.has(station.id)) continue;
       for (const variant of (station.variants || []).slice(0, limit)) {
         if (variant.image) assets.push(variant.image);
       }
